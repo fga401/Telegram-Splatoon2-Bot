@@ -1,0 +1,11 @@
+{
+  "nintendo":{
+    "useProxy": false
+  },
+  "bot": {
+    "useProxy": true
+  },
+  "log":{
+    "level": "debug"
+  }
+}
