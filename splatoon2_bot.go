@@ -14,7 +14,7 @@ import (
 )
 
 func InitViper() {
-	viper.SetConfigFile(os.Getenv("CONFIG"))
+	viper.SetConfigName(os.Getenv("CONFIG"))
 	viper.SetConfigType("json")
 	viper.AddConfigPath("./config/")
 	viper.AddConfigPath(".")
