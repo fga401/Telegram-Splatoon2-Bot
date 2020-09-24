@@ -4,6 +4,7 @@ import (
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"go.uber.org/zap"
 	"strings"
+	log "telegram-splatoon2-bot/logger"
 )
 
 type Handler func(message *botapi.Update, bot *botapi.BotAPI)
@@ -46,7 +47,7 @@ func (cr *CommandRouter) Run(update *botapi.Update, bot *botapi.BotAPI) bool {
 	}
 	handler, in := cr.handlers[cmd]
 	if !in {
-		logger.Info("command not existed", zap.String("Command", cmd))
+		log.Info("command not existed", zap.String("Command", cmd))
 		if cr.defaultHandler == nil {
 			return false
 		}

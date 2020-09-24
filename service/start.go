@@ -4,21 +4,21 @@ import (
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"telegram-splatoon2-bot/common"
+	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
 )
 
 func Start(update *botapi.Update, bot *botapi.BotAPI) {
 	err := start(update, bot)
 	if err != nil {
-		logger.Error("Start Command",
+		log.Error("Start Command",
 			zap.Bool("status", false),
-			zap.Object("message", common.WrapMessage(update.Message)),
+			zap.Object("message", log.WrapMessage(update.Message)),
 			zap.Error(err))
 	} else {
-		logger.Info("Start Command",
+		log.Info("Start Command",
 			zap.Bool("status", true),
-			zap.Object("message", common.WrapMessage(update.Message)))
+			zap.Object("message", log.WrapMessage(update.Message)))
 	}
 }
 

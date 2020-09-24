@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	log "telegram-splatoon2-bot/logger"
 )
 
 func getProxyUrl() *url.URL {
@@ -39,7 +40,7 @@ func GetProxy() func(*http.Request) (*url.URL, error) {
 func GetProxyWithUrl(u string) func(*http.Request) (*url.URL, error) {
 	proxyUrl, err := url.Parse(u)
 	if err != nil{
-		Logger.Warn("GetProxyWithUrl failed",zap.String("url", u), zap.Error(err))
+		log.Warn("GetProxyWithUrl failed",zap.String("url", u), zap.Error(err))
 	}
 	return http.ProxyURL(proxyUrl)
 }

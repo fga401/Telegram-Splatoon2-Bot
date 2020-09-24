@@ -6,14 +6,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	_ "github.com/spf13/viper"
-	_ "github.com/valyala/fasthttp"
 	"os"
 	"telegram-splatoon2-bot/bot"
+	"telegram-splatoon2-bot/logger"
+	"telegram-splatoon2-bot/nintendo"
 	"telegram-splatoon2-bot/service"
 )
 
-func init() {
+func InitViper() {
 	viper.SetConfigFile(os.Getenv("CONFIG"))
 	viper.SetConfigType("json")
 	viper.AddConfigPath("./config/")
@@ -34,8 +34,12 @@ func init() {
 }
 
 func main() {
+	InitViper()
+	logger.InitLogger()
+	nintendo.InitClient()
+
 	token := viper.GetString("token")
-	myBot := bot.InitBot(token)
+	myBot := bot.NewBot(token)
 
 	router := bot.NewCommandRouter()
 	router.Add("start", service.Start)

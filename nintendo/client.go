@@ -9,7 +9,7 @@ import (
 
 var client *http.Client
 
-func init() {
+func InitClient() {
 	// disable http 2
 	useProxy := viper.GetBool("nintendo.useProxy")
 	proxy := common.GetProxy()

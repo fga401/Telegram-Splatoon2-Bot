@@ -1,34 +1,10 @@
-package common
+package logger
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/pkg/errors"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"log"
-	"strings"
 	"time"
 )
-
-var Logger *zap.Logger
-
-func init() {
-	// todo
-	level := strings.ToLower(viper.GetString("log.lever"))
-	cfg := zap.NewProductionConfig()
-	switch level {
-	case "debug":
-		cfg.Level.SetLevel(zap.DebugLevel)
-	case "info":
-		cfg.Level.SetLevel(zap.InfoLevel)
-	}
-	logger ,err := cfg.Build()
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "can't initialize zap logger"))
-	}
-	Logger = logger
-}
 
 type UpdateWrapper tgbotapi.Update
 type MessageWrapper tgbotapi.Message
@@ -46,6 +22,7 @@ func (m *MessageWrapper) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	return nil
 }
 
-func WrapMessage(m *tgbotapi.Message) *MessageWrapper{
+func WrapMessage(m *tgbotapi.Message) *MessageWrapper {
 	return (*MessageWrapper)(m)
 }
+
