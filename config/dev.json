@@ -3,12 +3,25 @@
     "useProxy": false
   },
   "bot": {
-    "useProxy": true
+    "useProxy": true,
+    "worker": 4,
+    "debug": true
   },
   "log":{
     "level": "debug"
   },
   "db": {
     "url": "./data/sqlite3.db"
+  },
+  "cache": {
+    "goCache": {
+      "expire": "5min",
+      "purge": "10min"
+    },
+    "ristretto": {
+      "numCounters": 500000000,
+      "maxCost": 2147483648,
+      "metrics": true
+    }
   }
 }

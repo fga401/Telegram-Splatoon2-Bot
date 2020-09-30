@@ -1,5 +1,6 @@
 CREATE TABLE account (
     uid BIGINT NOT NULL,
+    session_token VARCHAR(512) NOT NULL,
     iksm CHARACTER(40) NOT NULL,
     PRIMARY KEY (uid)
 );

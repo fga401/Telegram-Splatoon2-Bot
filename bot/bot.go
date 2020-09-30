@@ -2,18 +2,33 @@ package bot
 
 import (
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"net/http"
-	"telegram-splatoon2-bot/common"
+	proxy2 "telegram-splatoon2-bot/common/proxy"
 	log "telegram-splatoon2-bot/logger"
 )
 
-func NewBot(token string) *botapi.BotAPI{
-	useProxy := viper.GetBool("bot.useProxy")
-	proxy := common.GetProxy()
-	if viper.InConfig("bot.proxyUrl"){
-		proxy = common.GetProxyWithUrl(viper.GetString("nintendo.proxyUrl"))
+type Job struct {
+	bot              *botapi.BotAPI
+	update           *botapi.Update
+	describedHandler *DescribedHandler
+}
+
+type BotConfig struct {
+	UserProxy bool
+	ProxyUrl  string
+	Token     string
+	Debug     bool
+}
+
+func NewBot(config BotConfig) *botapi.BotAPI {
+	useProxy := config.UserProxy
+	proxyUrl := config.ProxyUrl
+	dubug := config.Debug
+	token := config.Token
+	proxy := proxy2.GetProxy()
+	if proxyUrl != "" {
+		proxy = proxy2.GetProxyWithUrl(proxyUrl)
 	}
 	if !useProxy {
 		proxy = nil
@@ -24,26 +39,45 @@ func NewBot(token string) *botapi.BotAPI{
 	if err != nil {
 		log.Fatal("Bot API initialization failed.", zap.Error(err))
 	}
-	bot.Debug = true
+	bot.Debug = dubug
 	log.Info("Authorized on account.", zap.String("account", bot.Self.UserName))
 	return bot
 }
 
-func RunBotInPullMode(bot *botapi.BotAPI, router *CommandRouter, updateConfig botapi.UpdateConfig){
+func RunBotInPullMode(bot *botapi.BotAPI, router *UpdateRouter, updateConfig botapi.UpdateConfig, worker int) {
 	updates, err := bot.GetUpdatesChan(updateConfig)
 	if err != nil {
 		log.Fatal("can't get bot update channel", zap.Error(err))
 	}
+	jobChan := make(chan Job, worker)
+	for i := 0; i < worker; i++ {
+		go func() {
+			for job := range jobChan {
+				err := job.describedHandler.handler(job.update, job.bot)
+				if err != nil {
+					log.Error(job.describedHandler.des,
+						zap.Bool("status", false),
+						zap.Object("message", log.WrapMessage(job.update.Message)),
+						zap.Error(err))
+				} else {
+					log.Info(job.describedHandler.des,
+						zap.Bool("status", true),
+						zap.Object("message", log.WrapMessage(job.update.Message)))
+				}
+			}
+		}()
+	}
+
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
 
-		log.Info("message received",
-			zap.Object("message", log.WrapMessage(update.Message)))
-
-		if update.Message.IsCommand() {
-			router.Run(&update, bot)
+		describedHandler := router.Route(&update)
+		jobChan <- Job{
+			bot:              bot,
+			update:           &update,
+			describedHandler: describedHandler,
 		}
 	}
 }

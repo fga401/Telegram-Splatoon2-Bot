@@ -10,6 +10,10 @@ import (
 
 var logger *zap.Logger
 
+func init() {
+	logger, _ = zap.NewDevelopment()
+}
+
 func InitLogger() {
 	level := strings.ToLower(viper.GetString("log.level"))
 	cfg := zap.NewProductionConfig()

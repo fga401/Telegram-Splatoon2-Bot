@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/viper"
 	"os"
 	"telegram-splatoon2-bot/bot"
+	"telegram-splatoon2-bot/common/cache"
+	"telegram-splatoon2-bot/common/db"
 	"telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
 	"telegram-splatoon2-bot/service"
@@ -37,16 +39,23 @@ func main() {
 	InitViper()
 	logger.InitLogger()
 	nintendo.InitClient()
+	cache.InitCache()
+	db.InitDatabaseInstance()
 
-	token := viper.GetString("token")
-	myBot := bot.NewBot(token)
+	botConfig := bot.BotConfig{
+		UserProxy: viper.GetBool("bot.useProxy"),
+		ProxyUrl:  viper.GetString("bot.proxyUrl"),
+		Token:     viper.GetString("token"),
+		Debug:     viper.GetBool("bot.debug"),
+	}
+	worker := viper.GetInt("bot.worker")
 
-	router := bot.NewCommandRouter()
-	router.Add("start", service.Start)
+	myBot := bot.NewBot(botConfig)
+	router := bot.NewUpdateRouter()
+	router.AddCommandHandler("start", service.Start, "Start Command")
+	router.SetTextHandler(service.InputRedirectLink, "Input Redirect Link")
 
 	updateConfig := botapi.UpdateConfig{Offset: 0, Timeout: 60}
 
-	bot.RunBotInPullMode(myBot, router, updateConfig)
+	bot.RunBotInPullMode(myBot, router, updateConfig, worker)
 }
-
-

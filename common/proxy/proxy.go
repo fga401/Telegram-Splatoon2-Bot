@@ -1,4 +1,4 @@
-package common
+package proxy
 
 import (
 	"go.uber.org/zap"
