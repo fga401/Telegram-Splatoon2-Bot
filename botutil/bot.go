@@ -1,4 +1,4 @@
-package bot
+package botutil
 
 import (
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -24,7 +24,7 @@ type BotConfig struct {
 func NewBot(config BotConfig) *botapi.BotAPI {
 	useProxy := config.UserProxy
 	proxyUrl := config.ProxyUrl
-	dubug := config.Debug
+	debug := config.Debug
 	token := config.Token
 	proxy := proxy2.GetProxy()
 	if proxyUrl != "" {
@@ -39,7 +39,7 @@ func NewBot(config BotConfig) *botapi.BotAPI {
 	if err != nil {
 		log.Fatal("Bot API initialization failed.", zap.Error(err))
 	}
-	bot.Debug = dubug
+	bot.Debug = debug
 	log.Info("Authorized on account.", zap.String("account", bot.Self.UserName))
 	return bot
 }
@@ -57,27 +57,25 @@ func RunBotInPullMode(bot *botapi.BotAPI, router *UpdateRouter, updateConfig bot
 				if err != nil {
 					log.Error(job.describedHandler.des,
 						zap.Bool("status", false),
-						zap.Object("message", log.WrapMessage(job.update.Message)),
+						zap.Object("update", log.WrapUpdate(job.update)),
 						zap.Error(err))
 				} else {
 					log.Info(job.describedHandler.des,
 						zap.Bool("status", true),
-						zap.Object("message", log.WrapMessage(job.update.Message)))
+						zap.Object("update", log.WrapUpdate(job.update)))
 				}
 			}
 		}()
 	}
 
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
 		describedHandler := router.Route(&update)
-		jobChan <- Job{
-			bot:              bot,
-			update:           &update,
-			describedHandler: describedHandler,
+		if describedHandler != nil {
+			jobChan <- Job{
+				bot:              bot,
+				update:           &update,
+				describedHandler: describedHandler,
+			}
 		}
 	}
 }

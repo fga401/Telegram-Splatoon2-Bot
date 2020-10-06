@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
-	"fmt"
 	"github.com/google/uuid"
 	json "github.com/json-iterator/go"
 	"github.com/pkg/errors"
@@ -51,40 +50,43 @@ func NewLoginLink(proofKey []byte) (string, error) {
 var prefix = "npf71b963c1b7b6d119://auth#"
 var prefixLen = len(prefix)
 
-func GetCookies(link string, proofKey []byte) (string, error) {
-	if !strings.HasPrefix(link, prefix) {
-		return "", fmt.Errorf("unknown URI")
-	}
+func GetSessionTokenCode(link string) (string, error) {
 	param, err := url.ParseQuery(link[prefixLen:])
 	if err != nil {
 		return "", errors.Wrap(err, "can't parse redirect link")
 	}
-	//state := param.Get("state")
-	//sessionState := param.Get("session_state")
+	//state := param.get("state")
+	//sessionState := param.get("session_state")
 	sessionTokenCode := param.Get("session_token_code")
+	return sessionTokenCode, nil
+}
 
-	language := "en-US"
+func GetSessionToken(sessionTokenCode string, proofKey []byte, language string) (string, error) {
 	sessionToken, err := getSessionToken(proofKey, sessionTokenCode, language)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get session token")
+		return "", err
 	}
+	return sessionToken, nil
+}
+
+func GetCookiesAndNames(sessionToken, language string) (string, string, string, error) {
 	accessToken, err := getAccessToken(sessionToken, language)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get access token")
+		return "", "", "", errors.Wrap(err, "can't get access token")
 	}
 	userInfo, err := getUserInfo(accessToken, language)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get user info")
+		return "", "", "", errors.Wrap(err, "can't get user info")
 	}
-	splatoonAccessToken, err := getSplatoonAccessToken(accessToken, userInfo, language)
+	splatoonAccessToken, nsName, err := getSplatoonAccessToken(accessToken, userInfo, language)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get splatoon access token")
+		return "", "", "", errors.Wrap(err, "can't get splatoon access token")
 	}
 	iksmSession, err := getIksmSession(splatoonAccessToken, language)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get iksm session")
+		return "", "", "", errors.Wrap(err, "can't get iksm session")
 	}
-	return iksmSession, nil
+	return iksmSession, userInfo.NickName, nsName, nil
 }
 
 func getSessionToken(proofKey []byte, sessionTokenCode string, acceptLang string) (string, error) {
@@ -124,7 +126,7 @@ func getSessionToken(proofKey []byte, sessionTokenCode string, acceptLang string
 		return "", errors.Wrap(err, "can't read response body")
 	}
 	sessionToken := json.Get(respJson, "session_token").ToString()
-	log.Debug("Get session token", zap.String("session token", sessionToken), zap.ByteString("json", respJson))
+	log.Debug("get session token", zap.String("session token", sessionToken), zap.ByteString("json", respJson))
 	return sessionToken, nil
 }
 
@@ -168,7 +170,7 @@ func getAccessToken(sessionToken string, acceptLang string) (string, error) {
 		return "", errors.Wrap(err, "can't read response body")
 	}
 	accessToken := json.Get(respJson, "access_token").ToString()
-	log.Debug("Get access token", zap.String("access token", accessToken), zap.ByteString("json", respJson))
+	log.Debug("get access token", zap.String("access token", accessToken), zap.ByteString("json", respJson))
 	return accessToken, nil
 }
 
@@ -212,7 +214,7 @@ func getUserInfo(accessToken string, acceptLang string) (*UserInfo, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "can't unmarshal response body")
 	}
-	log.Debug("Get user info",
+	log.Debug("get user info",
 		zap.String("nickname", userInfo.NickName),
 		zap.String("country", userInfo.Country),
 		zap.String("birthday", userInfo.Birthday),
@@ -264,7 +266,7 @@ func getFlapgResponse(guid, accessToken string, timestamp int64, iid string) (*F
 	if err != nil {
 		return nil, errors.Wrap(err, "can't unmarshal response body")
 	}
-	log.Debug("Get flapgResponse",
+	log.Debug("get flapgResponse",
 		zap.String("f", flapgResponse.Result.F),
 		zap.String("p1", flapgResponse.Result.P1),
 		zap.String("p2", flapgResponse.Result.P2),
@@ -298,13 +300,13 @@ func getS2SResponse(accessToken string, timestamp int64) (string, error) {
 		return "", errors.Wrap(err, "can't read response body")
 	}
 	hash := json.Get(respJson, "hash").ToString()
-	log.Debug("Get hash", zap.String("hash", hash), zap.ByteString("json", respJson))
+	log.Debug("get hash", zap.String("hash", hash), zap.ByteString("json", respJson))
 	return hash, nil
 }
 
-func getSplatoonAccessTokenFirstStep(flapgNsoResponse *FlapgResponse, userInfo *UserInfo, acceptLang string) (string, error) {
+func getSplatoonAccessTokenFirstStep(flapgNsoResponse *FlapgResponse, userInfo *UserInfo, acceptLang string) (string, string, error) {
 	reqUrl := "https://api-lp1.znc.srv.nintendo.net/v1/Account/Login"
-	bodyMap:= map[string]map[string]string{
+	bodyMap := map[string]map[string]string{
 		"parameter": {
 			"f":          flapgNsoResponse.Result.F,
 			"naIdToken":  flapgNsoResponse.Result.P1,
@@ -317,12 +319,12 @@ func getSplatoonAccessTokenFirstStep(flapgNsoResponse *FlapgResponse, userInfo *
 	}
 	bodyText, err := json.Marshal(bodyMap)
 	if err != nil {
-		return "", errors.Wrap(err, "can't generate request body")
+		return "", "", errors.Wrap(err, "can't generate request body")
 	}
 	reqBody := bytes.NewReader(bodyText)
 	req, err := http.NewRequest("POST", reqUrl, reqBody)
 	if err != nil {
-		return "", errors.Wrap(err, "can't generate request")
+		return "", "", errors.Wrap(err, "can't generate request")
 	}
 	req.Header = map[string][]string{
 		"Accept":           {"application/json"},
@@ -339,22 +341,23 @@ func getSplatoonAccessTokenFirstStep(flapgNsoResponse *FlapgResponse, userInfo *
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get response")
+		return "", "", errors.Wrap(err, "can't get response")
 	}
 	defer closeBody(resp.Body)
 	respBody, err := gzip.NewReader(resp.Body)
 	if err != nil {
-		return "", errors.Wrap(err, "can't unzip response body")
+		return "", "", errors.Wrap(err, "can't unzip response body")
 	}
 	respJson, err := ioutil.ReadAll(respBody)
 	if err != nil {
-		return "", errors.Wrap(err, "can't read response body")
+		return "", "", errors.Wrap(err, "can't read response body")
 	}
 	splatoonAccessToken := json.Get(respJson, "result", "webApiServerCredential", "accessToken").ToString()
-	log.Debug("Get splatoon access token first step",
+	nsName := json.Get(respJson, "result", "user", "name").ToString()
+	log.Debug("get splatoon access token first step",
 		zap.String("splatoon webApiServerCredential access token", splatoonAccessToken),
 		zap.ByteString("json", respJson))
-	return splatoonAccessToken, nil
+	return splatoonAccessToken, nsName, nil
 }
 
 func getSplatoonAccessTokenSecondStep(accessToken string, flapgAppResponse *FlapgResponse, acceptLang string) (string, error) {
@@ -404,40 +407,40 @@ func getSplatoonAccessTokenSecondStep(accessToken string, flapgAppResponse *Flap
 		return "", errors.Wrap(err, "can't read response body")
 	}
 	splatoonAccessToken := json.Get(respJson, "result", "accessToken").ToString()
-	log.Debug("Get splatoon access token",
+	log.Debug("get splatoon access token",
 		zap.String("splatoon access token", splatoonAccessToken),
 		zap.ByteString("json", respJson))
 	return splatoonAccessToken, nil
 }
 
-func getSplatoonAccessToken(accessToken string, userInfo *UserInfo, acceptLang string) (string, error) {
+func getSplatoonAccessToken(accessToken string, userInfo *UserInfo, acceptLang string) (string, string, error) {
 	uuid4, err := uuid.NewRandom()
 	if err != nil {
-		return "", errors.Wrap(err, "can't generate uuid4")
+		return "", "", errors.Wrap(err, "can't generate uuid4")
 	}
 	guid := uuid4.URN()[9:]
 	timestamp := time.Now().Unix()
 
 	flapgResponse, err := getFlapgResponse(guid, accessToken, timestamp, "nso")
 	if err != nil {
-		return "", errors.Wrap(err, "can't get flapg response")
+		return "", "", errors.Wrap(err, "can't get flapg response")
 	}
-	firstSplatoonAccessToken, err := getSplatoonAccessTokenFirstStep(flapgResponse, userInfo, acceptLang)
+	firstSplatoonAccessToken, name, err := getSplatoonAccessTokenFirstStep(flapgResponse, userInfo, acceptLang)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get first splatoon access token")
+		return "", "", errors.Wrap(err, "can't get first splatoon access token")
 	}
 
 	flapgResponse, err = getFlapgResponse(guid, firstSplatoonAccessToken, timestamp, "app")
 	if err != nil {
-		return "", errors.Wrap(err, "can't get flapg response")
+		return "", "", errors.Wrap(err, "can't get flapg response")
 	}
 
 	SecondSplatoonAccessToken, err := getSplatoonAccessTokenSecondStep(firstSplatoonAccessToken, flapgResponse, acceptLang)
 	if err != nil {
-		return "", errors.Wrap(err, "can't get second splatoon access token")
+		return "", "", errors.Wrap(err, "can't get second splatoon access token")
 	}
 
-	return SecondSplatoonAccessToken, nil
+	return SecondSplatoonAccessToken, name, nil
 }
 
 func getIksmSession(splatoonAccessToken string, acceptLang string) (string, error) {
@@ -465,12 +468,12 @@ func getIksmSession(splatoonAccessToken string, acceptLang string) (string, erro
 	}
 	defer closeBody(resp.Body)
 	cookies := resp.Cookies()
-	for _, cookie := range cookies{
+	for _, cookie := range cookies {
 		if cookie.Name == "iksm_session" {
 			iksmSession := cookie.Value
-			log.Debug("Get iksm session", zap.String("iksm session", iksmSession))
+			log.Debug("get iksm session", zap.String("iksm session", iksmSession))
 			return iksmSession, nil
 		}
 	}
-	return "", fmt.Errorf("iksm_session not in response's cookies")
+	return "", errors.Errorf("iksm_session not in response's cookies")
 }

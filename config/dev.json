@@ -1,27 +1,41 @@
 {
-  "nintendo":{
+  "nintendo": {
     "useProxy": false
   },
   "bot": {
     "useProxy": true,
-    "worker": 4,
+    "worker": 16,
     "debug": true
   },
-  "log":{
+  "log": {
     "level": "debug"
   },
   "db": {
-    "url": "./data/sqlite3.db"
+    "url": "./data/sqlite3.db",
+    "maxIdleConns": 3,
+    "maxOpenConns": 0
   },
   "cache": {
-    "goCache": {
-      "expire": "5min",
-      "purge": "10min"
+    "fastcache": {
+      "maxBytes": 2147483648
     },
-    "ristretto": {
-      "numCounters": 500000000,
-      "maxCost": 2147483648,
-      "metrics": true
+    "gocache": {
+      "expiration": "5m",
+      "cleanUp": "10m"
     }
+  },
+  "account": {
+    "maxAccount": 3,
+    "allowPolling": true
+  },
+  "service": {
+    "language": [
+      "en",
+      "zh-TW",
+      "zh-CN",
+      "ja"
+    ],
+    "callbackQueryCachedSecond": 3,
+    "retryTimes": 3
   }
 }

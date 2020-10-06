@@ -1,15 +1,14 @@
 package main
 
+//go:generate gotext -srclang=en update -out=locales/catalog.go -lang=en,zh,ja
+
 import (
-	"fmt"
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"os"
-	"telegram-splatoon2-bot/bot"
-	"telegram-splatoon2-bot/common/cache"
-	"telegram-splatoon2-bot/common/db"
+	"telegram-splatoon2-bot/botutil"
 	"telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
 	"telegram-splatoon2-bot/service"
@@ -22,7 +21,7 @@ func InitViper() {
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("main: config file: %s \n", err))
+		panic(errors.Errorf("main: config file: %s \n", err))
 	}
 
 	err = viper.BindEnv("token")
@@ -39,10 +38,9 @@ func main() {
 	InitViper()
 	logger.InitLogger()
 	nintendo.InitClient()
-	cache.InitCache()
-	db.InitDatabaseInstance()
+	service.InitService()
 
-	botConfig := bot.BotConfig{
+	botConfig := botutil.BotConfig{
 		UserProxy: viper.GetBool("bot.useProxy"),
 		ProxyUrl:  viper.GetString("bot.proxyUrl"),
 		Token:     viper.GetString("token"),
@@ -50,12 +48,15 @@ func main() {
 	}
 	worker := viper.GetInt("bot.worker")
 
-	myBot := bot.NewBot(botConfig)
-	router := bot.NewUpdateRouter()
+	myBot := botutil.NewBot(botConfig)
+	router := botutil.NewUpdateRouter()
 	router.AddCommandHandler("start", service.Start, "Start Command")
+	router.AddCommandHandler("settings", service.Settings, "Settings Command")
+	router.AddCallbackQueryHandler(service.SettingsKeyboardPrefix, service.SettingsCallback, "Settings Callback")
+	router.AddCallbackQueryHandler(service.LanguageKeyboardPrefix, service.SelectLanguageCallback, "Select Language Callback")
 	router.SetTextHandler(service.InputRedirectLink, "Input Redirect Link")
 
 	updateConfig := botapi.UpdateConfig{Offset: 0, Timeout: 60}
 
-	bot.RunBotInPullMode(myBot, router, updateConfig, worker)
+	botutil.RunBotInPullMode(myBot, router, updateConfig, worker)
 }

@@ -15,6 +15,8 @@ func prepareTest() {
 	viper.SetConfigName("dev")
 	viper.SetConfigType("json")
 	viper.AddConfigPath("../config/")
+	viper.AddConfigPath("./config/")
+	viper.ReadInConfig()
 	log.InitLogger()
 	InitClient()
 }
@@ -81,7 +83,7 @@ func TestGetS2SResponse(t *testing.T) {
 
 func TestGetSplatoonAccessTokenFirstStep(t *testing.T) {
 	prepareTest()
-	_, err := getSplatoonAccessTokenFirstStep(flapgNsoResponse, userInfo, acceptLang)
+	_, _, err := getSplatoonAccessTokenFirstStep(flapgNsoResponse, userInfo, acceptLang)
 	assert.Nil(t, err)
 }
 

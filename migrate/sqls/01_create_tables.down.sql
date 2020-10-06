@@ -1,3 +1,4 @@
 DROP TABLE account;
-DROP TABLE username;
-DROP TABLE status;
+DROP TABLE runtime_info;
+DROP TABLE user;
+DROP INDEX idx_user_name;

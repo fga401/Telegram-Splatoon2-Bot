@@ -3,7 +3,7 @@ module telegram-splatoon2-bot
 go 1.13
 
 require (
-	github.com/dgraph-io/ristretto v0.0.3
+	github.com/VictoriaMetrics/fastcache v1.5.7
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.12.2
 	github.com/google/uuid v1.1.1
@@ -19,4 +19,7 @@ require (
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
+	golang.org/x/text v0.3.3
+	golang.org/x/tools v0.0.0-20201002184944-ecd9fd270d5d // indirect
+	google.golang.org/protobuf v1.25.0
 )
