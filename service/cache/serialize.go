@@ -102,6 +102,10 @@ func serializeRuntime(runtime *db.Runtime) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "can't encode language")
 	}
+	err = binary.Write(buf, binary.LittleEndian, int16(runtime.Timezone))
+	if err != nil {
+		return nil, errors.Wrap(err, "can't encode user timezone")
+	}
 	return buf.Bytes(), nil
 }
 
@@ -131,5 +135,11 @@ func deserializeRuntime(data []byte) (*db.Runtime, error) {
 	}
 	runtime.Language = string(lang)
 
+	var timezone int16
+	err = binary.Read(buf, binary.LittleEndian, &(timezone))
+	if err != nil {
+		return nil, errors.Wrap(err, "can't decode user timezone")
+	}
+	runtime.Timezone = int(timezone)
 	return runtime, nil
 }

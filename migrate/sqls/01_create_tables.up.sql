@@ -21,6 +21,7 @@ CREATE TABLE runtime (
     session_token VARCHAR(512) NOT NULL,
     iksm CHARACTER(40) NOT NULL,
     language VARCHAR(10) NOT NULL,
+    timezone INT NOT NULL,
     PRIMARY KEY (uid)
 );
 

@@ -75,18 +75,15 @@ type I18nKeys struct {
 	Args []interface{}
 }
 
-func getI18nText(lanague string, user *botapi.User, keys ...I18nKeys) []string {
-	tag, err := language.Parse(lanague)
+func getI18nText(lang string, user *botapi.User, keys ...I18nKeys) []string {
+	tag, err := language.Parse(lang)
 	zapFields := make([]zap.Field, 0, 3)
 	if user != nil {
 		zapFields = append(zapFields, zap.Object("user", log.WrapUser(user)))
 	}
 	if err != nil {
-		zapFields = append(zapFields, zap.String("language", lanague), zap.Error(err))
-		log.Warn("parse language failed",
-			zap.Object("user", log.WrapUser(user)),
-			zap.String("language", lanague),
-			zap.Error(err))
+		zapFields = append(zapFields, zap.String("language", lang), zap.Error(err))
+		log.Warn("parse language failed", zapFields...)
 		tag = language.English
 	}
 	printer := message.NewPrinter(tag)

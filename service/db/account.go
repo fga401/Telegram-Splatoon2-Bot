@@ -1,11 +1,10 @@
 package db
 
-//type AccountTableInterface interface {
-//	TableInterface
-//	InsertAccount(account Account) error
-//	UpdateAccount(account Account) error
-//	GetAccount(uid int64) (Account, error)
-//}
+type Account struct {
+	Uid          int64  `db:"uid"`
+	SessionToken string `db:"session_token"`
+	Tag          string `db:"tag"`
+}
 
 type AccountTableImpl struct {
 	TableImpl

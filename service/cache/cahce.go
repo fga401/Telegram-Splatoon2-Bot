@@ -54,6 +54,7 @@ func (c *CacheImpl) GetProofKey(user *tgbotapi.User) ([]byte, error) {
 	if !found {
 		return nil, nil
 	}
+	c.gocache.Delete(key)
 	proofKey := proofKeyInterface.([]byte)
 	return proofKey, nil
 }

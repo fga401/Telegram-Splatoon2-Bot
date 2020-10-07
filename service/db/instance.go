@@ -8,29 +8,6 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type User struct {
-	Uid          int64  `db:"uid"`
-	UserName     string `db:"user_name"`
-	IsBlock      bool   `db:"is_block"`
-	MaxAccount   int    `db:"max_account"`
-	NumAccount   int    `db:"n_account"`
-	IsAdmin      bool   `db:"is_admin"`
-	AllowPolling bool   `db:"allow_polling"`
-}
-
-type Account struct {
-	Uid          int64  `db:"uid"`
-	SessionToken string `db:"session_token"`
-	Tag          string `db:"tag"`
-}
-
-type Runtime struct {
-	Uid          int64  `db:"uid"`
-	SessionToken string `db:"session_token"`
-	IKSM         []byte `db:"iksm"`
-	Language     string `db:"language"`
-}
-
 var (
 	UserTable    *UserTableImpl
 	AccountTable *AccountTableImpl

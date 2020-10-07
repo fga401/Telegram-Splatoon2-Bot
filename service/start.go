@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
+	"strconv"
 	botutils "telegram-splatoon2-bot/botutil"
 	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
@@ -48,28 +49,15 @@ func Settings(update *botapi.Update, bot *botapi.BotAPI) error {
 
 }
 
-func SettingsCallback(update *botapi.Update, bot *botapi.BotAPI) error {
+func SetLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
 	callback := update.CallbackQuery
-	data := botutils.GetCallbackQueryOriginText(callback.Data)
 	user := callback.From
 	runtime, err := fetchRuntime(user)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
-	switch data {
-	case "lang":
-		err = selectLanguage(runtime, callback, bot)
-	case "account":
-		err = addAccount(runtime, callback, bot)
-	default:
-		err = errors.Errorf("unknown callback query: %s", callback.Data)
-	}
-	return err
-}
 
-func selectLanguage(runtime *db.Runtime, callback *botapi.CallbackQuery, bot *botapi.BotAPI) error {
-	user := callback.From
-	_, err := bot.AnswerCallbackQuery(botapi.CallbackConfig{
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
 		CallbackQueryID: callback.ID,
 		CacheTime:       callbackQueryCachedSecond,
 	})
@@ -85,7 +73,7 @@ func selectLanguage(runtime *db.Runtime, callback *botapi.CallbackQuery, bot *bo
 	return SendWithRetry(bot, msg)
 }
 
-func SelectLanguageCallback(update *botapi.Update, bot *botapi.BotAPI) error {
+func SelectLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
 	callback := update.CallbackQuery
 	user := callback.From
 	runtime, err := fetchRuntime(user)
@@ -113,14 +101,81 @@ func SelectLanguageCallback(update *botapi.Update, bot *botapi.BotAPI) error {
 	log.Info("user language updated", zap.String("language", lang), zap.Object("user", log.WrapUser(user)))
 	Cache.DeleteRuntime(user)
 
-	texts := getI18nText(runtime.Language, user, I18nKeys{selectLanguageSuccessfullyTextKey, nil})
+	texts := getI18nText(runtime.Language, user, I18nKeys{
+		selectLanguageSuccessfullyTextKey,
+		[]interface{}{langToText(runtime.Language, runtime.Language)}})
 	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 	msg.ParseMode = "Markdown"
 	return SendWithRetry(bot, msg)
 }
 
-func addAccount(runtime *db.Runtime, callback *botapi.CallbackQuery, bot *botapi.BotAPI) error {
+func SetTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
+	callback := update.CallbackQuery
 	user := callback.From
+	runtime, err := fetchRuntime(user)
+	if err != nil {
+		return errors.Wrap(err, "can't fetch runtime")
+	}
+
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
+	if err != nil {
+		return errors.Wrap(err, "can't answer callback query")
+	}
+
+	texts := getI18nText(runtime.Language, user, I18nKeys{selectTimezoneTextKey, nil})
+	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
+	markup := getStaticMarkup(timezoneKeyboard, runtime.Language)
+	msg.ReplyMarkup = &markup
+	msg.ParseMode = "Markdown"
+	return SendWithRetry(bot, msg)
+}
+
+func SelectTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
+	callback := update.CallbackQuery
+	user := callback.From
+	runtime, err := fetchRuntime(user)
+	if err != nil {
+		return errors.Wrap(err, "can't fetch runtime")
+	}
+	data := botutils.GetCallbackQueryOriginText(callback.Data)
+	if data == "BACK" {
+		texts := getI18nText(runtime.Language, user, I18nKeys{settingsTextKey, nil})
+		markup := getStaticMarkup(settingsKeyboard, runtime.Language)
+		msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
+		msg.ReplyMarkup = &markup
+		msg.ParseMode = "Markdown"
+		return SendWithRetry(bot, msg)
+	}
+
+	timezone, err:= strconv.Atoi(data)
+	if err != nil {
+		return errors.Wrap(err, "can't parse timezone")
+	}
+	err = RuntimeTable.UpdateRuntimeTimezone(runtime.Uid, timezone)
+	if err != nil {
+		return errors.Wrap(err, "can't update timezone")
+	}
+	log.Info("user timezone updated", zap.Int("timezone", timezone), zap.Object("user", log.WrapUser(user)))
+	Cache.DeleteRuntime(user)
+
+	texts := getI18nText(runtime.Language, user, I18nKeys{
+		selectTimezoneSuccessfullyTextKey,
+		[]interface{}{timezoneToText(timezone, runtime.Language)}})
+	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
+	msg.ParseMode = "Markdown"
+	return SendWithRetry(bot, msg)
+}
+
+func AddAccount(update *botapi.Update, bot *botapi.BotAPI) error {
+	callback := update.CallbackQuery
+	user := callback.From
+	runtime, err := fetchRuntime(user)
+	if err != nil {
+		return errors.Wrap(err, "can't fetch runtime")
+	}
 	// todo: check account number limitation
 	proofKey, err := nintendo.NewProofKey()
 	if err != nil {
@@ -264,6 +319,7 @@ func register(user *botapi.User) error {
 		SessionToken: "",
 		IKSM:         make([]byte, 40),
 		Language:     "en",
+		Timezone:     -480,  // todo: default UTC+8
 	}
 	err := Transactions.InsertUserAndRuntime(newUser, runtime)
 	if err != nil {

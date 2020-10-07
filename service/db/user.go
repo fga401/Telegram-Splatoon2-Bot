@@ -1,12 +1,14 @@
 package db
 
-//type UserTableInterface interface {
-//	TableInterface
-//	InsertUser(status User) error
-//	UpdateUser(user User) error
-//	GetUser(uid int64) (User, error)
-//	IsUserExisted(uid int64) (bool, error)
-//}
+type User struct {
+	Uid          int64  `db:"uid"`
+	UserName     string `db:"user_name"`
+	IsBlock      bool   `db:"is_block"`
+	MaxAccount   int    `db:"max_account"`
+	NumAccount   int    `db:"n_account"`
+	IsAdmin      bool   `db:"is_admin"`
+	AllowPolling bool   `db:"allow_polling"`
+}
 
 type UserTableImpl struct {
 	TableImpl

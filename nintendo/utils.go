@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"github.com/pkg/errors"
 	"io"
+	"strconv"
 )
 
 // base64UrlEncode encodes a []byte to a base64 coding url
@@ -58,4 +59,22 @@ func closeBody(c io.Closer) {
 	_ = c.Close()
 }
 
-
+func getAppHeader(iksm string, timezone int, acceptLang string, gzip bool) map[string][]string {
+	acceptEncoding := ""
+	if gzip {
+		acceptEncoding = "gzip"
+	}
+	return map[string][]string{
+		"Accept":            {"*/*"},
+		"Accept-Encoding":   {"gzip"},
+		"Accept-Language":   {acceptEncoding},
+		"Connection":        {"Keep-Alive"},
+		"Host":              {"app.splatoon2.nintendo.net"},
+		"Referer":           {"https://app.splatoon2.nintendo.net/home"},
+		"User-Agent":        {"Mozilla/5.0 (Linux; Android 7.1.2; Pixel Build/NJH47D; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/59.0.3071.125 Mobile Safari/537.36"},
+		"x-requested-with":  {"XMLHttpRequest"},
+		"x-timezone-offset": {strconv.Itoa(timezone)}, // todo: seems useless
+		"x-unique-id":       {"32449507786579989234"},
+		"Cookie":            {"iksm_session=" + iksm},
+	}
+}

@@ -52,8 +52,11 @@ func main() {
 	router := botutil.NewUpdateRouter()
 	router.AddCommandHandler("start", service.Start, "Start Command")
 	router.AddCommandHandler("settings", service.Settings, "Settings Command")
-	router.AddCallbackQueryHandler(service.SettingsKeyboardPrefix, service.SettingsCallback, "Settings Callback")
-	router.AddCallbackQueryHandler(service.LanguageKeyboardPrefix, service.SelectLanguageCallback, "Select Language Callback")
+	router.AddCallbackQueryHandler(service.AccountSettingsKeyboardPrefix, service.AddAccount, "Settings Callback")
+	router.AddCallbackQueryHandler(service.LanguageSettingsKeyboardPrefix, service.SetLanguage, "Settings Callback")
+	router.AddCallbackQueryHandler(service.TimezoneSettingsKeyboardPrefix, service.SetTimezone, "Settings Callback")
+	router.AddCallbackQueryHandler(service.LanguageSelectionKeyboardPrefix, service.SelectLanguage, "Select Language Callback")
+	router.AddCallbackQueryHandler(service.TimezoneSelectionKeyboardPrefix, service.SelectTimezone, "Select Language Callback")
 	router.SetTextHandler(service.InputRedirectLink, "Input Redirect Link")
 
 	updateConfig := botapi.UpdateConfig{Offset: 0, Timeout: 60}
