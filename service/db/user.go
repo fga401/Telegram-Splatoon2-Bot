@@ -23,6 +23,7 @@ const (
 	userStmtSelectByUid     stmtName = iota
 	userStmtCount           stmtName = iota
 	userStmtIncreaseAccount stmtName = iota
+	userStmtLoadAdmin       stmtName = iota
 )
 
 var userNamedStmts = map[namedStmtName]Declaration{
@@ -34,6 +35,7 @@ var userStmts = map[stmtName]Declaration{
 	userStmtSelectByUid:     {false, "SELECT * FROM user WHERE uid=?;"},
 	userStmtCount:           {false, "SELECT count(uid) FROM user WHERE uid=?;"},
 	userStmtIncreaseAccount: {false, "UPDATE user SET n_account=n_account+1 WHERE uid=?"},
+	userStmtLoadAdmin:       {false, "SELECT uid FROM user WHERE is_admin=true"},
 }
 
 func (impl *UserTableImpl) InsertUser(user *User) error {
@@ -54,4 +56,10 @@ func (impl *UserTableImpl) IsUserExisted(uid int64) (bool, error) {
 	var count int
 	err := impl.get(userStmtCount, &count, uid)
 	return count >= 1, err
+}
+
+func (impl *UserTableImpl) LoadAdmin() ([]int64, error) {
+	var ret []int64
+	err := impl.sel(userStmtLoadAdmin, &ret)
+	return ret, err
 }

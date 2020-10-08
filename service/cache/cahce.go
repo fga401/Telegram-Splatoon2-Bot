@@ -2,7 +2,6 @@ package cache
 
 import (
 	"github.com/VictoriaMetrics/fastcache"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	gocache "github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -35,21 +34,15 @@ func InitCache() {
 	}
 }
 
-func (c *CacheImpl) SetProofKey(user *tgbotapi.User, proofKey []byte) error {
-	if user == nil {
-		return errors.Errorf("user is nil")
-	}
-	key := userToStringKey(user)
+func (c *CacheImpl) SetProofKey(uid int64, proofKey []byte) error {
+	key := userToStringKey(uid)
 	c.gocache.SetDefault(key, proofKey)
 	return nil
 }
 
 // GetProofKey returns proof key if existed, or nil if not found
-func (c *CacheImpl) GetProofKey(user *tgbotapi.User) ([]byte, error) {
-	if user == nil {
-		return nil, errors.Errorf("user is nil")
-	}
-	key := userToStringKey(user)
+func (c *CacheImpl) GetProofKey(uid int64) ([]byte, error) {
+	key := userToStringKey(uid)
 	proofKeyInterface, found := c.gocache.Get(key)
 	if !found {
 		return nil, nil
@@ -59,11 +52,9 @@ func (c *CacheImpl) GetProofKey(user *tgbotapi.User) ([]byte, error) {
 	return proofKey, nil
 }
 
-func (c *CacheImpl) SetRuntime(user *tgbotapi.User, runtime *db.Runtime) error {
-	if user == nil {
-		return errors.Errorf("user is nil")
-	}
-	key, err := userToBytesKey(user)
+func (c *CacheImpl) SetRuntime(runtime *db.Runtime) error {
+	uid := runtime.Uid
+	key, err := userToBytesKey(uid)
 	if err != nil {
 		return errors.Wrap(err, "can't convert user to key")
 	}
@@ -76,11 +67,8 @@ func (c *CacheImpl) SetRuntime(user *tgbotapi.User, runtime *db.Runtime) error {
 }
 
 // GetRuntime returns proof key if existed, or nil if not found
-func (c *CacheImpl) GetRuntime(user *tgbotapi.User) (*db.Runtime, error) {
-	if user == nil {
-		return nil, errors.Errorf("user is nil")
-	}
-	key, err := userToBytesKey(user)
+func (c *CacheImpl) GetRuntime(uid int64) (*db.Runtime, error) {
+	key, err := userToBytesKey(uid)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't convert user to key")
 	}
@@ -95,11 +83,9 @@ func (c *CacheImpl) GetRuntime(user *tgbotapi.User) (*db.Runtime, error) {
 	return runtime, nil
 }
 
-func (c *CacheImpl) DeleteRuntime(user *tgbotapi.User) {
-	if user != nil {
-		key, err := userToBytesKey(user)
-		if err != nil {
-			c.fastCache.Del(key)
-		}
+func (c *CacheImpl) DeleteRuntime(uid int64) {
+	key, err := userToBytesKey(uid)
+	if err != nil {
+		c.fastCache.Del(key)
 	}
 }

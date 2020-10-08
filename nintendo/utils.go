@@ -78,3 +78,5 @@ func getAppHeader(iksm string, timezone int, acceptLang string, gzip bool) map[s
 		"Cookie":            {"iksm_session=" + iksm},
 	}
 }
+
+var Host = "https://app.splatoon2.nintendo.net"

@@ -3,22 +3,21 @@ package cache
 import (
 	"bytes"
 	"encoding/binary"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
 	"io"
 	"strconv"
 	"telegram-splatoon2-bot/service/db"
 )
 
-func userToStringKey(user *tgbotapi.User) string {
-	key := strconv.FormatInt(int64(user.ID), 10)
+func userToStringKey(uid int64) string {
+	key := strconv.FormatInt(uid, 10)
 	key = "PK" + key
 	return key
 }
 
-func userToBytesKey(user *tgbotapi.User) ([]byte, error) {
+func userToBytesKey(uid int64) ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 8))
-	err := binary.Write(buf, binary.LittleEndian, int64(user.ID))
+	err := binary.Write(buf, binary.LittleEndian, uid)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't encode user id")
 	}
@@ -127,7 +126,7 @@ func deserializeRuntime(data []byte) (*db.Runtime, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "can't decode iksm")
 	}
-	runtime.IKSM = iksm
+	runtime.IKSM = string(iksm)
 
 	lang, err := deserializeBytes(buf, binary.LittleEndian, 8)
 	if err != nil {

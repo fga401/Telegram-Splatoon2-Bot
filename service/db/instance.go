@@ -94,7 +94,21 @@ func (impl *TableImpl) get(name stmtName, dest interface{}, args ...interface{})
 		err = impl.db.Get(dest, impl.stmtsDeclaration[name].stmt, args...)
 	}
 	if err != nil {
-		err = errors.Wrap(err, "can't execute statement")
+		err = errors.Wrap(err, "can't execute get statement")
+	}
+	return err
+}
+
+func (impl *TableImpl)sel(name stmtName, dest interface{}, args ...interface{}) error {
+	var err error
+	if impl.stmtsDeclaration[name].prepared {
+		stmt := impl.preparedStmts[name]
+		err = stmt.Select(dest, args...)
+	} else {
+		err = impl.db.Select(dest, impl.stmtsDeclaration[name].stmt, args...)
+	}
+	if err != nil {
+		err = errors.Wrap(err, "can't execute select statement")
 	}
 	return err
 }
@@ -117,7 +131,7 @@ func InitDatabaseInstance() {
 func (r *Runtime) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	enc.AddInt64("id", r.Uid)
 	enc.AddString("session_token", r.SessionToken)
-	enc.AddByteString("iksm,", r.IKSM)
+	enc.AddString("iksm,", r.IKSM)
 	enc.AddString("language", r.Language)
 	return nil
 }

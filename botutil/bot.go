@@ -9,7 +9,6 @@ import (
 )
 
 type Job struct {
-	bot              *botapi.BotAPI
 	update           *botapi.Update
 	describedHandler *DescribedHandler
 }
@@ -53,7 +52,7 @@ func RunBotInPullMode(bot *botapi.BotAPI, router *UpdateRouter, updateConfig bot
 	for i := 0; i < worker; i++ {
 		go func() {
 			for job := range jobChan {
-				err := job.describedHandler.handler(job.update, job.bot)
+				err := job.describedHandler.handler(job.update)
 				if err != nil {
 					log.Error(job.describedHandler.des,
 						zap.Bool("status", false),
@@ -72,7 +71,6 @@ func RunBotInPullMode(bot *botapi.BotAPI, router *UpdateRouter, updateConfig bot
 		describedHandler := router.Route(&update)
 		if describedHandler != nil {
 			jobChan <- Job{
-				bot:              bot,
 				update:           &update,
 				describedHandler: describedHandler,
 			}

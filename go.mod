@@ -10,6 +10,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.6
 	github.com/mattn/go-sqlite3 v1.10.0
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cast v1.3.1 // indirect
@@ -21,5 +22,4 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/text v0.3.3
 	golang.org/x/tools v0.0.0-20201002184944-ecd9fd270d5d // indirect
-	google.golang.org/protobuf v1.25.0
 )

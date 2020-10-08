@@ -7,7 +7,7 @@ import (
 	log "telegram-splatoon2-bot/logger"
 )
 
-type Handler func(message *botapi.Update, bot *botapi.BotAPI) error
+type Handler func(message *botapi.Update) error
 
 type DescribedHandler struct {
 	handler Handler

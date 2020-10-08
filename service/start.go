@@ -12,7 +12,7 @@ import (
 	"telegram-splatoon2-bot/service/db"
 )
 
-func Start(update *botapi.Update, bot *botapi.BotAPI) error {
+func Start(update *botapi.Update) error {
 	user := update.Message.From
 	existed, err := UserTable.IsUserExisted(int64(user.ID))
 	if err != nil {
@@ -26,17 +26,17 @@ func Start(update *botapi.Update, bot *botapi.BotAPI) error {
 		}
 		msg := botapi.NewMessage(update.Message.Chat.ID, "Welcome to use this bot.")
 		msg.ParseMode = "Markdown"
-		err = SendWithRetry(bot, msg)
+		err = sendWithRetry(bot, msg)
 		if err != nil {
 			log.Warn("can't send hello message", zap.Object("user", log.WrapUser(user)), zap.Error(err))
 		}
 	}
-	return Settings(update, bot)
+	return Settings(update)
 }
 
-func Settings(update *botapi.Update, bot *botapi.BotAPI) error {
+func Settings(update *botapi.Update) error {
 	user := update.Message.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -45,14 +45,14 @@ func Settings(update *botapi.Update, bot *botapi.BotAPI) error {
 	msg := botapi.NewMessage(update.Message.Chat.ID, texts[0])
 	msg.ReplyMarkup = markup
 	msg.ParseMode = "Markdown"
-	return SendWithRetry(bot, msg)
+	return sendWithRetry(bot, msg)
 
 }
 
-func SetLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
+func SetLanguage(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -70,13 +70,13 @@ func SetLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
 	markup := getStaticMarkup(languageKeyboard, runtime.Language)
 	msg.ReplyMarkup = &markup
 	msg.ParseMode = "Markdown"
-	return SendWithRetry(bot, msg)
+	return sendWithRetry(bot, msg)
 }
 
-func SelectLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
+func SelectLanguage(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -87,7 +87,7 @@ func SelectLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
 		msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 		msg.ReplyMarkup = &markup
 		msg.ParseMode = "Markdown"
-		return SendWithRetry(bot, msg)
+		return sendWithRetry(bot, msg)
 	}
 
 	if _, err = language.Parse(runtime.Language); err != nil {
@@ -99,20 +99,20 @@ func SelectLanguage(update *botapi.Update, bot *botapi.BotAPI) error {
 		return errors.Wrap(err, "can't update language")
 	}
 	log.Info("user language updated", zap.String("language", lang), zap.Object("user", log.WrapUser(user)))
-	Cache.DeleteRuntime(user)
+	Cache.DeleteRuntime(int64(user.ID))
 
 	texts := getI18nText(runtime.Language, user, I18nKeys{
 		selectLanguageSuccessfullyTextKey,
 		[]interface{}{langToText(runtime.Language, runtime.Language)}})
 	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 	msg.ParseMode = "Markdown"
-	return SendWithRetry(bot, msg)
+	return sendWithRetry(bot, msg)
 }
 
-func SetTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
+func SetTimezone(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -130,13 +130,13 @@ func SetTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
 	markup := getStaticMarkup(timezoneKeyboard, runtime.Language)
 	msg.ReplyMarkup = &markup
 	msg.ParseMode = "Markdown"
-	return SendWithRetry(bot, msg)
+	return sendWithRetry(bot, msg)
 }
 
-func SelectTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
+func SelectTimezone(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -147,7 +147,7 @@ func SelectTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
 		msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 		msg.ReplyMarkup = &markup
 		msg.ParseMode = "Markdown"
-		return SendWithRetry(bot, msg)
+		return sendWithRetry(bot, msg)
 	}
 
 	timezone, err:= strconv.Atoi(data)
@@ -159,20 +159,20 @@ func SelectTimezone(update *botapi.Update, bot *botapi.BotAPI) error {
 		return errors.Wrap(err, "can't update timezone")
 	}
 	log.Info("user timezone updated", zap.Int("timezone", timezone), zap.Object("user", log.WrapUser(user)))
-	Cache.DeleteRuntime(user)
+	Cache.DeleteRuntime(int64(user.ID))
 
 	texts := getI18nText(runtime.Language, user, I18nKeys{
 		selectTimezoneSuccessfullyTextKey,
 		[]interface{}{timezoneToText(timezone, runtime.Language)}})
 	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 	msg.ParseMode = "Markdown"
-	return SendWithRetry(bot, msg)
+	return sendWithRetry(bot, msg)
 }
 
-func AddAccount(update *botapi.Update, bot *botapi.BotAPI) error {
+func AddAccount(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -181,7 +181,7 @@ func AddAccount(update *botapi.Update, bot *botapi.BotAPI) error {
 	if err != nil {
 		return errors.Wrap(err, "can't generate proof key")
 	}
-	err = Cache.SetProofKey(user, proofKey)
+	err = Cache.SetProofKey(int64(user.ID), proofKey)
 	if err != nil {
 		return errors.Wrap(err, "can't save proof key")
 	}
@@ -197,13 +197,13 @@ func AddAccount(update *botapi.Update, bot *botapi.BotAPI) error {
 	markup := botapi.NewInlineKeyboardMarkup(botapi.NewInlineKeyboardRow(botapi.NewInlineKeyboardButtonURL(linkText, link)))
 	msg.ReplyMarkup = &markup
 	msg.ParseMode = "Markdown"
-	return SendWithRetry(bot, msg)
+	return sendWithRetry(bot, msg)
 }
 
-func InputRedirectLink(update *botapi.Update, bot *botapi.BotAPI) (err error) {
+func InputRedirectLink(update *botapi.Update) (err error) {
 	text := update.Message.Text
 	user := update.Message.From
-	runtime, err := fetchRuntime(user)
+	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime runtime")
 	}
@@ -213,7 +213,7 @@ func InputRedirectLink(update *botapi.Update, bot *botapi.BotAPI) (err error) {
 		// todo: invalid operation count ++
 		return errors.Wrap(err, "invalid redirect link")
 	}
-	proofKey, err := Cache.GetProofKey(user)
+	proofKey, err := Cache.GetProofKey(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't get proof key")
 	}
@@ -222,13 +222,13 @@ func InputRedirectLink(update *botapi.Update, bot *botapi.BotAPI) (err error) {
 		texts := getI18nText(runtime.Language, user, I18nKeys{expiredProofKeyTextKey, nil})
 		msg := botapi.NewMessage(update.Message.Chat.ID, texts[0])
 		msg.ParseMode = "Markdown"
-		return SendWithRetry(bot, msg)
+		return sendWithRetry(bot, msg)
 	}
 
 	texts := getI18nText(runtime.Language, user, I18nKeys{addingAccountTextKey, nil})
 	msg := botapi.NewMessage(update.Message.Chat.ID, texts[0])
 	msg.ParseMode = "Markdown"
-	respMsg, err := SendWithRetryAndResponse(bot, msg)
+	respMsg, err := sendWithRetryAndResponse(bot, msg)
 	if err != nil {
 		return err
 	}
@@ -239,14 +239,14 @@ func InputRedirectLink(update *botapi.Update, bot *botapi.BotAPI) (err error) {
 			texts := getI18nText(runtime.Language, user, I18nKeys{addAccountUnsuccessfullyTextKey, nil})
 			msg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
 			msg.ParseMode = "Markdown"
-			err = SendWithRetry(bot, msg)
+			err = sendWithRetry(bot, msg)
 			if err != nil {
 			}
 		}
 	}()
 
 	var sessionTokes, cookie, accountName, nsName string
-	err = Retry(func() error {
+	err = retry(func() error {
 		sessionTokes, err = nintendo.GetSessionToken(code, proofKey, runtime.Language)
 		if err != nil {
 			return errors.Wrap(err, "can't get session token")
@@ -275,7 +275,7 @@ func InputRedirectLink(update *botapi.Update, bot *botapi.BotAPI) (err error) {
 		texts = getI18nText(runtime.Language, user, I18nKeys{addAccountExistedTextKey, nil})
 		editMsg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
 		editMsg.ParseMode = "Markdown"
-		return SendWithRetry(bot, editMsg)
+		return sendWithRetry(bot, editMsg)
 	}
 	err = Transactions.AddNewAccount(account)
 	if err != nil {
@@ -283,22 +283,25 @@ func InputRedirectLink(update *botapi.Update, bot *botapi.BotAPI) (err error) {
 	}
 	sendFailureMessage = false
 
+	// notify job scheduler
+	tryStartJobScheduler()
+
 	// new user
 	if runtime.SessionToken == "" {
 		runtime.SessionToken = sessionTokes
-		runtime.IKSM = []byte(cookie)
+		runtime.IKSM = cookie
 		err = RuntimeTable.UpdateRuntimeAccount(runtime)
 		if err != nil {
 			log.Warn("can't update runtime runtime")
 			return errors.Wrap(err, "can't update runtime runtime")
 		}
-		Cache.DeleteRuntime(user)
+		Cache.DeleteRuntime(int64(user.ID))
 	}
 
 	texts = getI18nText(runtime.Language, user, I18nKeys{addAccountSuccessfullyTextKey, []interface{}{account.Tag}})
 	editMsg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
 	editMsg.ParseMode = "Markdown"
-	return SendWithRetry(bot, editMsg)
+	return sendWithRetry(bot, editMsg)
 }
 
 func register(user *botapi.User) error {
@@ -311,21 +314,22 @@ func register(user *botapi.User) error {
 		IsBlock:      false,
 		MaxAccount:   userMaxAccount,
 		NumAccount:   0,
-		IsAdmin:      false,
+		IsAdmin:      int64(user.ID) == defaultAdmin,
 		AllowPolling: userAllowPolling,
 	}
 	runtime := &db.Runtime{
 		Uid:          int64(user.ID),
 		SessionToken: "",
-		IKSM:         make([]byte, 40),
+		IKSM:         "0000000000000000000000000000000000000000",
 		Language:     "en",
-		Timezone:     -480,  // todo: default UTC+8
+		Timezone:     480,  // todo: default UTC+8
 	}
 	err := Transactions.InsertUserAndRuntime(newUser, runtime)
 	if err != nil {
 		return errors.Wrap(err, "can't insert user and runtime to db")
 	}
-	err = Cache.SetRuntime(user, runtime)
+	// set cache
+	err = Cache.SetRuntime(runtime)
 	if err != nil {
 		log.Warn("can't set Runtime to cache", zap.Object("runtime", runtime), zap.Error(err))
 	}

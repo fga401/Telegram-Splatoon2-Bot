@@ -8,11 +8,14 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	log "telegram-splatoon2-bot/logger"
+	"telegram-splatoon2-bot/nintendo"
 	"telegram-splatoon2-bot/service/cache"
 	"telegram-splatoon2-bot/service/db"
+	"time"
 )
 
 var (
+	bot          *botapi.BotAPI
 	Cache        *cache.CacheImpl
 	AccountTable *db.AccountTableImpl
 	UserTable    *db.UserTableImpl
@@ -25,9 +28,12 @@ var (
 	userAllowPolling          bool
 	callbackQueryCachedSecond int
 	retryTimes                int
+	defaultAdmin              int64
+	storeChannelID            int64
 )
 
-func InitService() {
+func InitService(b *botapi.BotAPI) {
+	InitImageClient()
 	db.InitDatabaseInstance()
 	cache.InitCache()
 	Cache = cache.Cache
@@ -37,33 +43,71 @@ func InitService() {
 	Transactions = db.Transactions
 
 	// default value
+	bot = b
 	userMaxAccount = viper.GetInt("account.maxAccount")
 	userAllowPolling = viper.GetBool("account.allowPolling")
 	callbackQueryCachedSecond = viper.GetInt("service.callbackQueryCachedSecond")
 	retryTimes = viper.GetInt("service.retryTimes")
+	defaultAdmin = viper.GetInt64("admin")
+	storeChannelID = viper.GetInt64("store_channel")
 
 	// markup
 	initMarkup()
+
+	//service
+	loadUsers()
+	tryStartJobScheduler()
 }
 
-func fetchRuntime(user *botapi.User) (*db.Runtime, error) {
-	runtime, err := Cache.GetRuntime(user)
+func tryStartJobScheduler() {
+	if salmonSchedules == nil {
+		log.Info("start salmon job scheduler")
+		startSalmonJobScheduler()
+	}
+}
+
+func updateCookies(runtime *db.Runtime) (string, error) {
+	// fetch
+	var iksm string
+	err := retry(func() error {
+		var err error
+		iksm, _, _, err = nintendo.GetCookiesAndNames(runtime.SessionToken, runtime.Language)
+		return err
+	}, retryTimes)
+	if err != nil {
+		return "", errors.Wrap(err, "can't get cookie")
+	}
+	// update
+	if iksm == runtime.IKSM {
+		return iksm, nil
+	}
+	err = RuntimeTable.UpdateRuntimeIKSM(runtime.Uid, iksm)
+	if err != nil {
+		return "", errors.Wrap(err, "can't update iksm to db")
+	}
+	log.Info("cookie updated", zap.Int64("user", runtime.Uid), zap.String("cookie", iksm))
+	Cache.DeleteRuntime(runtime.Uid)
+	return iksm, nil
+}
+
+func fetchRuntime(uid int64) (*db.Runtime, error) {
+	runtime, err := Cache.GetRuntime(uid)
 	// found in cache
 	if err == nil && runtime != nil {
 		return runtime, nil
 	}
 	if err != nil {
-		log.Warn("can't fetch Runtime from cache", zap.Object("user", log.WrapUser(user)), zap.Error(err))
+		log.Warn("can't fetch Runtime from cache", zap.Int64("uid", uid), zap.Error(err))
 	}
 	// try to fetch from db
 	// todo: add metrics
-	log.Info("runtime cache missed", zap.Object("user", log.WrapUser(user)))
-	runtime, err = RuntimeTable.GetRuntime(int64(user.ID))
+	log.Info("runtime cache missed", zap.Int64("uid", uid))
+	runtime, err = RuntimeTable.GetRuntime(uid)
 	if err != nil {
 		return nil, err
 	}
 	// set cache
-	err = Cache.SetRuntime(user, runtime)
+	err = Cache.SetRuntime(runtime)
 	if err != nil {
 		log.Warn("can't set Runtime to cache", zap.Object("runtime", runtime), zap.Error(err))
 	}
@@ -94,7 +138,7 @@ func getI18nText(lang string, user *botapi.User, keys ...I18nKeys) []string {
 	return ret
 }
 
-func Retry(handler func() error, times int) error {
+func retry(handler func() error, times int) error {
 	var err error
 	for i := 0; i < times; i++ {
 		err = handler()
@@ -105,8 +149,8 @@ func Retry(handler func() error, times int) error {
 	return err
 }
 
-func SendWithRetry(bot *botapi.BotAPI, msg botapi.Chattable) error {
-	err := Retry(func() error {
+func sendWithRetry(bot *botapi.BotAPI, msg botapi.Chattable) error {
+	err := retry(func() error {
 		_, err := bot.Send(msg)
 		return err
 	}, retryTimes)
@@ -116,9 +160,9 @@ func SendWithRetry(bot *botapi.BotAPI, msg botapi.Chattable) error {
 	return err
 }
 
-func SendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi.Message, error) {
+func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi.Message, error) {
 	var respMsg botapi.Message
-	err := Retry(func() error {
+	err := retry(func() error {
 		var err error
 		respMsg, err = bot.Send(msg)
 		return err
@@ -127,4 +171,13 @@ func SendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 		err = errors.Wrap(err, "can't send message")
 	}
 	return &respMsg, err
+}
+
+var updateInterval = int64(2 * time.Hour.Seconds())
+
+func getSplatoonNextUpdateTime(t time.Time) time.Time {
+	nowTimestamp := t.Unix()
+	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
+	// nextTimestamp += 5 // 5s delay
+	return time.Unix(nextTimestamp, 0)
 }

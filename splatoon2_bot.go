@@ -26,7 +26,15 @@ func InitViper() {
 
 	err = viper.BindEnv("token")
 	if err != nil {
-		panic(errors.Wrap(err, "can't bind env"))
+		panic(errors.Wrap(err, "can't bind token env"))
+	}
+	err = viper.BindEnv("admin")
+	if err != nil {
+		panic(errors.Wrap(err, "can't bind admin env"))
+	}
+	err = viper.BindEnv("store_channel")
+	if err != nil {
+		panic(errors.Wrap(err, "can't bind store_channel env"))
 	}
 
 	if pflag.NArg() == 1 {
@@ -38,7 +46,6 @@ func main() {
 	InitViper()
 	logger.InitLogger()
 	nintendo.InitClient()
-	service.InitService()
 
 	botConfig := botutil.BotConfig{
 		UserProxy: viper.GetBool("bot.useProxy"),
@@ -49,9 +56,12 @@ func main() {
 	worker := viper.GetInt("bot.worker")
 
 	myBot := botutil.NewBot(botConfig)
+	service.InitService(myBot)
+
 	router := botutil.NewUpdateRouter()
 	router.AddCommandHandler("start", service.Start, "Start Command")
 	router.AddCommandHandler("settings", service.Settings, "Settings Command")
+	router.AddCommandHandler("salmon_schedules", service.QuerySalmonSchedules, "SalmonSchedules Command")
 	router.AddCallbackQueryHandler(service.AccountSettingsKeyboardPrefix, service.AddAccount, "Settings Callback")
 	router.AddCallbackQueryHandler(service.LanguageSettingsKeyboardPrefix, service.SetLanguage, "Settings Callback")
 	router.AddCallbackQueryHandler(service.TimezoneSettingsKeyboardPrefix, service.SetTimezone, "Settings Callback")
