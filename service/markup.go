@@ -17,6 +17,8 @@ var markups = make(map[string]map[MarkupName]botapi.InlineKeyboardMarkup)
 type MarkupName int
 
 const (
+	// common
+	TimeTemplateTextKey = "01-02 15:04"
 	// settings
 	settingsTextKey = "What do you want to change?"
 	// language
@@ -26,18 +28,20 @@ const (
 	selectTimezoneTextKey             = "Please select your timezone:"
 	selectTimezoneSuccessfullyTextKey = "Change timezone successfully! Your timezone is *%s* now. Use /settings to change other settings."
 	// account
+	loginLinkTextKey                = "Login Link"
 	loginLinkGuideTextKey           = "Please open the following link and:\n*1.* Login;\n*2.* Right click / Long press the *<Select this account>* button;\n*3.* Copy the link address;\n*4.* Paste and send to this bot."
 	expiredProofKeyTextKey          = "Your link is expired. Please use /settings to retry."
 	addingAccountTextKey            = "Fetching account from Nintendo server..."
 	addAccountSuccessfullyTextKey   = "Account *%s* has been added. Use /settings to change other settings."
 	addAccountUnsuccessfullyTextKey = "Adding new account failed. Please use /settings to retry."
-	addAccountExistedTextKey        = "Sorry, your account is existed. Use /settings to add another accounts."
+	addAccountExistedTextKey        = "Sorry, your account *%s* is already existed. Use /settings to add another accounts."
+	accountReachLimitTextKey        = "Sorry, your number of account has reached the limitation. Current: *%d*, Max: *%d*."
 	//salmon
 	salmonSchedulesFutureTextKey   = "#Future"
 	salmonSchedulesScheduleTextKey = "*Time*: `%s ~ %s`\n"
 	salmonSchedulesNextTextKey     = "#Next"
-	salmonSchedulesOpenTextKey     = "#Open"
-	salmonSchedulesSoonTextKey     = "#Soon"
+	salmonSchedulesOpenTextKey     = "#Open: *Will be over in %dh %dm!*"
+	salmonSchedulesSoonTextKey     = "#Soon: *Will start in %dh %dm!*"
 	salmonSchedulesDetailTextKey   = "*Time*: `%s ~ %s`\n*Stage*: %s\n*Weapons*:\n- %s\n- %s\n- %s\n- %s\n"
 )
 const (

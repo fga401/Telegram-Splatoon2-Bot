@@ -16,7 +16,6 @@ var furtherSalmonScheduleImageID string
 var laterSalmonScheduleImageID string
 
 func startSalmonJobScheduler() {
-	// todo: debug: will be failed after first user register
 	go func() {
 		//first attempt
 		err := updateSalmonSchedules()
@@ -41,13 +40,15 @@ func startSalmonJobScheduler() {
 }
 
 func updateSalmonSchedules() error {
-	for k, _ := range admins {
-		err := updateSalmonSchedulesWithUid(k)
-		if err == nil {
-			return nil
-		}
+	var err error
+	admins.Range(func(uid int64) (continued bool) {
+		err = updateSalmonSchedulesWithUid(uid)
+		return err != nil
+	})
+	if err == nil {
+		return nil
 	}
-	log.Warn("can't update salmon schedules by admin")
+	log.Warn("can't update salmon schedules by admin", zap.Error(err))
 	runtime, err := RuntimeTable.GetFirstRuntime()
 	if err != nil {
 		return errors.Wrap(err, "can't get first runtime object")
@@ -114,11 +115,11 @@ func sortSalmonSchedules(salmonSchedules *nintendo.SalmonSchedules) {
 }
 
 func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
-	furtherImg, err:= concatSalmonScheduleImage(&salmonSchedules.Details[0])
+	furtherImg, err := concatSalmonScheduleImage(&salmonSchedules.Details[0])
 	if err != nil {
 		return errors.Wrap(err, "can't prepare image")
 	}
-	laterImg, err:= concatSalmonScheduleImage(&salmonSchedules.Details[1])
+	laterImg, err := concatSalmonScheduleImage(&salmonSchedules.Details[1])
 	if err != nil {
 		return errors.Wrap(err, "can't prepare image")
 	}
@@ -139,37 +140,51 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
-	// todo: show time to start / to end
+	now := time.Now().Unix()
+	startTime := schedules.Details[1].StartTime
+	endTime:= schedules.Details[1].EndTime
+	var textKey string
+	var remainingTime time.Duration
+	if now > storeChannelID {
+		textKey = salmonSchedulesOpenTextKey
+		remainingTime = time.Until(time.Unix(endTime, 0))
+	} else {
+		textKey = salmonSchedulesSoonTextKey
+		remainingTime = time.Until(time.Unix(startTime, 0))
+	}
+	remainingTime = remainingTime.Round(time.Minute)
+	hour := remainingTime / time.Hour
+	remainingTime -= hour * time.Hour
+	minute := remainingTime / time.Minute
+
+	timeTemplate := getI18nText(runtime.Language, user, NewI18nKey(TimeTemplateTextKey))[0]
 	keys := []I18nKeys{
-		{salmonSchedulesFutureTextKey, nil},
-		{salmonSchedulesNextTextKey, []interface{}{nintendo.Host + schedules.Details[0].Stage.Image}},
-		{salmonSchedulesOpenTextKey, []interface{}{nintendo.Host + schedules.Details[1].Stage.Image}},
+		NewI18nKey(salmonSchedulesFutureTextKey),
+		NewI18nKey(salmonSchedulesNextTextKey),
+		NewI18nKey(textKey, hour, minute),
 	}
 	for _, s := range schedules.Schedules {
-		startTime := time.Unix(s.StartTime, 0).Format("01-02 15:04")
-		endTime := time.Unix(s.EndTime, 0).Format("01-02 15:04")
-		keys = append(keys, I18nKeys{
-			salmonSchedulesScheduleTextKey,
-			[]interface{}{startTime, endTime}})
+		startTime := getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
+		endTime := getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
+		keys = append(keys, NewI18nKey(salmonSchedulesScheduleTextKey, startTime, endTime))
 	}
 	for _, s := range schedules.Details {
-		startTime := time.Unix(s.StartTime, 0).Format("01-02 15:04")
-		endTime := time.Unix(s.EndTime, 0).Format("01-02 15:04")
-		keys = append(keys, I18nKeys{
-			salmonSchedulesDetailTextKey,
-			[]interface{}{startTime, endTime, s.Stage.Name,
-				s.Weapons[0].Weapon.Name,
-				s.Weapons[1].Weapon.Name,
-				s.Weapons[2].Weapon.Name,
-				s.Weapons[3].Weapon.Name}})
+		startTime := getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
+		endTime := getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
+		keys = append(keys, NewI18nKey(salmonSchedulesDetailTextKey,
+			startTime, endTime, s.Stage.Name,
+			s.Weapons[0].Weapon.Name,
+			s.Weapons[1].Weapon.Name,
+			s.Weapons[2].Weapon.Name,
+			s.Weapons[3].Weapon.Name))
 	}
 	texts := getI18nText(runtime.Language, user, keys...)
-	futureText := strings.Join(texts[3:len(schedules.Schedules) + 3], "") + texts[0]
+	futureText := strings.Join(texts[3:len(schedules.Schedules)+3], "") + texts[0]
 	futureMsg := botapi.NewMessage(update.Message.Chat.ID, futureText)
 	futureMsg.ParseMode = "Markdown"
 	furtherText := texts[3+len(schedules.Schedules)] + texts[1]
 	furtherMsg := botapi.NewPhotoShare(update.Message.Chat.ID, furtherSalmonScheduleImageID)
-	furtherMsg.Caption= furtherText
+	furtherMsg.Caption = furtherText
 	furtherMsg.ParseMode = "Markdown"
 	laterText := texts[4+len(schedules.Schedules)] + texts[2]
 	laterMsg := botapi.NewPhotoShare(update.Message.Chat.ID, laterSalmonScheduleImageID)

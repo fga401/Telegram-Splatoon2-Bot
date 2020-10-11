@@ -119,6 +119,13 @@ type I18nKeys struct {
 	Args []interface{}
 }
 
+func NewI18nKey(key string, args ...interface{}) I18nKeys {
+	return I18nKeys{
+		Key:  key,
+		Args: args,
+	}
+}
+
 func getI18nText(lang string, user *botapi.User, keys ...I18nKeys) []string {
 	tag, err := language.Parse(lang)
 	zapFields := make([]zap.Field, 0, 3)
@@ -180,4 +187,8 @@ func getSplatoonNextUpdateTime(t time.Time) time.Time {
 	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
 	// nextTimestamp += 5 // 5s delay
 	return time.Unix(nextTimestamp, 0)
+}
+
+func getLocalTime(timestamp int64, offsetInMinute int) time.Time {
+	return time.Unix(timestamp, 0).UTC().Add(time.Duration(offsetInMinute) * time.Minute)
 }

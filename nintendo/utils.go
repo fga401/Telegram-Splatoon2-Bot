@@ -66,8 +66,8 @@ func getAppHeader(iksm string, timezone int, acceptLang string, gzip bool) map[s
 	}
 	return map[string][]string{
 		"Accept":            {"*/*"},
-		"Accept-Encoding":   {"gzip"},
-		"Accept-Language":   {acceptEncoding},
+		"Accept-Encoding":   {acceptEncoding},
+		"Accept-Language":   {acceptLang},
 		"Connection":        {"Keep-Alive"},
 		"Host":              {"app.splatoon2.nintendo.net"},
 		"Referer":           {"https://app.splatoon2.nintendo.net/home"},

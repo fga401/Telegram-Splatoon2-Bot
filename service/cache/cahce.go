@@ -85,7 +85,7 @@ func (c *CacheImpl) GetRuntime(uid int64) (*db.Runtime, error) {
 
 func (c *CacheImpl) DeleteRuntime(uid int64) {
 	key, err := userToBytesKey(uid)
-	if err != nil {
+	if err == nil {
 		c.fastCache.Del(key)
 	}
 }
