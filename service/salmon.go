@@ -23,16 +23,20 @@ func startSalmonJobScheduler() {
 			log.Error("can't update salmon schedules", zap.Error(err))
 			return
 		}
+		log.Info("update salmon schedules successfully. start periodical task.")
 		// update periodically
 		for {
 			now := time.Now()
 			nextUpdateTime := getSplatoonNextUpdateTime(now)
+			log.Info("set salmon schedules update task", zap.Time("next_update_time", nextUpdateTime))
 			task := time.After(nextUpdateTime.Sub(now))
 			select {
 			case <-task:
 				err := updateSalmonSchedules()
 				if err != nil {
 					log.Error("can't update salmon schedules")
+				} else {
+					log.Info("update salmon schedules successfully")
 				}
 			}
 		}
@@ -124,7 +128,13 @@ func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) erro
 		return errors.Wrap(err, "can't prepare image")
 	}
 	furtherImgID, err := uploadImage(furtherImg, "further")
+	if err != nil {
+		return errors.Wrap(err, "can't upload further detail image")
+	}
 	laterImgID, err := uploadImage(laterImg, "later")
+	if err != nil {
+		return errors.Wrap(err, "can't upload later detail image")
+	}
 	furtherSalmonScheduleImageID = furtherImgID
 	laterSalmonScheduleImageID = laterImgID
 	return nil

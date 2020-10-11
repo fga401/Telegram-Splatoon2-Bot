@@ -1,0 +1,6 @@
+{
+  "db": {
+    "url": "../data/sqlite3.db",
+    "sql": "file://./sqls/"
+  }
+}

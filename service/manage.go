@@ -2,7 +2,9 @@ package service
 
 import (
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 	"sync"
+	log "telegram-splatoon2-bot/logger"
 )
 
 type UserSet map[int64]struct{}
@@ -65,6 +67,7 @@ func loadUsers() {
 	for _, id := range adminsList {
 		adminsMap[id] = struct{}{}
 	}
+	log.Info("loaded admins list", zap.Int64s("admins", adminsList))
 	admins = NewUserSet(adminsMap)
 	// todo: load block and polling
 }

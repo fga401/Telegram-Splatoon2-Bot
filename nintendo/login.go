@@ -364,7 +364,7 @@ func getSplatoonAccessTokenSecondStep(accessToken string, flapgAppResponse *Flap
 	reqUrl := "https://api-lp1.znc.srv.nintendo.net/v2/Game/GetWebServiceToken"
 	bodyMap := map[string]map[string]interface{}{
 		"parameter": {
-			"id":                5741031244955648,
+			"id":                int64(5741031244955648),
 			"f":                 flapgAppResponse.Result.F,
 			"registrationToken": flapgAppResponse.Result.P1,
 			"timestamp":         flapgAppResponse.Result.P2,

@@ -87,7 +87,7 @@ func uploadImage(img image.Image, name string) (string, error) {
 		return "", errors.Wrap(err, "can't encode image")
 	}
 	msg := botapi.NewPhotoUpload(storeChannelID, botapi.FileBytes{Name: name + ".png", Bytes: buf.Bytes()})
-	msg.Caption = "test"
+	msg.Caption = name
 	respMsg, err := sendWithRetryAndResponse(bot, msg)
 	if err != nil {
 		return "", errors.Wrap(err, "no response photo")
