@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
+	"strconv"
 	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
 	"telegram-splatoon2-bot/service/cache"
@@ -42,15 +43,21 @@ func InitService(b *botapi.BotAPI) {
 	RuntimeTable = db.RuntimeTable
 	Transactions = db.Transactions
 
+	var err error
 	// default value
 	bot = b
 	userMaxAccount = viper.GetInt("account.maxAccount")
 	userAllowPolling = viper.GetBool("account.allowPolling")
 	callbackQueryCachedSecond = viper.GetInt("service.callbackQueryCachedSecond")
 	retryTimes = viper.GetInt("service.retryTimes")
-	defaultAdmin = viper.GetInt64("admin")
-	storeChannelID = viper.GetInt64("store_channel")
-
+	defaultAdmin, err = strconv.ParseInt(viper.GetString("admin"), 10, 64)
+	if err != nil {
+		panic(errors.Wrap(err, "viper get admin failed"))
+	}
+	storeChannelID, err = strconv.ParseInt(viper.GetString("store_channel"), 10, 64)
+	if err != nil {
+		panic(errors.Wrap(err, "viper get store_channel failed"))
+	}
 	// markup
 	initMarkup()
 

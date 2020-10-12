@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"sort"
+	"strconv"
 	"strings"
 	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
@@ -119,6 +120,7 @@ func sortSalmonSchedules(salmonSchedules *nintendo.SalmonSchedules) {
 }
 
 func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
+	now := strconv.FormatInt(time.Now().Round(time.Hour).Unix(), 10)
 	furtherImg, err := concatSalmonScheduleImage(&salmonSchedules.Details[0])
 	if err != nil {
 		return errors.Wrap(err, "can't prepare image")
@@ -127,11 +129,11 @@ func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) erro
 	if err != nil {
 		return errors.Wrap(err, "can't prepare image")
 	}
-	furtherImgID, err := uploadImage(furtherImg, "further")
+	furtherImgID, err := uploadImage(furtherImg, "further_salmon_schedule_"+now)
 	if err != nil {
 		return errors.Wrap(err, "can't upload further detail image")
 	}
-	laterImgID, err := uploadImage(laterImg, "later")
+	laterImgID, err := uploadImage(laterImg, "later_salmon_schedule_"+now)
 	if err != nil {
 		return errors.Wrap(err, "can't upload later detail image")
 	}
@@ -152,7 +154,7 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 	}
 	now := time.Now().Unix()
 	startTime := schedules.Details[1].StartTime
-	endTime:= schedules.Details[1].EndTime
+	endTime := schedules.Details[1].EndTime
 	var textKey string
 	var remainingTime time.Duration
 	if now > storeChannelID {

@@ -236,27 +236,34 @@ func prepareSettingsKeyboard(langTag string, printer *message.Printer) {
 }
 
 func prepareLanguageKeyboard(langTag string, printer *message.Printer) {
-	markups[langTag][languageKeyboard] = botapi.NewInlineKeyboardMarkup(
-		botapi.NewInlineKeyboardRow(
+	list := make([][]botapi.InlineKeyboardButton, 0)
+	supportLanguageButtons := map[string][]botapi.InlineKeyboardButton{
+		"en": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("English"),
-				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "en-US"))),
-		botapi.NewInlineKeyboardRow(
+				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "en"))),
+		"zh-TW": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Chinese(Traditional)"),
 				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "zh-TW"))),
-		botapi.NewInlineKeyboardRow(
+		"zh-CN": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Chinese(Simplified)"),
 				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "zh-CN"))),
-		botapi.NewInlineKeyboardRow(
+		"ja": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Japanese"),
 				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "ja"))),
-		botapi.NewInlineKeyboardRow(
-			botapi.NewInlineKeyboardButtonData(
-				printer.Sprintf("« Back to Settings"),
-				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "BACK"))),
+	}
+	for _, l := range viper.GetStringSlice("service.language") {
+		if button, found:= supportLanguageButtons[l]; found{
+			list = append(list, button)
+		}
+	}
+	markups[langTag][languageKeyboard] = botapi.NewInlineKeyboardMarkup(
+		append(list, botapi.NewInlineKeyboardRow(botapi.NewInlineKeyboardButtonData(
+			printer.Sprintf("« Back to Settings"),
+			botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "BACK"))))...,
 	)
 }
 
