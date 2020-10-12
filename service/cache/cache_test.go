@@ -1,7 +1,6 @@
 package cache
 
 import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	log "telegram-splatoon2-bot/logger"
@@ -28,17 +27,9 @@ func TestSetAndGetValue(t *testing.T) {
 		Language:     "987654321",
 		Timezone:     0,
 	}
-	user := &tgbotapi.User{
-		ID:           147258369,
-		FirstName:    "",
-		LastName:     "",
-		UserName:     "",
-		LanguageCode: "",
-		IsBot:        false,
-	}
-	err := Cache.SetRuntime(user, expected)
+	err := Cache.SetRuntime(expected)
 	assert.Nil(t, err)
-	actual, err := Cache.GetRuntime(user)
+	actual, err := Cache.GetRuntime(expected.Uid)
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual)
 }
