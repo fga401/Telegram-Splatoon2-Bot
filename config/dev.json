@@ -31,8 +31,8 @@
   "service": {
     "language": [
       "en",
-      "zh-TW",
       "zh-CN",
+      "zh-TW",
       "ja"
     ],
     "callbackQueryCachedSecond": 3,

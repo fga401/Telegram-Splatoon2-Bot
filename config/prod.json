@@ -4,11 +4,11 @@
   },
   "bot": {
     "useProxy": true,
-    "worker": 16,
-    "debug": true
+    "worker": 32,
+    "debug": false
   },
   "log": {
-    "level": "debug"
+    "level": "info"
   },
   "db": {
     "url": "./data/sqlite3.db",
@@ -17,7 +17,7 @@
   },
   "cache": {
     "fastcache": {
-      "maxBytes": 2147483648
+       "maxBytes": 1073741824
     },
     "gocache": {
       "expiration": "5m",
@@ -26,16 +26,13 @@
   },
   "account": {
     "maxAccount": 3,
-    "allowPolling": true
+    "allowPolling": false
   },
   "service": {
     "language": [
-      "en",
-      "zh-TW",
-      "zh-CN",
-      "ja"
+      "en"
     ],
     "callbackQueryCachedSecond": 3,
-    "retryTimes": 3
+    "retryTimes": 5
   }
 }
