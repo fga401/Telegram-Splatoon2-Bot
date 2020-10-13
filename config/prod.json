@@ -33,6 +33,7 @@
       "en"
     ],
     "callbackQueryCachedSecond": 3,
-    "retryTimes": 5
+    "retryTimes": 5,
+    "updateFailureRetryInterval": "1min"
   }
 }
