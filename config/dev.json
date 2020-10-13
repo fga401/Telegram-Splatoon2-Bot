@@ -36,6 +36,7 @@
       "ja"
     ],
     "callbackQueryCachedSecond": 3,
-    "retryTimes": 3
+    "retryTimes": 3,
+    "updateFailureRetryInterval": "1min"
   }
 }

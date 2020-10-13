@@ -297,7 +297,6 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 		runtime.IKSM = cookie
 		err = RuntimeTable.UpdateRuntimeAccount(runtime)
 		if err != nil {
-			log.Warn("can't update runtime runtime")
 			return errors.Wrap(err, "can't update runtime runtime")
 		}
 		Cache.DeleteRuntime(int64(user.ID))

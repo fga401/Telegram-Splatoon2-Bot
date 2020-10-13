@@ -24,20 +24,20 @@ func startSalmonJobScheduler() {
 			log.Error("can't update salmon schedules", zap.Error(err))
 			return
 		}
-		log.Info("update salmon schedules successfully. start periodical task.")
 		// update periodically
+		nextUpdateTime := getSplatoonNextUpdateTime(time.Now())
+		log.Info("update salmon schedules successfully. start periodical task.", zap.Time("next_update_time", nextUpdateTime))
 		for {
-			now := time.Now()
-			nextUpdateTime := getSplatoonNextUpdateTime(now)
-			log.Info("set salmon schedules update task", zap.Time("next_update_time", nextUpdateTime))
-			task := time.After(nextUpdateTime.Sub(now))
+			task := time.After(time.Until(nextUpdateTime))
 			select {
 			case <-task:
 				err := updateSalmonSchedules()
 				if err != nil {
-					log.Error("can't update salmon schedules")
+					nextUpdateTime = time.Now().Add(updateFailureRetryInterval)
+					log.Error("can't update salmon schedules", zap.Time("next_update_time", nextUpdateTime), zap.Error(err))
 				} else {
-					log.Info("update salmon schedules successfully")
+					nextUpdateTime := getSplatoonNextUpdateTime(time.Now())
+					log.Info("update salmon schedules successfully. set next update task", zap.Time("next_update_time", nextUpdateTime))
 				}
 			}
 		}
@@ -157,7 +157,7 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 	endTime := schedules.Details[1].EndTime
 	var textKey string
 	var remainingTime time.Duration
-	if now > storeChannelID {
+	if now > startTime {
 		textKey = salmonSchedulesOpenTextKey
 		remainingTime = time.Until(time.Unix(endTime, 0))
 	} else {

@@ -25,12 +25,13 @@ var (
 )
 
 var (
-	userMaxAccount            int
-	userAllowPolling          bool
-	callbackQueryCachedSecond int
-	retryTimes                int
-	defaultAdmin              int64
-	storeChannelID            int64
+	userMaxAccount             int
+	userAllowPolling           bool
+	callbackQueryCachedSecond  int
+	retryTimes                 int
+	defaultAdmin               int64
+	storeChannelID             int64
+	updateFailureRetryInterval time.Duration
 )
 
 func InitService(b *botapi.BotAPI) {
@@ -58,6 +59,8 @@ func InitService(b *botapi.BotAPI) {
 	if err != nil {
 		panic(errors.Wrap(err, "viper get store_channel failed"))
 	}
+	updateFailureRetryInterval = viper.GetDuration("service.updateFailureRetryInterval")
+
 	// markup
 	initMarkup()
 
