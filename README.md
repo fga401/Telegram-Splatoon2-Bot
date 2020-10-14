@@ -1,7 +1,7 @@
 # [WIP] Splatoon2 Telgram Bot
 A telegram bot copying all functions in Nintendo app but running on telegram.
 
-The Bot in Version [0.1]() has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
+The Bot in Version [0.1](https://github.com/fga401/Telegram-Splatoon2-Bot/releases/tag/0.1) has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
 
 ## Feature
 
@@ -21,7 +21,7 @@ To build your own bot, clone the codes and generate a new sqlite database file:
 ```shell script
 ./migrate/prepare.sh [some_path]
 ```
-The database file and config will be saved in `<some_path>`. 
+The database file and config will be saved in `some_path`. 
 
 Or use your preferred way to execute sqls in `./migrate/sqls/*.up.sql`, and create folders with following structure before running:
 ```
