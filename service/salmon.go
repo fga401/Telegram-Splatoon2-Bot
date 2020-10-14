@@ -36,7 +36,7 @@ func startSalmonJobScheduler() {
 					nextUpdateTime = time.Now().Add(updateFailureRetryInterval)
 					log.Error("can't update salmon schedules", zap.Time("next_update_time", nextUpdateTime), zap.Error(err))
 				} else {
-					nextUpdateTime := getSplatoonNextUpdateTime(time.Now())
+					nextUpdateTime = getSplatoonNextUpdateTime(time.Now())
 					log.Info("update salmon schedules successfully. set next update task", zap.Time("next_update_time", nextUpdateTime))
 				}
 			}

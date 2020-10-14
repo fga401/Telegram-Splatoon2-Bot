@@ -195,7 +195,7 @@ var updateInterval = int64(2 * time.Hour.Seconds())
 func getSplatoonNextUpdateTime(t time.Time) time.Time {
 	nowTimestamp := t.Unix()
 	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
-	// nextTimestamp += 5 // 5s delay
+	nextTimestamp += 5 // 5s delay
 	return time.Unix(nextTimestamp, 0)
 }
 
