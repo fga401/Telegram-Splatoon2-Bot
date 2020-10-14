@@ -1,7 +1,7 @@
 # [WIP] Splatoon2 Telgram Bot
 A telegram bot copying all functions in Nintendo app but running on telegram.
 
-The Bot in Version [0.1]() has been deployed, you can find it by [@Splatoon2HelperBot]() in Telegram.
+The Bot in Version [0.1]() has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
 
 ## Feature
 
@@ -18,15 +18,14 @@ The Bot in Version [0.1]() has been deployed, you can find it by [@Splatoon2Help
 
 To build your own bot, clone the codes and generate a new sqlite database file:
 
-``` shell script
-./migrate/migrate.sh <database_path>
+```shell script
+./migrate/prepare.sh [some_path]
 ```
-The database file will be saved in `<database_path>`. 
-(Or use your preferred way to execute sqls in `./migrate/sqls/*.up.sql`)
+The database file and config will be saved in `<some_path>`. 
 
-Before running, create a folder with following structure:
+Or use your preferred way to execute sqls in `./migrate/sqls/*.up.sql`, and create folders with following structure before running:
 ```
-foo:
+some_path:
 ├── config
 │   └── prod.json
 └── data
@@ -35,12 +34,12 @@ foo:
 ```
 
 Then build docker image and run:
-``` shell script
-./build.sh <version>
-./run.sh <version> <path>
+```shell script
+./build.sh [version]
+./run.sh [version] [some_path]
 ```
-A example run script, where the second arguments `<path>` is the path to `foo`:
-```
+An example run script:
+```shell script
 #!/bin/bash
 # arg 1: version
 # arg 2: path
@@ -53,7 +52,7 @@ if [ ! "$2" ]
 then
     path=~/bots/splatoon2_bot
 else
-    path=${$2%/}
+    path=${2%/}
 fi
 echo "Path: "$path
 docker stop splatoon2_bot >/dev/null 2>&1
