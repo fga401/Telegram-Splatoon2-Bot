@@ -32,6 +32,7 @@ var (
 	defaultAdmin               int64
 	storeChannelID             int64
 	updateFailureRetryInterval time.Duration
+	randomWeapon               nintendo.SalmonWeapon
 )
 
 func InitService(b *botapi.BotAPI) {
@@ -66,7 +67,10 @@ func InitService(b *botapi.BotAPI) {
 
 	//service
 	loadUsers()
+
+	// salmon
 	tryStartJobScheduler()
+	initRandomWeapon()
 }
 
 func tryStartJobScheduler() {

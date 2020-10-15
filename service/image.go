@@ -12,9 +12,10 @@ import (
 	"image/draw"
 	"image/png"
 	"net/http"
+	"os"
+	"strings"
 	proxy2 "telegram-splatoon2-bot/common/proxy"
 	log "telegram-splatoon2-bot/logger"
-	"telegram-splatoon2-bot/nintendo"
 )
 
 var client *http.Client
@@ -37,7 +38,7 @@ func InitImageClient() {
 	}
 }
 
-func downloadImage(url string) (image.Image, error) {
+func downloadImageFromNet(url string) (image.Image, error) {
 	var resp *http.Response
 	err := retry(func() error {
 		var err error
@@ -54,8 +55,39 @@ func downloadImage(url string) (image.Image, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "can't decode image")
 	}
-	log.Info("get image from url", zap.String("url", url))
+	log.Info("get image from http(s) url", zap.String("url", url))
 	return img, nil
+}
+
+func downloadImageFromFile(url string) (image.Image, error) {
+	filePath := url[7:]
+	imgFile, err := os.Open(filePath)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't open image file")
+	}
+	defer func() {
+		_ = imgFile.Close()
+	}()
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't decode image")
+	}
+	log.Info("get image from local file", zap.String("url", url))
+	return img, nil
+}
+
+func downloadImage(url string) (image.Image, error) {
+	switch  {
+	case strings.HasPrefix(url, "file://"):
+		return downloadImageFromFile(url)
+	case strings.HasPrefix(url, "https://"):
+		return downloadImageFromNet(url)
+	case strings.HasPrefix(url, "http://"):
+		return downloadImageFromNet(url)
+	default:
+		return nil, errors.Errorf("")
+	}
+
 }
 
 func downloadImages(urls []string) ([]image.Image, error) {
@@ -96,18 +128,9 @@ func uploadImage(img image.Image, name string) (string, error) {
 	return photo[0].FileID, nil
 }
 
-func concatSalmonScheduleImage(detail *nintendo.SalmonScheduleDetail) (image.Image, error) {
-	urls := []string{
-		nintendo.Host + detail.Stage.Image,
-		nintendo.Host + detail.Weapons[0].Weapon.Image,
-		nintendo.Host + detail.Weapons[1].Weapon.Image,
-		nintendo.Host + detail.Weapons[2].Weapon.Image,
-		nintendo.Host + detail.Weapons[3].Weapon.Image,
-	}
-	imgs, err := downloadImages(urls)
-	if err != nil {
-		return nil, err
-	}
+// concatSalmonScheduleImage parameter:
+//   imgs[0]: stage; imgs[1:5]: weapons
+func concatSalmonScheduleImage(imgs []image.Image) image.Image {
 	stage := imgs[0]
 	weapons := imgs[1:5]
 	width := stage.Bounds().Dx()
@@ -128,5 +151,5 @@ func concatSalmonScheduleImage(detail *nintendo.SalmonScheduleDetail) (image.Ima
 			image.Rectangle{Min: image.Point{X: i * qtrWidth}, Max: image.Point{X: (i + 1) * qtrWidth, Y: qtrWidth}},
 			img, image.Point{}, draw.Src)
 	}
-	return rgba, nil
+	return rgba
 }

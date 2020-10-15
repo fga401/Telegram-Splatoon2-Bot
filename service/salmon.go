@@ -101,6 +101,8 @@ func updateSalmonSchedulesWithUid(uid int64) error {
 	}
 
 	sortSalmonSchedules(result)
+	AddPrefixAndEmptyField(result)
+
 	err = uploadSalmonSchedulesImages(result)
 	if err != nil {
 		return errors.Wrap(err, "can't upload salmon schedules images")
@@ -120,15 +122,25 @@ func sortSalmonSchedules(salmonSchedules *nintendo.SalmonSchedules) {
 }
 
 func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
+	urls := []string{
+		salmonSchedules.Details[0].Stage.Image,
+		salmonSchedules.Details[0].Weapons[0].Weapon.Image,
+		salmonSchedules.Details[0].Weapons[1].Weapon.Image,
+		salmonSchedules.Details[0].Weapons[2].Weapon.Image,
+		salmonSchedules.Details[0].Weapons[3].Weapon.Image,
+		salmonSchedules.Details[1].Stage.Image,
+		salmonSchedules.Details[1].Weapons[0].Weapon.Image,
+		salmonSchedules.Details[1].Weapons[1].Weapon.Image,
+		salmonSchedules.Details[1].Weapons[2].Weapon.Image,
+		salmonSchedules.Details[1].Weapons[3].Weapon.Image,
+	}
+	imgs, err := downloadImages(urls)
+	if err != nil {
+		return err
+	}
 	now := strconv.FormatInt(time.Now().Round(time.Hour).Unix(), 10)
-	furtherImg, err := concatSalmonScheduleImage(&salmonSchedules.Details[0])
-	if err != nil {
-		return errors.Wrap(err, "can't prepare image")
-	}
-	laterImg, err := concatSalmonScheduleImage(&salmonSchedules.Details[1])
-	if err != nil {
-		return errors.Wrap(err, "can't prepare image")
-	}
+	furtherImg := concatSalmonScheduleImage(imgs[0:5])
+	laterImg:= concatSalmonScheduleImage(imgs[5:10])
 	furtherImgID, err := uploadImage(furtherImg, "further_salmon_schedule_"+now)
 	if err != nil {
 		return errors.Wrap(err, "can't upload further detail image")
@@ -140,6 +152,28 @@ func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) erro
 	furtherSalmonScheduleImageID = furtherImgID
 	laterSalmonScheduleImageID = laterImgID
 	return nil
+}
+
+func initRandomWeapon() {
+	randomWeapon.ID = "-1"
+	randomWeapon.Name = "Random"
+	randomWeapon.Image = "file://./service/resources/salmon_random_weapon_green.png"
+	randomWeapon.Thumbnail = "file://./service/resources/salmon_random_weapon_green.png"
+}
+
+func AddPrefixAndEmptyField(salmonSchedules *nintendo.SalmonSchedules) {
+	for i, detail := range salmonSchedules.Details {
+		for j, weapon := range detail.Weapons {
+			// todo: distinguish grizzco weapons and normal weapons
+			if id, err := strconv.Atoi(weapon.ID); err==nil && id < 0 {
+				salmonSchedules.Details[i].Weapons[j].Weapon = randomWeapon
+			} else {
+				salmonSchedules.Details[i].Weapons[j].Weapon.Image = nintendo.Host +  salmonSchedules.Details[i].Weapons[j].Weapon.Image
+				salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail = nintendo.Host +  salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail
+			}
+		}
+		salmonSchedules.Details[i].Stage.Image = nintendo.Host + salmonSchedules.Details[i].Stage.Image
+	}
 }
 
 func QuerySalmonSchedules(update *botapi.Update) error {
