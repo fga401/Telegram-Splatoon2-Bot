@@ -156,7 +156,7 @@ func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) erro
 
 func initRandomWeapon() {
 	randomWeapon.ID = "-1"
-	randomWeapon.Name = "Random"
+	randomWeapon.Name = "Random Weapon"
 	randomWeapon.Image = "file://./service/resources/salmon_random_weapon_green.png"
 	randomWeapon.Thumbnail = "file://./service/resources/salmon_random_weapon_green.png"
 }

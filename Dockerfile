@@ -11,4 +11,5 @@ WORKDIR /splatoon2_bot
 VOLUME /splatoon2_bot/data
 VOLUME /splatoon2_bot/config
 COPY --from=build /splatoon2_bot/splatoon2_bot ./
+COPY --from=build /splatoon2_bot/service/resources ./service/resources
 CMD ["./splatoon2_bot"]
