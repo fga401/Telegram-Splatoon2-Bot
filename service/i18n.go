@@ -395,3 +395,34 @@ func timezoneToText(timezone int, lang string) string {
 	}
 	return printer.Sprintf("UTC+8 (CT)")
 }
+
+type I18nKeys struct {
+	Key  string
+	Args []interface{}
+}
+
+func NewI18nKey(key string, args ...interface{}) I18nKeys {
+	return I18nKeys{
+		Key:  key,
+		Args: args,
+	}
+}
+
+func getI18nText(lang string, user *botapi.User, keys ...I18nKeys) []string {
+	tag, err := language.Parse(lang)
+	zapFields := make([]zap.Field, 0, 3)
+	if user != nil {
+		zapFields = append(zapFields, zap.Object("user", log.WrapUser(user)))
+	}
+	if err != nil {
+		zapFields = append(zapFields, zap.String("language", lang), zap.Error(err))
+		log.Warn("parse language failed", zapFields...)
+		tag = language.English
+	}
+	printer := message.NewPrinter(tag)
+	ret := make([]string, 0, len(keys))
+	for _, key := range keys {
+		ret = append(ret, printer.Sprintf(key.Key, key.Args...))
+	}
+	return ret
+}

@@ -3,7 +3,9 @@ package service
 import (
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,42 +14,113 @@ import (
 	"time"
 )
 
-var salmonSchedules *nintendo.SalmonSchedules
-var furtherSalmonScheduleImageID string
-var laterSalmonScheduleImageID string
+var (
+	salmonScheduleRepo *SalmonScheduleRepo
 
-func startSalmonJobScheduler() {
-	go func() {
-		//first attempt
-		err := updateSalmonSchedules()
-		if err != nil {
-			log.Error("can't update salmon schedules", zap.Error(err))
-			return
-		}
-		// update periodically
-		nextUpdateTime := getSplatoonNextUpdateTime(time.Now())
-		log.Info("update salmon schedules successfully. start periodical task.", zap.Time("next_update_time", nextUpdateTime))
-		for {
-			task := time.After(time.Until(nextUpdateTime))
-			select {
-			case <-task:
-				err := updateSalmonSchedules()
-				if err != nil {
-					nextUpdateTime = time.Now().Add(updateFailureRetryInterval)
-					log.Error("can't update salmon schedules", zap.Time("next_update_time", nextUpdateTime), zap.Error(err))
-				} else {
-					nextUpdateTime = getSplatoonNextUpdateTime(time.Now())
-					log.Info("update salmon schedules successfully. set next update task", zap.Time("next_update_time", nextUpdateTime))
-				}
-			}
-		}
-	}()
+	randomWeapon = nintendo.SalmonWeapon{
+		ID:        "-1",
+		Name:      "Random Weapon",
+		Image:     "file://./service/resources/salmon_random_weapon_green.png",
+		Thumbnail: "file://./service/resources/salmon_random_weapon_green.png",
+	}
+)
+
+type SalmonDumpling struct {
+	stageFileName  string
+	weaponFileName string
+	stages         map[string]nintendo.SalmonStage
+	weapons        map[string]nintendo.SalmonWeaponWrapper
 }
 
-func updateSalmonSchedules() error {
+func NewSalmonDumpling() *SalmonDumpling {
+	return &SalmonDumpling{
+		stageFileName:  viper.GetString("service.salmon.stageFileName"),
+		weaponFileName: viper.GetString("service.salmon.weaponFileName"),
+		stages:         make(map[string]nintendo.SalmonStage),
+		weapons:        make(map[string]nintendo.SalmonWeaponWrapper),
+	}
+}
+
+func (d *SalmonDumpling) Save() error {
+	err := marshalToFile(d.stageFileName, d.stages)
+	if err != nil {
+		return errors.Wrap(err, "can't save salmon stage")
+	}
+	err = marshalToFile(d.weaponFileName, d.weapons)
+	if err != nil {
+		return errors.Wrap(err, "can't save salmon weapon")
+	}
+	return nil
+}
+
+func (d *SalmonDumpling) Load() error {
+	if _, err := os.Stat(d.stageFileName); err == nil {
+		if err := unmarshalFromFile(d.stageFileName, &d.stages); err != nil {
+			return errors.Wrap(err, "can't load salmon stage")
+		}
+	} else {
+		log.Warn("can't open stage file", zap.Error(err))
+	}
+	if _, err := os.Stat(d.weaponFileName); err == nil {
+		if err := unmarshalFromFile(d.weaponFileName, &d.weapons); err != nil {
+			return errors.Wrap(err, "can't load salmon weapons")
+		}
+	} else {
+		log.Warn("can't open weapon file", zap.Error(err))
+	}
+	return nil
+}
+
+func (d *SalmonDumpling) Update(src interface{}) error {
+	schedules, ok := src.(*nintendo.SalmonSchedules)
+	if !ok {
+		return errors.Errorf("unknown input type")
+	}
+	for _, detail := range schedules.Details {
+		d.stages[detail.Stage.Name] = detail.Stage
+		for _, weapon := range detail.Weapons {
+			d.weapons[weapon.ID] = weapon
+		}
+	}
+	return nil
+}
+
+type SalmonScheduleRepo struct {
+	schedules      *nintendo.SalmonSchedules
+	furtherImageID string
+	laterImageID   string
+
+	admins        *SyncUserSet
+	salmonDumping *SalmonDumpling
+}
+
+func NewSalmonScheduleRepo(admins *SyncUserSet) (*SalmonScheduleRepo, error) {
+	salmonDumping := NewSalmonDumpling()
+	err := salmonDumping.Load()
+	if err != nil {
+		return nil, errors.Wrap(err, "can't load salmon dumping files")
+	}
+	return &SalmonScheduleRepo{
+		schedules:      nil,
+		furtherImageID: "",
+		laterImageID:   "",
+		admins:         admins,
+		salmonDumping:  salmonDumping,
+	}, nil
+}
+
+func (repo *SalmonScheduleRepo) HasInit() bool {
+	return repo.schedules != nil
+}
+
+func (repo *SalmonScheduleRepo) RepoName() string {
+	return "SalmonScheduleRepo"
+}
+
+func (repo *SalmonScheduleRepo) Update() error {
 	var err error
-	admins.Range(func(uid int64) (continued bool) {
-		err = updateSalmonSchedulesWithUid(uid)
+	repo.admins.Range(func(uid int64) (continued bool) {
+		err = repo.updateByUid(uid)
 		return err != nil
 	})
 	if err == nil {
@@ -58,14 +131,14 @@ func updateSalmonSchedules() error {
 	if err != nil {
 		return errors.Wrap(err, "can't get first runtime object")
 	}
-	err = updateSalmonSchedulesWithUid(runtime.Uid)
+	err = repo.updateByUid(runtime.Uid)
 	if err != nil {
 		return errors.Wrap(err, "can't update salmon schedules by other user")
 	}
 	return nil
 }
 
-func updateSalmonSchedulesWithUid(uid int64) error {
+func (repo *SalmonScheduleRepo) updateByUid(uid int64) error {
 	runtime, err := fetchRuntime(uid)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
@@ -100,18 +173,28 @@ func updateSalmonSchedulesWithUid(uid int64) error {
 		return errors.Errorf("invalid cookie")
 	}
 
-	sortSalmonSchedules(result)
-	AddPrefixAndEmptyField(result)
+	repo.sortSchedules(result)
+	repo.populateFields(result)
+	err = repo.salmonDumping.Update(result)
+	if err != nil {
+		log.Warn("can't update salmon dumping file", zap.Error(err))
+	}
+	err = repo.salmonDumping.Save()
+	if err != nil {
+		log.Warn("can't update salmon dumping file", zap.Error(err))
+	} else {
+		log.Info("dumped salmon stages and weapons to files")
+	}
 
-	err = uploadSalmonSchedulesImages(result)
+	err = repo.uploadSchedulesImages(result)
 	if err != nil {
 		return errors.Wrap(err, "can't upload salmon schedules images")
 	}
-	salmonSchedules = result
+	repo.schedules = result
 	return nil
 }
 
-func sortSalmonSchedules(salmonSchedules *nintendo.SalmonSchedules) {
+func (repo *SalmonScheduleRepo) sortSchedules(salmonSchedules *nintendo.SalmonSchedules) {
 	// sort by start time in descending order
 	sort.Slice(salmonSchedules.Details, func(i, j int) bool {
 		return salmonSchedules.Details[i].StartTime > salmonSchedules.Details[j].StartTime
@@ -121,7 +204,23 @@ func sortSalmonSchedules(salmonSchedules *nintendo.SalmonSchedules) {
 	})
 }
 
-func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
+func (repo *SalmonScheduleRepo) populateFields(salmonSchedules *nintendo.SalmonSchedules) {
+	for i, detail := range salmonSchedules.Details {
+		for j, weapon := range detail.Weapons {
+			// todo: distinguish grizzco weapons and normal weapons
+			if id, err := strconv.Atoi(weapon.ID); err == nil && id < 0 {
+				salmonSchedules.Details[i].Weapons[j].Weapon = randomWeapon
+				salmonSchedules.Details[i].Weapons[j].Weapon.ID = weapon.ID
+			} else {
+				salmonSchedules.Details[i].Weapons[j].Weapon.Image = nintendo.Host + salmonSchedules.Details[i].Weapons[j].Weapon.Image
+				salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail = nintendo.Host + salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail
+			}
+		}
+		salmonSchedules.Details[i].Stage.Image = nintendo.Host + salmonSchedules.Details[i].Stage.Image
+	}
+}
+
+func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
 	urls := []string{
 		salmonSchedules.Details[0].Stage.Image,
 		salmonSchedules.Details[0].Weapons[0].Weapon.Image,
@@ -140,7 +239,7 @@ func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) erro
 	}
 	now := strconv.FormatInt(time.Now().Round(time.Hour).Unix(), 10)
 	furtherImg := concatSalmonScheduleImage(imgs[0:5])
-	laterImg:= concatSalmonScheduleImage(imgs[5:10])
+	laterImg := concatSalmonScheduleImage(imgs[5:10])
 	furtherImgID, err := uploadImage(furtherImg, "further_salmon_schedule_"+now)
 	if err != nil {
 		return errors.Wrap(err, "can't upload further detail image")
@@ -149,38 +248,16 @@ func uploadSalmonSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) erro
 	if err != nil {
 		return errors.Wrap(err, "can't upload later detail image")
 	}
-	furtherSalmonScheduleImageID = furtherImgID
-	laterSalmonScheduleImageID = laterImgID
+	repo.furtherImageID = furtherImgID
+	repo.laterImageID = laterImgID
 	return nil
-}
-
-func initRandomWeapon() {
-	randomWeapon.ID = "-1"
-	randomWeapon.Name = "Random Weapon"
-	randomWeapon.Image = "file://./service/resources/salmon_random_weapon_green.png"
-	randomWeapon.Thumbnail = "file://./service/resources/salmon_random_weapon_green.png"
-}
-
-func AddPrefixAndEmptyField(salmonSchedules *nintendo.SalmonSchedules) {
-	for i, detail := range salmonSchedules.Details {
-		for j, weapon := range detail.Weapons {
-			// todo: distinguish grizzco weapons and normal weapons
-			if id, err := strconv.Atoi(weapon.ID); err==nil && id < 0 {
-				salmonSchedules.Details[i].Weapons[j].Weapon = randomWeapon
-			} else {
-				salmonSchedules.Details[i].Weapons[j].Weapon.Image = nintendo.Host +  salmonSchedules.Details[i].Weapons[j].Weapon.Image
-				salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail = nintendo.Host +  salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail
-			}
-		}
-		salmonSchedules.Details[i].Stage.Image = nintendo.Host + salmonSchedules.Details[i].Stage.Image
-	}
 }
 
 func QuerySalmonSchedules(update *botapi.Update) error {
 	user := update.Message.From
-	schedules := salmonSchedules
+	schedules := salmonScheduleRepo.schedules
 	if schedules == nil {
-		return errors.Errorf("no cached salmonSchedules")
+		return errors.Errorf("no cached schedules")
 	}
 	runtime, err := fetchRuntime(int64(user.ID))
 	if err != nil {
@@ -229,11 +306,11 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 	futureMsg := botapi.NewMessage(update.Message.Chat.ID, futureText)
 	futureMsg.ParseMode = "Markdown"
 	furtherText := texts[3+len(schedules.Schedules)] + texts[1]
-	furtherMsg := botapi.NewPhotoShare(update.Message.Chat.ID, furtherSalmonScheduleImageID)
+	furtherMsg := botapi.NewPhotoShare(update.Message.Chat.ID, salmonScheduleRepo.furtherImageID)
 	furtherMsg.Caption = furtherText
 	furtherMsg.ParseMode = "Markdown"
 	laterText := texts[4+len(schedules.Schedules)] + texts[2]
-	laterMsg := botapi.NewPhotoShare(update.Message.Chat.ID, laterSalmonScheduleImageID)
+	laterMsg := botapi.NewPhotoShare(update.Message.Chat.ID, salmonScheduleRepo.laterImageID)
 	laterMsg.Caption = laterText
 	laterMsg.ParseMode = "Markdown"
 	err = sendWithRetry(bot, futureMsg)

@@ -1,4 +1,4 @@
-*.db
+/data
 *.exe
 /.idea
 /run.sh

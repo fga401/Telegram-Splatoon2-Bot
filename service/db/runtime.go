@@ -36,7 +36,7 @@ var runtimeStmts = map[stmtName]Declaration{
 	runtimeStmtSelectByUid:    {true, "SELECT * FROM runtime WHERE uid=?;"},
 	runtimeStmtUpdateLanguage: {false, "UPDATE runtime SET language=? WHERE uid=?;"},
 	runtimeStmtUpdateTimezone: {false, "UPDATE runtime SET timezone=? WHERE uid=?;"},
-	runtimeStmtSelectFirst:    {false, "SELECT * FROM runtime LIMIT 1;"},
+	runtimeStmtSelectFirst:    {false, `SELECT * FROM runtime WHERE session_token!="" LIMIT 1;`},
 	runtimeStmtUpdateIKSM:     {true, "UPDATE runtime SET iksm=? WHERE uid=?;"},
 }
 

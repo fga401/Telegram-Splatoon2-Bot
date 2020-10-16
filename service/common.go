@@ -5,8 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 	"strconv"
 	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
@@ -25,14 +23,15 @@ var (
 )
 
 var (
-	userMaxAccount             int
-	userAllowPolling           bool
+	userMaxAccount   int
+	userAllowPolling bool
+	defaultAdmin     int64
+	storeChannelID   int64
+
 	callbackQueryCachedSecond  int
 	retryTimes                 int
-	defaultAdmin               int64
-	storeChannelID             int64
 	updateFailureRetryInterval time.Duration
-	randomWeapon               nintendo.SalmonWeapon
+	updateDelayInSecond        int64
 )
 
 func InitService(b *botapi.BotAPI) {
@@ -61,6 +60,7 @@ func InitService(b *botapi.BotAPI) {
 		panic(errors.Wrap(err, "viper get store_channel failed"))
 	}
 	updateFailureRetryInterval = viper.GetDuration("service.updateFailureRetryInterval")
+	updateDelayInSecond = viper.GetInt64("service.updateDelayInSecond")
 
 	// markup
 	initMarkup()
@@ -69,15 +69,11 @@ func InitService(b *botapi.BotAPI) {
 	loadUsers()
 
 	// salmon
-	tryStartJobScheduler()
-	initRandomWeapon()
-}
-
-func tryStartJobScheduler() {
-	if salmonSchedules == nil {
-		log.Info("start salmon job scheduler")
-		startSalmonJobScheduler()
+	salmonScheduleRepo, err = NewSalmonScheduleRepo(admins)
+	if err != nil {
+		panic(errors.Wrap(err, "can't init NewSalmonScheduleRepo"))
 	}
+	tryStartJobSchedulers()
 }
 
 func updateCookies(runtime *db.Runtime) (string, error) {
@@ -128,37 +124,6 @@ func fetchRuntime(uid int64) (*db.Runtime, error) {
 	return runtime, nil
 }
 
-type I18nKeys struct {
-	Key  string
-	Args []interface{}
-}
-
-func NewI18nKey(key string, args ...interface{}) I18nKeys {
-	return I18nKeys{
-		Key:  key,
-		Args: args,
-	}
-}
-
-func getI18nText(lang string, user *botapi.User, keys ...I18nKeys) []string {
-	tag, err := language.Parse(lang)
-	zapFields := make([]zap.Field, 0, 3)
-	if user != nil {
-		zapFields = append(zapFields, zap.Object("user", log.WrapUser(user)))
-	}
-	if err != nil {
-		zapFields = append(zapFields, zap.String("language", lang), zap.Error(err))
-		log.Warn("parse language failed", zapFields...)
-		tag = language.English
-	}
-	printer := message.NewPrinter(tag)
-	ret := make([]string, 0, len(keys))
-	for _, key := range keys {
-		ret = append(ret, printer.Sprintf(key.Key, key.Args...))
-	}
-	return ret
-}
-
 func retry(handler func() error, times int) error {
 	var err error
 	for i := 0; i < times; i++ {
@@ -192,15 +157,6 @@ func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 		err = errors.Wrap(err, "can't send message")
 	}
 	return &respMsg, err
-}
-
-var updateInterval = int64(2 * time.Hour.Seconds())
-
-func getSplatoonNextUpdateTime(t time.Time) time.Time {
-	nowTimestamp := t.Unix()
-	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
-	nextTimestamp += 5 // 5s delay
-	return time.Unix(nextTimestamp, 0)
 }
 
 func getLocalTime(timestamp int64, offsetInMinute int) time.Time {

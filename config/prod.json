@@ -34,6 +34,11 @@
     ],
     "callbackQueryCachedSecond": 3,
     "retryTimes": 5,
-    "updateFailureRetryInterval": "1min"
+    "updateFailureRetryInterval": "1m",
+    "updateDelayInSecond": 5,
+    "salmon":{
+      "stageFileName": "./data/salmon_stages.json",
+      "weaponFileName": "./data/salmon_weapons.json"
+    }
   }
 }

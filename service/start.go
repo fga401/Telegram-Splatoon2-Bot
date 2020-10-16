@@ -303,7 +303,7 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 	}
 
 	// notify job scheduler
-	tryStartJobScheduler()
+	tryStartJobSchedulers()
 
 	texts = getI18nText(runtime.Language, user, NewI18nKey(addAccountSuccessfullyTextKey, account.Tag))
 	editMsg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
