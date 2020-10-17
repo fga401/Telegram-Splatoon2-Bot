@@ -16,28 +16,21 @@ import (
 
 var (
 	salmonScheduleRepo *SalmonScheduleRepo
-
-	randomWeapon = nintendo.SalmonWeapon{
-		ID:        "-1",
-		Name:      "Random Weapon",
-		Image:     "file://./service/resources/salmon_random_weapon_green.png",
-		Thumbnail: "file://./service/resources/salmon_random_weapon_green.png",
-	}
 )
 
 type SalmonDumpling struct {
 	stageFileName  string
 	weaponFileName string
-	stages         map[string]nintendo.SalmonStage
-	weapons        map[string]nintendo.SalmonWeaponWrapper
+	stages         map[string]*nintendo.SalmonStage
+	weapons        map[string]*nintendo.SalmonWeaponWrapper
 }
 
 func NewSalmonDumpling() *SalmonDumpling {
 	return &SalmonDumpling{
 		stageFileName:  viper.GetString("service.salmon.stageFileName"),
 		weaponFileName: viper.GetString("service.salmon.weaponFileName"),
-		stages:         make(map[string]nintendo.SalmonStage),
-		weapons:        make(map[string]nintendo.SalmonWeaponWrapper),
+		stages:         make(map[string]*nintendo.SalmonStage),
+		weapons:        make(map[string]*nintendo.SalmonWeaponWrapper),
 	}
 }
 
@@ -79,7 +72,11 @@ func (d *SalmonDumpling) Update(src interface{}) error {
 	for _, detail := range schedules.Details {
 		d.stages[detail.Stage.Name] = detail.Stage
 		for _, weapon := range detail.Weapons {
-			d.weapons[weapon.ID] = weapon
+			if weapon.Weapon != nil {
+				d.weapons[weapon.Weapon.Name] = weapon
+			} else if weapon.SpecialWeapon != nil {
+				d.weapons[weapon.SpecialWeapon.Name] = weapon
+			}
 		}
 	}
 	return nil
@@ -204,34 +201,49 @@ func (repo *SalmonScheduleRepo) sortSchedules(salmonSchedules *nintendo.SalmonSc
 	})
 }
 
+// populateFields fills Weapon's fields by SpecialWeapon, if Weapon is nil
 func (repo *SalmonScheduleRepo) populateFields(salmonSchedules *nintendo.SalmonSchedules) {
-	for i, detail := range salmonSchedules.Details {
-		for j, weapon := range detail.Weapons {
-			// todo: distinguish grizzco weapons and normal weapons
-			if id, err := strconv.Atoi(weapon.ID); err == nil && id < 0 {
-				salmonSchedules.Details[i].Weapons[j].Weapon = randomWeapon
-				salmonSchedules.Details[i].Weapons[j].Weapon.ID = weapon.ID
-			} else {
-				salmonSchedules.Details[i].Weapons[j].Weapon.Image = nintendo.Host + salmonSchedules.Details[i].Weapons[j].Weapon.Image
-				salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail = nintendo.Host + salmonSchedules.Details[i].Weapons[j].Weapon.Thumbnail
+	for _, detail := range salmonSchedules.Details {
+		for _, weapon := range detail.Weapons {
+			if weapon.Weapon != nil {
+				weapon.Weapon.Image = nintendo.Host + weapon.Weapon.Image
+				weapon.Weapon.Thumbnail = nintendo.Host + weapon.Weapon.Thumbnail
+			}
+			if weapon.SpecialWeapon != nil {
+				weapon.Weapon = &nintendo.SalmonWeapon{
+					ID:   weapon.ID,
+					Name: weapon.SpecialWeapon.Name,
+					// default images are too ugly
+					//Image:     nintendo.Host + weapon.SpecialWeapon.Image,
+					//Thumbnail: nintendo.Host + weapon.SpecialWeapon.Image,
+				}
+				if weapon.SpecialWeapon.Name == "Random" {
+					weapon.Weapon.Image = "file://./service/resources/salmon_random_weapon_green.png"
+					weapon.Weapon.Thumbnail = "file://./service/resources/salmon_random_weapon_green.png"
+				} else {
+					weapon.Weapon.Image = "file://./service/resources/salmon_random_weapon_yellow.png"
+					weapon.Weapon.Thumbnail = "file://./service/resources/salmon_random_weapon_yellow.png"
+				}
+				weapon.SpecialWeapon = nil
 			}
 		}
-		salmonSchedules.Details[i].Stage.Image = nintendo.Host + salmonSchedules.Details[i].Stage.Image
+		detail.Stage.Image = nintendo.Host + detail.Stage.Image
 	}
 }
 
 func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
-	urls := []string{
-		salmonSchedules.Details[0].Stage.Image,
-		salmonSchedules.Details[0].Weapons[0].Weapon.Image,
-		salmonSchedules.Details[0].Weapons[1].Weapon.Image,
-		salmonSchedules.Details[0].Weapons[2].Weapon.Image,
-		salmonSchedules.Details[0].Weapons[3].Weapon.Image,
-		salmonSchedules.Details[1].Stage.Image,
-		salmonSchedules.Details[1].Weapons[0].Weapon.Image,
-		salmonSchedules.Details[1].Weapons[1].Weapon.Image,
-		salmonSchedules.Details[1].Weapons[2].Weapon.Image,
-		salmonSchedules.Details[1].Weapons[3].Weapon.Image,
+	urls := make([]string, 0)
+	for _, detail := range salmonSchedules.Details {
+		urls = append(urls, detail.Stage.Image)
+		for _, weapon := range detail.Weapons {
+			if weapon.Weapon != nil {
+				urls = append(urls, weapon.Weapon.Image)
+			} else if weapon.SpecialWeapon != nil{
+				urls = append(urls, weapon.SpecialWeapon.Image)
+			} else {
+				return errors.Errorf("no image found", zap.String("id", weapon.ID))
+			}
+		}
 	}
 	imgs, err := downloadImages(urls)
 	if err != nil {

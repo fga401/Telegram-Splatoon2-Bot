@@ -10,35 +10,6 @@ import (
 	log "telegram-splatoon2-bot/logger"
 )
 
-type SalmonScheduleTime struct {
-	StartTime int64 `json:"start_time"`
-	EndTime   int64 `json:"end_time"`
-}
-type SalmonWeapon struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Image     string `json:"image"`
-	Thumbnail string `json:"thumbnail"`
-}
-type SalmonWeaponWrapper struct {
-	ID     string       `json:"id"`
-	Weapon SalmonWeapon `json:"weapon"`
-}
-type SalmonStage struct {
-	Name  string `json:"name"`
-	Image string `json:"image"`
-}
-type SalmonScheduleDetail struct {
-	Weapons []SalmonWeaponWrapper `json:"weapons"`
-	SalmonScheduleTime
-	Stage SalmonStage `json:"stage"`
-}
-
-type SalmonSchedules struct {
-	Details   []SalmonScheduleDetail `json:"details"`
-	Schedules []SalmonScheduleTime   `json:"schedules"`
-}
-
 // GetSalmonSchedules returns SalmonSchedules, whether cookie is expired, and error
 func GetSalmonSchedules(iksm string, timezone int, acceptLang string) (*SalmonSchedules, bool, error) {
 	reqUrl := "https://app.splatoon2.nintendo.net/api/coop_schedules"
