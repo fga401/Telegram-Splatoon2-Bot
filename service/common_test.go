@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestName(t *testing.T) {
+func TestGetSplatoonNextUpdateTime(t *testing.T) {
 	ret := getSplatoonNextUpdateTime(time.Now())
 	fmt.Println(ret)
 	ret = getSplatoonNextUpdateTime(time.Now().Add(time.Hour))

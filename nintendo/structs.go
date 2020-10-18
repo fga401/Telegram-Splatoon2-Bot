@@ -33,3 +33,31 @@ type SalmonSchedules struct {
 	Details   []*SalmonScheduleDetail `json:"details"`
 	Schedules []*ScheduleTime         `json:"schedules"`
 }
+
+type Rule struct {
+	MultilineName string `json:"multiline_name"`
+	Name          string `json:"name"`
+	Key           string `json:"key"`
+}
+type GameMode struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+}
+type Stage struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Image string `json:"image"`
+}
+type StageSchedule struct {
+	ID       int64     `json:"id"`
+	Rule     *Rule     `json:"rule"`
+	GameMode *GameMode `json:"game_mode"`
+	StageA   *Stage    `json:"stage_a"`
+	StageB   *Stage    `json:"stage_b"`
+	*ScheduleTime
+}
+type StageSchedules struct {
+	League  []*StageSchedule `json:"league"`
+	Gachi   []*StageSchedule `json:"gachi"`
+	Regular []*StageSchedule `json:"regular"`
+}

@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"image"
 	"os"
 	"sort"
 	"strconv"
@@ -52,14 +53,14 @@ func (d *SalmonDumpling) Load() error {
 			return errors.Wrap(err, "can't load salmon stage")
 		}
 	} else {
-		log.Warn("can't open stage file", zap.Error(err))
+		log.Warn("can't open salmon stage file", zap.Error(err))
 	}
 	if _, err := os.Stat(d.weaponFileName); err == nil {
 		if err := unmarshalFromFile(d.weaponFileName, &d.weapons); err != nil {
 			return errors.Wrap(err, "can't load salmon weapons")
 		}
 	} else {
-		log.Warn("can't open weapon file", zap.Error(err))
+		log.Warn("can't open salmon weapon file", zap.Error(err))
 	}
 	return nil
 }
@@ -98,9 +99,6 @@ func NewSalmonScheduleRepo(admins *SyncUserSet) (*SalmonScheduleRepo, error) {
 		return nil, errors.Wrap(err, "can't load salmon dumping files")
 	}
 	return &SalmonScheduleRepo{
-		schedules:      nil,
-		furtherImageID: "",
-		laterImageID:   "",
 		admins:         admins,
 		salmonDumping:  salmonDumping,
 	}, nil
@@ -136,43 +134,18 @@ func (repo *SalmonScheduleRepo) Update() error {
 }
 
 func (repo *SalmonScheduleRepo) updateByUid(uid int64) error {
-	runtime, err := fetchRuntime(uid)
+	wrapper := func(iksm string, timezone int, acceptLang string, _ ...interface{}) (interface{}, error) {
+		return nintendo.GetSalmonSchedules(iksm, timezone, acceptLang)
+	}
+	result, err := fetchResourceWithUpdate(uid, wrapper)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
+	schedules := result.(*nintendo.SalmonSchedules)
 
-	var result *nintendo.SalmonSchedules
-	var expired bool
-	err = retry(func() error {
-		result, expired, err = nintendo.GetSalmonSchedules(runtime.IKSM, runtime.Timezone, runtime.Language)
-		return err
-	}, retryTimes)
-	if err != nil {
-		return errors.Wrap(err, "can't get salmon schedules")
-	}
-
-	if expired {
-		// todo: add metric
-		iksm, err := updateCookies(runtime)
-		if err != nil {
-			return errors.Wrap(err, "cookie expired and can't update it")
-		}
-		runtime.IKSM = iksm
-		err = retry(func() error {
-			result, expired, err = nintendo.GetSalmonSchedules(runtime.IKSM, runtime.Timezone, runtime.Language)
-			return err
-		}, retryTimes)
-		if err != nil {
-			return errors.Wrap(err, "can't get salmon schedules")
-		}
-	}
-	if expired {
-		return errors.Errorf("invalid cookie")
-	}
-
-	repo.sortSchedules(result)
-	repo.populateFields(result)
-	err = repo.salmonDumping.Update(result)
+	repo.sortSchedules(schedules)
+	repo.populateFields(schedules)
+	err = repo.salmonDumping.Update(schedules)
 	if err != nil {
 		log.Warn("can't update salmon dumping file", zap.Error(err))
 	}
@@ -183,11 +156,11 @@ func (repo *SalmonScheduleRepo) updateByUid(uid int64) error {
 		log.Info("dumped salmon stages and weapons to files")
 	}
 
-	err = repo.uploadSchedulesImages(result)
+	err = repo.uploadSchedulesImages(schedules)
 	if err != nil {
 		return errors.Wrap(err, "can't upload salmon schedules images")
 	}
-	repo.schedules = result
+	repo.schedules = schedules
 	return nil
 }
 
@@ -232,7 +205,7 @@ func (repo *SalmonScheduleRepo) populateFields(salmonSchedules *nintendo.SalmonS
 }
 
 func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.SalmonSchedules) error {
-	urls := make([]string, 0)
+	urls := make([]string, 0, 10)
 	for _, detail := range salmonSchedules.Details {
 		urls = append(urls, detail.Stage.Image)
 		for _, weapon := range detail.Weapons {
@@ -241,7 +214,7 @@ func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.
 			} else if weapon.SpecialWeapon != nil{
 				urls = append(urls, weapon.SpecialWeapon.Image)
 			} else {
-				return errors.Errorf("no image found", zap.String("id", weapon.ID))
+				return errors.Errorf("no image found")
 			}
 		}
 	}
@@ -252,16 +225,14 @@ func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.
 	now := strconv.FormatInt(time.Now().Round(time.Hour).Unix(), 10)
 	furtherImg := concatSalmonScheduleImage(imgs[0:5])
 	laterImg := concatSalmonScheduleImage(imgs[5:10])
-	furtherImgID, err := uploadImage(furtherImg, "further_salmon_schedule_"+now)
+	ids, err := uploadImages(
+		[]image.Image{furtherImg, laterImg},
+		[]string{"further_salmon_schedule_"+now, "later_salmon_schedule_"+now})
 	if err != nil {
-		return errors.Wrap(err, "can't upload further detail image")
+		return errors.Wrap(err, "can't upload images")
 	}
-	laterImgID, err := uploadImage(laterImg, "later_salmon_schedule_"+now)
-	if err != nil {
-		return errors.Wrap(err, "can't upload later detail image")
-	}
-	repo.furtherImageID = furtherImgID
-	repo.laterImageID = laterImgID
+	repo.furtherImageID = ids[0]
+	repo.laterImageID = ids[1]
 	return nil
 }
 

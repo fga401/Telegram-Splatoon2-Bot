@@ -20,11 +20,10 @@ func tryStartJobSchedulers() {
 		log.Info("start salmon job scheduler")
 		startJobScheduler(salmonScheduleRepo)
 	}
-	// todo: stage schedule repo
-	//if !stageScheduleRepo.HasInit() {
-	//	log.Info("start stage job scheduler")
-	//	startJobScheduler(stageScheduleRepo)
-	//}
+	if !stageScheduleRepo.HasInit() {
+		log.Info("start stage job scheduler")
+		startJobScheduler(stageScheduleRepo)
+	}
 }
 
 var updateInterval = int64(2 * time.Hour.Seconds())

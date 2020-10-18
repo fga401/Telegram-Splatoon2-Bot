@@ -42,6 +42,9 @@
     "salmon":{
       "stageFileName": "./data/salmon_stages.json",
       "weaponFileName": "./data/salmon_weapons.json"
+    },
+    "stage": {
+      "stageFileName": "./data/stages.json"
     }
   }
 }

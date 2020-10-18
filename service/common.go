@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"strconv"
+	"telegram-splatoon2-bot/botutil"
 	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
 	"telegram-splatoon2-bot/service/cache"
@@ -73,6 +74,13 @@ func InitService(b *botapi.BotAPI) {
 	if err != nil {
 		panic(errors.Wrap(err, "can't init NewSalmonScheduleRepo"))
 	}
+
+	// stage
+	stageScheduleRepo, err = NewStageScheduleRepo(admins)
+	if err != nil {
+		panic(errors.Wrap(err, "can't init NewStageScheduleRepo"))
+	}
+
 	tryStartJobSchedulers()
 }
 
@@ -138,6 +146,11 @@ func retry(handler func() error, times int) error {
 func sendWithRetry(bot *botapi.BotAPI, msg botapi.Chattable) error {
 	err := retry(func() error {
 		_, err := bot.Send(msg)
+		if is, sec := botutil.IsTooManyRequestError(err); is {
+			// todo: more info?
+			log.Warn("send message blocked by telegram request limits", zap.Int("after", sec))
+			time.Sleep(time.Duration(sec) * time.Second)
+		}
 		return err
 	}, retryTimes)
 	if err != nil {
@@ -151,6 +164,11 @@ func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 	err := retry(func() error {
 		var err error
 		respMsg, err = bot.Send(msg)
+		if is, sec := botutil.IsTooManyRequestError(err); is {
+			// todo: more info?
+			log.Warn("send message blocked by telegram request limits", zap.Int("after", sec))
+			time.Sleep(time.Duration(sec) * time.Second)
+		}
 		return err
 	}, retryTimes)
 	if err != nil {
@@ -161,4 +179,40 @@ func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 
 func getLocalTime(timestamp int64, offsetInMinute int) time.Time {
 	return time.Unix(timestamp, 0).UTC().Add(time.Duration(offsetInMinute) * time.Minute)
+}
+
+// func(iksm string, timezone int, acceptLang string, args ...interface{}) (result interface{}, error)
+type Retriever func(string, int, string, ...interface{}) (interface{}, error)
+
+func fetchResourceWithUpdate(uid int64, retriever Retriever, args ...interface{}) (interface{}, error) {
+	runtime, err := fetchRuntime(uid)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't fetch runtime")
+	}
+
+	var result interface{}
+	err = retry(func() error {
+		result, err = retriever(runtime.IKSM, runtime.Timezone, runtime.Language, args...)
+		return err
+	}, retryTimes)
+
+	if errors.Is(err, &nintendo.ExpirationError{}) {
+		// todo: add metric
+		var iksm string
+		iksm, err = updateCookies(runtime)
+		if err != nil {
+			return nil, errors.Wrap(err, "cookie expired and can't update it")
+		}
+		runtime.IKSM = iksm
+		err = retry(func() error {
+			result, err = retriever(runtime.IKSM, runtime.Timezone, runtime.Language, args...)
+			return err
+		}, retryTimes)
+	}
+
+	if err != nil {
+		return nil, errors.Wrap(err, "can't get resources from nintendo")
+	}
+
+	return result, nil
 }
