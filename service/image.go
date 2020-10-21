@@ -124,7 +124,7 @@ func uploadImage(img image.Image, name string) (string, error) {
 		return "", errors.Wrap(err, "no response photo")
 	}
 	photo := *respMsg.Photo
-	return photo[0].FileID, nil
+	return photo[len(photo)-1].FileID, nil
 }
 
 type FileItem struct {
@@ -187,13 +187,13 @@ func uploadImages(imgs []image.Image, names []string) ([]string, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "can't get response message")
 			}
-			for j:=i;j<sup;j++ {
+			for j := i; j < sup; j++ {
 				photo := *messages[j-i].Photo
-				ids[j] = photo[0].FileID
+				ids[j] = photo[len(photo)-1].FileID
 			}
 		}
 	}
-	log.Info("upload multiple images done", zap.Strings("file_ids",ids))
+	log.Info("upload multiple images done", zap.Strings("file_ids", ids))
 	return ids, nil
 }
 

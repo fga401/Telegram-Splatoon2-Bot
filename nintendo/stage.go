@@ -12,6 +12,9 @@ import (
 func GetStageSchedules(iksm string, timezone int, acceptLang string) (*StageSchedules, error) {
 	reqUrl := "https://app.splatoon2.nintendo.net/api/schedules"
 	respJson, err := getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
+	}
 	if isCookiesExpired(respJson) {
 		return nil, &ExpirationError{iksm}
 	}
