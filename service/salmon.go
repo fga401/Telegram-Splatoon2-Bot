@@ -269,7 +269,8 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 		NewI18nKey(salmonSchedulesNextTextKey),
 		NewI18nKey(textKey, hour, minute),
 	}
-	for _, s := range schedules.Schedules {
+	future := schedules.Schedules[:len(schedules.Schedules) - 2]
+	for _, s := range future {
 		startTime := getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
 		endTime := getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
 		keys = append(keys, NewI18nKey(salmonSchedulesScheduleTextKey, startTime, endTime))
@@ -285,14 +286,14 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 			s.Weapons[3].Weapon.Name))
 	}
 	texts := getI18nText(runtime.Language, user, keys...)
-	futureText := strings.Join(texts[3:len(schedules.Schedules)+3], "") + texts[0]
+	futureText := strings.Join(texts[3:len(future)+3], "") + texts[0]
 	futureMsg := botapi.NewMessage(update.Message.Chat.ID, futureText)
 	futureMsg.ParseMode = "Markdown"
-	furtherText := texts[3+len(schedules.Schedules)] + texts[1]
+	furtherText := texts[3+len(future)] + texts[1]
 	furtherMsg := botapi.NewPhotoShare(update.Message.Chat.ID, salmonScheduleRepo.furtherImageID)
 	furtherMsg.Caption = furtherText
 	furtherMsg.ParseMode = "Markdown"
-	laterText := texts[4+len(schedules.Schedules)] + texts[2]
+	laterText := texts[4+len(future)] + texts[2]
 	laterMsg := botapi.NewPhotoShare(update.Message.Chat.ID, salmonScheduleRepo.laterImageID)
 	laterMsg.Caption = laterText
 	laterMsg.ParseMode = "Markdown"
