@@ -56,14 +56,14 @@ const (
 /stages \[<prim\_filter>] \[<sec\_filters>...]
 
 *<prim_filter>* should be:
-- *[lgr]+* shows 'l' denotes 'league', 'g' denotes 'gachi' and 'r' denotes 'regular'.
+- *[lgr]+* shows 'League', 'Gachi (Ranked)' or 'Regular'.
 
 *<sec_filters>* could be:
 - *\d+* shows the following N stage(s).
 - *[ztrc]+* shows 'Splat Zones', 'Tower Control', 'Rainmaker' and 'Clam Blitz'.
 - *b(\d+)-(\d+)* shows stages between X to Y o'clock.
 
-Default Case
+_Default Case:_
 - If no filter provided, it will add default filters 'lgr 1'.
 - If no primary filter provided, it will add primary filters 'lgr'.
 - If no secondary filter provided, it will add secondary filters '2'.
