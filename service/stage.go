@@ -559,8 +559,8 @@ func formatStage(stage StageScheduleWrapper, chatID int64, runtime *db.Runtime, 
 		startTime, endTime,
 		stage.Schedule.GameMode.Name, stage.Schedule.Rule.Name,
 		stage.Schedule.StageB.Name, stage.Schedule.StageA.Name,
-		strings.Replace(stage.Schedule.GameMode.Name, " ", "_", -1),
-		strings.Replace(stage.Schedule.Rule.Name, " ", "_", -1),
+		strings.Replace(stage.Schedule.GameMode.Name, " ", `\_`, -1),
+		strings.Replace(stage.Schedule.Rule.Name, " ", `\_`, -1),
 	))
 	msg.Caption = texts[0]
 	msg.ParseMode = "Markdown"

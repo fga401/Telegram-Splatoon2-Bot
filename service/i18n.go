@@ -46,7 +46,28 @@ const (
 	// stage
 	stageSchedulesFilterErrorTextKey   = "Unknown filter. Please use /help to get help."
 	stageSchedulesNumberWarningTextKey = "_Note: your query returns too many results, and some of them have been omitted to avoid reaching telegram rate limit._"
-	stageSchedulesImageCaptionTextKey  = "*Time*:\n`%s ~ %s`\n*Mode*: %s\n*Rule*: %s\n*Stage*:\n- %s\n- %s\n#%s #%s"
+	stageSchedulesImageCaptionTextKey  = "*Time*:\n`%s ~ %s`\n*Mode*: %s\n*Rule*: %s\n*Stage*:\n- %s\n- %s\n#%s  #%s"
+	// help
+	helpTextKey = `
+*Commands*:
+- stages: /help\_stages`
+	helpStagesTextKey = `
+*Usage*:
+/stages \[<prim\_filter>] \[<sec\_filters>...]
+
+*<prim_filter>* should be:
+- *[lgr]+* shows 'l' denotes 'league', 'g' denotes 'gachi' and 'r' denotes 'regular'.
+
+*<sec_filters>* could be:
+- *\d+* shows the following N stage(s).
+- *[ztrc]+* shows 'Splat Zones', 'Tower Control', 'Rainmaker' and 'Clam Blitz'.
+- *b(\d+)-(\d+)* shows stages between X to Y o'clock.
+
+Default Case
+- If no filter provided, it will add default filters 'lgr 1'.
+- If no primary filter provided, it will add primary filters 'lgr'.
+- If no secondary filter provided, it will add secondary filters '2'.
+`
 )
 const (
 	settingsKeyboard MarkupName = iota

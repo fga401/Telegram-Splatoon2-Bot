@@ -63,6 +63,8 @@ func main() {
 	router.AddCommandHandler("settings", service.Settings, "Settings Command")
 	router.AddCommandHandler("salmon_schedules", service.QuerySalmonSchedules, "SalmonSchedules Command")
 	router.AddCommandHandler("stages", service.QueryStageSchedules, "Stages Command")
+	router.AddCommandHandler("help", service.Help, "Help Command")
+	router.AddCommandHandler("help_stages", service.HelpStages, "Help Stages Command")
 	router.AddCallbackQueryHandler(service.AccountSettingsKeyboardPrefix, service.AddAccount, "Settings Callback")
 	router.AddCallbackQueryHandler(service.LanguageSettingsKeyboardPrefix, service.SetLanguage, "Settings Callback")
 	router.AddCallbackQueryHandler(service.TimezoneSettingsKeyboardPrefix, service.SetTimezone, "Settings Callback")
