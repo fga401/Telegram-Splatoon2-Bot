@@ -41,7 +41,8 @@
       "weaponFileName": "./data/salmon_weapons.json"
     },
     "stage": {
-      "stageFileName": "./data/stages.json"
+      "stageFileName": "./data/stages.json",
+      "proposedNumber": 12
     }
   }
 }

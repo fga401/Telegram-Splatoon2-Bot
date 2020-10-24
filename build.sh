@@ -1,10 +1,8 @@
 #!/bin/bash
 # arg 1: version
-branch="master"
 if [ ! "$1" ]
 then
     version="latest"
-    git checkout $branch
 else
     version=$1
     git checkout "$version"

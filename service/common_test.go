@@ -110,14 +110,14 @@ func TestUpdateStage(t *testing.T) {
 	stageScheduleRepo, _ := NewStageScheduleRepo(admins)
 	stageScheduleRepo.sortSchedules(stageSchedulesOld)
 	stageScheduleRepo.populateFields(stageSchedulesOld)
-	err := stageScheduleRepo.uploadSchedulesImages(stageSchedulesOld)
+	s, err := stageScheduleRepo.wrapSchedules(stageSchedulesOld)
 	assert.Nil(t, err)
-	stageScheduleRepo.schedules = stageSchedulesOld
+	stageScheduleRepo.schedules = s
 	log.Info("stageSchedulesOld uploaded")
 	stageScheduleRepo.sortSchedules(stageSchedulesNew)
 	stageScheduleRepo.populateFields(stageSchedulesNew)
-	err = stageScheduleRepo.uploadSchedulesImages(stageSchedulesNew)
+	s, err = stageScheduleRepo.wrapSchedules(stageSchedulesNew)
 	log.Info("stageSchedulesNew uploaded")
 	assert.Nil(t, err)
-	stageScheduleRepo.schedules = stageSchedulesNew
+	stageScheduleRepo.schedules = s
 }

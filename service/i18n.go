@@ -43,6 +43,10 @@ const (
 	salmonSchedulesOpenTextKey     = "#Open: *Will be over in %dh %dm!*"
 	salmonSchedulesSoonTextKey     = "#Soon: *Will start in %dh %dm!*"
 	salmonSchedulesDetailTextKey   = "*Time*: `%s ~ %s`\n*Stage*: %s\n*Weapons*:\n- %s\n- %s\n- %s\n- %s\n"
+	// stage
+	stageSchedulesFilterErrorTextKey   = "Unknown filter. Please use /help to get help."
+	stageSchedulesNumberWarningTextKey = "_Note: your query returns too many results, and some of them have been omitted to avoid reaching telegram rate limit._"
+	stageSchedulesImageCaptionTextKey  = "*Time*:\n`%s ~ %s`\n*Mode*: %s\n*Rule*: %s\n*Stage*:\n- %s\n- %s\n#%s #%s"
 )
 const (
 	settingsKeyboard MarkupName = iota
@@ -256,7 +260,7 @@ func prepareLanguageKeyboard(langTag string, printer *message.Printer) {
 				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "ja"))),
 	}
 	for _, l := range viper.GetStringSlice("service.language") {
-		if button, found:= supportLanguageButtons[l]; found{
+		if button, found := supportLanguageButtons[l]; found {
 			list = append(list, button)
 		}
 	}

@@ -46,7 +46,6 @@ func Settings(update *botapi.Update) error {
 	msg.ReplyMarkup = markup
 	msg.ParseMode = "Markdown"
 	return sendWithRetry(bot, msg)
-
 }
 
 func SetLanguage(update *botapi.Update) error {

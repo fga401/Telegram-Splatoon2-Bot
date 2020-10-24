@@ -26,27 +26,20 @@ func tryStartJobSchedulers() {
 	}
 }
 
-var updateInterval = int64(2 * time.Hour.Seconds())
-
-func getSplatoonNextUpdateTime(t time.Time) time.Time {
-	nowTimestamp := t.Unix()
-	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
-	nextTimestamp += updateDelayInSecond
-	return time.Unix(nextTimestamp, 0)
-}
-
 func startJobScheduler(repo Repo) {
+	delay := time.Duration(updateDelayInSecond) * time.Second
 	name := repo.RepoName()
 	go func() {
-		//first attempt
-		err := repo.Update()
-		if err != nil {
-			log.Error(name+": can't update", zap.Error(err))
-			return
-		}
-		// update periodically
-		nextUpdateTime := getSplatoonNextUpdateTime(time.Now())
-		log.Info(name+": update successfully. start periodical task.", zap.Time("next_update_time", nextUpdateTime))
+		////first attempt
+		//err := repo.Update()
+		//if err != nil {
+		//	log.Error(name+": can't update", zap.Error(err))
+		//	return
+		//}
+		//// update periodically
+		//nextUpdateTime := getSplatoonNextUpdateTime(time.Now()).Add(delay)
+		//log.Info(name+": update successfully. start periodical task.", zap.Time("next_update_time", nextUpdateTime))
+		nextUpdateTime := time.Now()
 		for {
 			task := time.After(time.Until(nextUpdateTime))
 			select {
@@ -56,7 +49,7 @@ func startJobScheduler(repo Repo) {
 					nextUpdateTime = time.Now().Add(updateFailureRetryInterval)
 					log.Error(name+": can't update", zap.Time("next_update_time", nextUpdateTime), zap.Error(err))
 				} else {
-					nextUpdateTime = getSplatoonNextUpdateTime(time.Now())
+					nextUpdateTime = getSplatoonNextUpdateTime(time.Now()).Add(delay)
 					log.Info(name+": update successfully. set next update task", zap.Time("next_update_time", nextUpdateTime))
 				}
 			}

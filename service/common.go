@@ -33,6 +33,8 @@ var (
 	retryTimes                 int
 	updateFailureRetryInterval time.Duration
 	updateDelayInSecond        int64
+
+	proposedStageNumber int
 )
 
 func InitService(b *botapi.BotAPI) {
@@ -62,6 +64,7 @@ func InitService(b *botapi.BotAPI) {
 	}
 	updateFailureRetryInterval = viper.GetDuration("service.updateFailureRetryInterval")
 	updateDelayInSecond = viper.GetInt64("service.updateDelayInSecond")
+	proposedStageNumber = viper.GetInt("service.stage.proposedNumber")
 
 	// markup
 	initMarkup()
@@ -177,8 +180,16 @@ func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 	return &respMsg, err
 }
 
+var updateInterval = int64(2 * time.Hour.Seconds())
+
+func getSplatoonNextUpdateTime(t time.Time) time.Time {
+	nowTimestamp := t.Unix()
+	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
+	return time.Unix(nextTimestamp, 0)
+}
+
 func getLocalTime(timestamp int64, offsetInMinute int) time.Time {
-	return time.Unix(timestamp, 0).UTC().Add(time.Duration(offsetInMinute) * time.Minute)
+	return time.Unix(timestamp, 0).In(time.FixedZone("", offsetInMinute * 60))
 }
 
 // func(iksm string, timezone int, acceptLang string, args ...interface{}) (result interface{}, error)
