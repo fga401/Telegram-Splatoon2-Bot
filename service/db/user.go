@@ -23,6 +23,7 @@ const (
 	userStmtSelectByUid     stmtName = iota
 	userStmtCount           stmtName = iota
 	userStmtIncreaseAccount stmtName = iota
+	userStmtDecreaseAccount stmtName = iota
 	userStmtLoadAdmin       stmtName = iota
 )
 
@@ -35,6 +36,7 @@ var userStmts = map[stmtName]Declaration{
 	userStmtSelectByUid:     {false, "SELECT * FROM user WHERE uid=?;"},
 	userStmtCount:           {false, "SELECT count(uid) FROM user WHERE uid=?;"},
 	userStmtIncreaseAccount: {false, "UPDATE user SET n_account=n_account+1 WHERE uid=?"},
+	userStmtDecreaseAccount: {false, "UPDATE user SET n_account=n_account-1 WHERE uid=?"},
 	userStmtLoadAdmin:       {false, "SELECT uid FROM user WHERE is_admin=true"},
 }
 

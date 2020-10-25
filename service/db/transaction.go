@@ -33,6 +33,18 @@ func (impl *TransactionImpl) AddNewAccount(account *Account) (err error) {
 	})
 }
 
+func (impl *TransactionImpl) DeleteAccount(uid int64, tag string) (err error) {
+	return transact(impl.db, func (tx *sqlx.Tx) error {
+		if _, err = tx.Exec(userStmts[userStmtDecreaseAccount].stmt, uid); err != nil {
+			return errors.Wrap(err, "can't update user's account number")
+		}
+		if _, err = tx.Exec(accountStmts[accountStmtDeleteAccount].stmt, uid, tag); err != nil {
+			return errors.Wrap(err, "can't delete account")
+		}
+		return nil
+	})
+}
+
 func transact(db *sqlx.DB, txFunc func(*sqlx.Tx) error) (err error) {
 	tx, err := db.Beginx()
 	if err != nil {

@@ -16,8 +16,10 @@ const (
 )
 
 const (
-	accountStmtSelectByUid stmtName = iota
-	accountStmtCount       stmtName = iota
+	accountStmtSelectAccounts stmtName = iota
+	accountStmtSelectAccount  stmtName = iota
+	accountStmtDeleteAccount  stmtName = iota
+	accountStmtCount          stmtName = iota
 )
 
 var accountNamedStmts = map[namedStmtName]Declaration{
@@ -26,8 +28,10 @@ var accountNamedStmts = map[namedStmtName]Declaration{
 }
 
 var accountStmts = map[stmtName]Declaration{
-	accountStmtSelectByUid: {false, "SELECT * FROM account WHERE uid=?;"},
-	accountStmtCount:       {false, "SELECT count(tag) FROM account WHERE uid=? AND tag=?;"},
+	accountStmtSelectAccounts: {false, "SELECT * FROM account WHERE uid=?;"},
+	accountStmtSelectAccount:  {false, "SELECT * FROM account WHERE uid=? AND tag=?;"},
+	accountStmtDeleteAccount:  {false, "DELETE FROM account WHERE uid=? AND tag=?;"},
+	accountStmtCount:          {false, "SELECT count(tag) FROM account WHERE uid=? AND tag=?;"},
 }
 
 func (impl *AccountTableImpl) InsertAccount(account *Account) error {
@@ -38,9 +42,15 @@ func (impl *AccountTableImpl) UpdateAccount(account *Account) error {
 	return impl.namedExec(accountNamedStmtUpdate, account)
 }
 
-func (impl *AccountTableImpl) GetAccount(uid int64) (*Account, error) {
+func (impl *AccountTableImpl) GetAccount(uid int64, tag string) (*Account, error) {
 	account := &Account{}
-	err := impl.get(accountStmtSelectByUid, account, uid)
+	err := impl.get(accountStmtSelectAccount, account, uid, tag)
+	return account, err
+}
+
+func (impl *AccountTableImpl) GetAccounts(uid int64) ([]*Account, error) {
+	account := make([]*Account, 0)
+	err := impl.sel(accountStmtSelectAccounts, &account, uid)
 	return account, err
 }
 

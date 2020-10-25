@@ -28,14 +28,18 @@ const (
 	selectTimezoneTextKey             = "Please select your timezone:"
 	selectTimezoneSuccessfullyTextKey = "Change timezone successfully! Your timezone is *%s* now. Use /settings to change other settings."
 	// account
-	loginLinkTextKey                = "Login Link"
-	loginLinkGuideTextKey           = "Please open the following link and:\n*1.* Login;\n*2.* Right click / Long press the *<Select this account>* button;\n*3.* Copy the link address;\n*4.* Paste and send to this bot."
-	expiredProofKeyTextKey          = "Your link is expired. Please use /settings to retry."
-	addingAccountTextKey            = "Fetching account from Nintendo server..."
-	addAccountSuccessfullyTextKey   = "Account *%s* has been added. Use /settings to change other settings."
-	addAccountUnsuccessfullyTextKey = "Adding new account failed. Please use /settings to retry."
-	addAccountExistedTextKey        = "Sorry, your account *%s* is already existed. Use /settings to add another accounts."
-	accountReachLimitTextKey        = "Sorry, your number of account has reached the limitation. Current: *%d*, Max: *%d*."
+	accountLoginLinkTextKey            = "Login Link"
+	accountLoginLinkGuideTextKey       = "Please open the following link and:\n*1.* Login;\n*2.* Right click / Long press the *<Select this account>* button;\n*3.* Copy the link address;\n*4.* Paste and send to this bot."
+	accountExpiredProofKeyTextKey      = "Your link is expired. Please use /settings to retry."
+	accountAddingTextKey               = "Fetching account from Nintendo server..."
+	accountAddSuccessfullyTextKey      = "Account *%s* has been added. Use /settings to change other settings."
+	accountAddUnsuccessfullyTextKey    = "Adding new account failed. Please use /settings to retry."
+	accountAddExistedTextKey           = "Sorry, your account *%s* is already existed. Use /settings to add another accounts."
+	accountListTextKey                 = "Your account list: *(%d/%d)*\n"
+	accountTagTextKey                  = "- %s\n"
+	accountListEmptyTextKey            = "You have no account now, you can add a new Nintendo account."
+	accountDeleteSuccessfullyTextKey   = "Delete account *%s* successfully. Use /settings to change other settings."
+	accountDeleteUnsuccessfullyTextKey = "Delete account *%s* unsuccessfully. Please use /settings to retry."
 	//salmon
 	salmonSchedulesFutureTextKey   = "#Future"
 	salmonSchedulesScheduleTextKey = "*Time*: `%s ~ %s`\n"
@@ -75,7 +79,12 @@ const (
 	timezoneKeyboard MarkupName = iota
 )
 const (
-	AccountSettingsKeyboardPrefix   = "<set_account>"
+	ReturnToSettingsKeyboardPrefix = "<ret_settings>"
+
+	AccountSettingsKeyboardPrefix       = "<set_account>"
+	AccountSettingsAddKeyboardPrefix    = "<add_account>"
+	AccountSettingsDeleteKeyboardPrefix = "<del_account>"
+
 	LanguageSettingsKeyboardPrefix  = "<set_lang>"
 	TimezoneSettingsKeyboardPrefix  = "<set_timezone>"
 	LanguageSelectionKeyboardPrefix = "<sel_lang>"
@@ -241,7 +250,7 @@ func prepareTimezoneKeyboard(langTag string, printer *message.Printer) {
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("« Back to Settings"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "BACK"))),
+				botutil.SetCallbackQueryPrefix(ReturnToSettingsKeyboardPrefix, ""))),
 	)
 }
 
@@ -288,7 +297,7 @@ func prepareLanguageKeyboard(langTag string, printer *message.Printer) {
 	markups[langTag][languageKeyboard] = botapi.NewInlineKeyboardMarkup(
 		append(list, botapi.NewInlineKeyboardRow(botapi.NewInlineKeyboardButtonData(
 			printer.Sprintf("« Back to Settings"),
-			botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "BACK"))))...,
+			botutil.SetCallbackQueryPrefix(ReturnToSettingsKeyboardPrefix, ""))))...,
 	)
 }
 
@@ -309,6 +318,38 @@ func initMarkup() {
 
 func getStaticMarkup(name MarkupName, tag string) botapi.InlineKeyboardMarkup {
 	return markups[tag][name]
+}
+
+func getAccountActionMarkup(langTag string, add bool, accountTags []string) botapi.InlineKeyboardMarkup {
+	tag, err := language.Parse(langTag)
+	if err != nil {
+		tag = language.English
+	}
+	printer := message.NewPrinter(tag)
+	list := make([][]botapi.InlineKeyboardButton, 0)
+	if add {
+		list = append(list,
+			botapi.NewInlineKeyboardRow(
+				botapi.NewInlineKeyboardButtonData(
+					printer.Sprintf("Add Nintendo Account"),
+					botutil.SetCallbackQueryPrefix(AccountSettingsAddKeyboardPrefix, ""))),
+		)
+	}
+	for _, accountTag := range accountTags {
+		list = append(list,
+			botapi.NewInlineKeyboardRow(
+				botapi.NewInlineKeyboardButtonData(
+					printer.Sprintf("Delete %s", accountTag),
+					botutil.SetCallbackQueryPrefix(AccountSettingsDeleteKeyboardPrefix, accountTag))),
+		)
+	}
+	list = append(list,
+		botapi.NewInlineKeyboardRow(
+			botapi.NewInlineKeyboardButtonData(
+				printer.Sprintf("« Back to Settings"),
+				botutil.SetCallbackQueryPrefix(ReturnToSettingsKeyboardPrefix, ""))),
+	)
+	return botapi.NewInlineKeyboardMarkup(list...)
 }
 
 func langToText(selectedLanguage string, lang string) string {

@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/text/language"
 	"strconv"
+	"strings"
 	botutils "telegram-splatoon2-bot/botutil"
 	log "telegram-splatoon2-bot/logger"
 	"telegram-splatoon2-bot/nintendo"
@@ -48,6 +49,30 @@ func Settings(update *botapi.Update) error {
 	return sendWithRetry(bot, msg)
 }
 
+func ReturnToSettings(update *botapi.Update) error {
+	callback := update.CallbackQuery
+	user := callback.From
+	runtime, err := fetchRuntime(int64(user.ID))
+	if err != nil {
+		return errors.Wrap(err, "can't fetch runtime")
+	}
+
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
+	if err != nil {
+		return errors.Wrap(err, "can't answer callback query")
+	}
+
+	texts := getI18nText(runtime.Language, user, NewI18nKey(settingsTextKey))
+	markup := getStaticMarkup(settingsKeyboard, runtime.Language)
+	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
+	msg.ReplyMarkup = &markup
+	msg.ParseMode = "Markdown"
+	return sendWithRetry(bot, msg)
+}
+
 func SetLanguage(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
@@ -79,16 +104,17 @@ func SelectLanguage(update *botapi.Update) error {
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
-	lang := botutils.GetCallbackQueryOriginText(callback.Data)
-	if lang == "BACK" {
-		texts := getI18nText(runtime.Language, user, NewI18nKey(settingsTextKey))
-		markup := getStaticMarkup(settingsKeyboard, runtime.Language)
-		msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
-		msg.ReplyMarkup = &markup
-		msg.ParseMode = "Markdown"
-		return sendWithRetry(bot, msg)
+
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
+	if err != nil {
+		return errors.Wrap(err, "can't answer callback query")
 	}
 
+
+	lang := botutils.GetCallbackQueryOriginText(callback.Data)
 	if _, err = language.Parse(runtime.Language); err != nil {
 		return errors.Wrap(err, "unknown language")
 	}
@@ -137,16 +163,16 @@ func SelectTimezone(update *botapi.Update) error {
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
-	data := botutils.GetCallbackQueryOriginText(callback.Data)
-	if data == "BACK" {
-		texts := getI18nText(runtime.Language, user, NewI18nKey(settingsTextKey))
-		markup := getStaticMarkup(settingsKeyboard, runtime.Language)
-		msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
-		msg.ReplyMarkup = &markup
-		msg.ParseMode = "Markdown"
-		return sendWithRetry(bot, msg)
+
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
+	if err != nil {
+		return errors.Wrap(err, "can't answer callback query")
 	}
 
+	data := botutils.GetCallbackQueryOriginText(callback.Data)
 	timezone, err := strconv.Atoi(data)
 	if err != nil {
 		return errors.Wrap(err, "can't parse timezone")
@@ -158,8 +184,92 @@ func SelectTimezone(update *botapi.Update) error {
 	log.Info("user timezone updated", zap.Int("timezone", timezone), zap.Object("user", log.WrapUser(user)))
 	Cache.DeleteRuntime(int64(user.ID))
 
-
 	texts := getI18nText(runtime.Language, user, NewI18nKey(selectTimezoneSuccessfullyTextKey, timezoneToText(timezone, runtime.Language)))
+	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
+	msg.ParseMode = "Markdown"
+	return sendWithRetry(bot, msg)
+}
+
+func AccountSetting(update *botapi.Update) error {
+	callback := update.CallbackQuery
+	user := callback.From
+	_, err := bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
+	if err != nil {
+		return errors.Wrap(err, "can't answer callback query")
+	}
+
+	runtime, err := fetchRuntime(int64(user.ID))
+	if err != nil {
+		return errors.Wrap(err, "can't fetch runtime")
+	}
+	accounts, err := AccountTable.GetAccounts(int64(user.ID))
+	if err != nil {
+		return errors.Wrap(err, "can't get accounts from db")
+	}
+	privilege, err := UserTable.GetUser(int64(user.ID))
+	if err != nil {
+		return errors.Wrap(err, "can't not get user from db")
+	}
+
+	tags := make([]string, 0, len(accounts))
+	i18nKeys := make([]I18nKeys, 0, len(accounts))
+	for _, account := range accounts {
+		tags = append(tags, account.Tag)
+		i18nKeys = append(i18nKeys, NewI18nKey(accountTagTextKey, account.Tag))
+	}
+	var text string
+	if privilege.NumAccount > 0 {
+		texts := getI18nText(runtime.Language, user, append([]I18nKeys{NewI18nKey(accountListTextKey, privilege.NumAccount, privilege.MaxAccount)}, i18nKeys...)...)
+		text = strings.Join(texts, "")
+	} else {
+		text = getI18nText(runtime.Language, user, NewI18nKey(accountListEmptyTextKey))[0]
+	}
+	markup := getAccountActionMarkup(runtime.Language, privilege.NumAccount < privilege.MaxAccount, tags)
+	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, text)
+	msg.ReplyMarkup = &markup
+	msg.ParseMode = "Markdown"
+	return sendWithRetry(bot, msg)
+}
+
+func DeleteAccount(update *botapi.Update) (err error) {
+	callback := update.CallbackQuery
+	user := callback.From
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
+	if err != nil {
+		return errors.Wrap(err, "can't answer callback query")
+	}
+
+	runtime, err := fetchRuntime(int64(user.ID))
+	if err != nil {
+		return errors.Wrap(err, "can't fetch runtime")
+	}
+
+	tag := botutils.GetCallbackQueryOriginText(callback.Data)
+	sendFailureMessage := true
+	defer func() {
+		if err != nil && sendFailureMessage {
+			texts := getI18nText(runtime.Language, user, NewI18nKey(accountDeleteUnsuccessfullyTextKey, tag))
+			msg := botapi.NewEditMessageText(update.Message.Chat.ID, callback.Message.MessageID, texts[0])
+			msg.ParseMode = "Markdown"
+			err = sendWithRetry(bot, msg)
+			if err != nil {
+			}
+		}
+	}()
+	err = Transactions.DeleteAccount(int64(user.ID), tag)
+	if err != nil {
+		return err
+	}
+	Cache.DeleteRuntime(int64(user.ID))
+	sendFailureMessage = false
+
+	texts := getI18nText(runtime.Language, user, NewI18nKey(accountDeleteSuccessfullyTextKey, tag))
 	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 	msg.ParseMode = "Markdown"
 	return sendWithRetry(bot, msg)
@@ -169,19 +279,17 @@ func AddAccount(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
 	runtime, err := fetchRuntime(int64(user.ID))
+
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
-	// check account number limitation
-	privilage, err := UserTable.GetUser(int64(user.ID))
+
+	_, err = bot.AnswerCallbackQuery(botapi.CallbackConfig{
+		CallbackQueryID: callback.ID,
+		CacheTime:       callbackQueryCachedSecond,
+	})
 	if err != nil {
-		return errors.Wrap(err, "can't not get user from db")
-	}
-	if privilage.NumAccount == privilage.MaxAccount {
-		texts := getI18nText(runtime.Language, user, NewI18nKey(accountReachLimitTextKey, privilage.NumAccount, privilage.MaxAccount))
-		msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
-		msg.ParseMode = "Markdown"
-		return sendWithRetry(bot, msg)
+		return errors.Wrap(err, "can't answer callback query")
 	}
 
 	proofKey, err := nintendo.NewProofKey()
@@ -197,8 +305,8 @@ func AddAccount(update *botapi.Update) error {
 		return errors.Wrap(err, "can't generate login link")
 	}
 	texts := getI18nText(runtime.Language, user,
-		NewI18nKey(loginLinkGuideTextKey),
-		NewI18nKey(loginLinkTextKey))
+		NewI18nKey(accountLoginLinkGuideTextKey),
+		NewI18nKey(accountLoginLinkTextKey))
 	linkText := texts[1]
 	msg := botapi.NewEditMessageText(callback.Message.Chat.ID, callback.Message.MessageID, texts[0])
 	markup := botapi.NewInlineKeyboardMarkup(botapi.NewInlineKeyboardRow(botapi.NewInlineKeyboardButtonURL(linkText, link)))
@@ -226,13 +334,13 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 	}
 	if proofKey == nil {
 		// todo: invalid operation count ++
-		texts := getI18nText(runtime.Language, user, NewI18nKey(expiredProofKeyTextKey))
+		texts := getI18nText(runtime.Language, user, NewI18nKey(accountExpiredProofKeyTextKey))
 		msg := botapi.NewMessage(update.Message.Chat.ID, texts[0])
 		msg.ParseMode = "Markdown"
 		return sendWithRetry(bot, msg)
 	}
 
-	texts := getI18nText(runtime.Language, user, NewI18nKey(addingAccountTextKey))
+	texts := getI18nText(runtime.Language, user, NewI18nKey(accountAddingTextKey))
 	msg := botapi.NewMessage(update.Message.Chat.ID, texts[0])
 	msg.ParseMode = "Markdown"
 	respMsg, err := sendWithRetryAndResponse(bot, msg)
@@ -243,7 +351,7 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 	sendFailureMessage := true
 	defer func() {
 		if err != nil && sendFailureMessage {
-			texts := getI18nText(runtime.Language, user, NewI18nKey(addAccountUnsuccessfullyTextKey))
+			texts := getI18nText(runtime.Language, user, NewI18nKey(accountAddUnsuccessfullyTextKey))
 			msg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
 			msg.ParseMode = "Markdown"
 			err = sendWithRetry(bot, msg)
@@ -279,7 +387,7 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 		return errors.Wrap(err, "can't check whether account is existed")
 	}
 	if existed {
-		texts = getI18nText(runtime.Language, user, NewI18nKey(addAccountExistedTextKey, account.Tag))
+		texts = getI18nText(runtime.Language, user, NewI18nKey(accountAddExistedTextKey, account.Tag))
 		editMsg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
 		editMsg.ParseMode = "Markdown"
 		return sendWithRetry(bot, editMsg)
@@ -304,7 +412,7 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 	// notify job scheduler
 	tryStartJobSchedulers()
 
-	texts = getI18nText(runtime.Language, user, NewI18nKey(addAccountSuccessfullyTextKey, account.Tag))
+	texts = getI18nText(runtime.Language, user, NewI18nKey(accountAddSuccessfullyTextKey, account.Tag))
 	editMsg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])
 	editMsg.ParseMode = "Markdown"
 	return sendWithRetry(bot, editMsg)
