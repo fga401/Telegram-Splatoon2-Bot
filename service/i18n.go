@@ -102,155 +102,155 @@ func prepareTimezoneKeyboard(langTag string, printer *message.Printer) {
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-12 (IDLW)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-720"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-720"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-11 (SST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-660"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-660"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-10 (HST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-600"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-600"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-9:30 (MIT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-570"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-570"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-9 (AKST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-540"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-540"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-8 (PST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-480"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-480"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-7 (MST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-420"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-420"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-6 (CST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-360"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-360"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-5 (EST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-300"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-300"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-4 (AST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-240"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-240"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-3:30 (NST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-210"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-210"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-3 (BRT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-180"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-180"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-2 (FNT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-120"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-120"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC-1 (CVT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "-60"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "-60"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC (GNT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "0"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "0"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+1 (CET)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "60"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "60"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+2 (EET)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "120"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "120"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+3 (MSK)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "180"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "180"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+3:30 (IRST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "210"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "210"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+4 (GST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "240"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "240"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+4:30 (AFT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "270"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "270"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+5 (PKT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "300"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "300"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+5:30 (IST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "330"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "330"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+5:45 (NPT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "345"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "345"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+6 (BHT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "360"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "360"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+6:30 (MMT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "390"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "390"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+7 (ICT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "420"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "420"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+8 (CST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "480"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "480"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+9 (JST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "540"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "540"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+9:30 (ACST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "570"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "570"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+10 (AEST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "600"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "600"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+10:30 (LHST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "630"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "630"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+11 (VUT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "660"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "660"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+12 (NZST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "720"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "720"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+12:45 (CHAST)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "765"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "765"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+13 (PHOT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "780"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "780"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("UTC+14 (LINT)"),
-				botutil.SetCallbackQueryPrefix(TimezoneSelectionKeyboardPrefix, "840"))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSelectionKeyboardPrefix, "840"))),
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("« Back to Settings"),
-				botutil.SetCallbackQueryPrefix(ReturnToSettingsKeyboardPrefix, ""))),
+				botutil.CallbackHelper.SetPrefix(ReturnToSettingsKeyboardPrefix, ""))),
 	)
 }
 
@@ -259,13 +259,13 @@ func prepareSettingsKeyboard(langTag string, printer *message.Printer) {
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Account"),
-				botutil.SetCallbackQueryPrefix(AccountSettingsKeyboardPrefix, "")),
+				botutil.CallbackHelper.SetPrefix(AccountSettingsKeyboardPrefix, "")),
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Language"),
-				botutil.SetCallbackQueryPrefix(LanguageSettingsKeyboardPrefix, "")),
+				botutil.CallbackHelper.SetPrefix(LanguageSettingsKeyboardPrefix, "")),
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Timezone"),
-				botutil.SetCallbackQueryPrefix(TimezoneSettingsKeyboardPrefix, ""))),
+				botutil.CallbackHelper.SetPrefix(TimezoneSettingsKeyboardPrefix, ""))),
 	)
 }
 
@@ -275,19 +275,19 @@ func prepareLanguageKeyboard(langTag string, printer *message.Printer) {
 		"en": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("English"),
-				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "en"))),
+				botutil.CallbackHelper.SetPrefix(LanguageSelectionKeyboardPrefix, "en"))),
 		"zh-TW": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Chinese(Traditional)"),
-				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "zh-TW"))),
+				botutil.CallbackHelper.SetPrefix(LanguageSelectionKeyboardPrefix, "zh-TW"))),
 		"zh-CN": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Chinese(Simplified)"),
-				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "zh-CN"))),
+				botutil.CallbackHelper.SetPrefix(LanguageSelectionKeyboardPrefix, "zh-CN"))),
 		"ja": botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Japanese"),
-				botutil.SetCallbackQueryPrefix(LanguageSelectionKeyboardPrefix, "ja"))),
+				botutil.CallbackHelper.SetPrefix(LanguageSelectionKeyboardPrefix, "ja"))),
 	}
 	for _, l := range viper.GetStringSlice("service.language") {
 		if button, found := supportLanguageButtons[l]; found {
@@ -297,7 +297,7 @@ func prepareLanguageKeyboard(langTag string, printer *message.Printer) {
 	markups[langTag][languageKeyboard] = botapi.NewInlineKeyboardMarkup(
 		append(list, botapi.NewInlineKeyboardRow(botapi.NewInlineKeyboardButtonData(
 			printer.Sprintf("« Back to Settings"),
-			botutil.SetCallbackQueryPrefix(ReturnToSettingsKeyboardPrefix, ""))))...,
+			botutil.CallbackHelper.SetPrefix(ReturnToSettingsKeyboardPrefix, ""))))...,
 	)
 }
 
@@ -332,7 +332,7 @@ func getAccountActionMarkup(langTag string, add bool, accountTags []string) bota
 			botapi.NewInlineKeyboardRow(
 				botapi.NewInlineKeyboardButtonData(
 					printer.Sprintf("Add Nintendo Account"),
-					botutil.SetCallbackQueryPrefix(AccountSettingsAddKeyboardPrefix, ""))),
+					botutil.CallbackHelper.SetPrefix(AccountSettingsAddKeyboardPrefix, ""))),
 		)
 	}
 	for _, accountTag := range accountTags {
@@ -340,14 +340,14 @@ func getAccountActionMarkup(langTag string, add bool, accountTags []string) bota
 			botapi.NewInlineKeyboardRow(
 				botapi.NewInlineKeyboardButtonData(
 					printer.Sprintf("Delete %s", accountTag),
-					botutil.SetCallbackQueryPrefix(AccountSettingsDeleteKeyboardPrefix, accountTag))),
+					botutil.CallbackHelper.SetPrefix(AccountSettingsDeleteKeyboardPrefix, accountTag))),
 		)
 	}
 	list = append(list,
 		botapi.NewInlineKeyboardRow(
 			botapi.NewInlineKeyboardButtonData(
 				printer.Sprintf("« Back to Settings"),
-				botutil.SetCallbackQueryPrefix(ReturnToSettingsKeyboardPrefix, ""))),
+				botutil.CallbackHelper.SetPrefix(ReturnToSettingsKeyboardPrefix, ""))),
 	)
 	return botapi.NewInlineKeyboardMarkup(list...)
 }

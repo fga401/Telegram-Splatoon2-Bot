@@ -36,11 +36,11 @@ func NewSalmonDumpling() *SalmonDumpling {
 }
 
 func (d *SalmonDumpling) Save() error {
-	err := marshalToFile(d.stageFileName, d.stages)
+	err := DumpingHelper.marshalToFile(d.stageFileName, d.stages)
 	if err != nil {
 		return errors.Wrap(err, "can't save salmon stage")
 	}
-	err = marshalToFile(d.weaponFileName, d.weapons)
+	err = DumpingHelper.marshalToFile(d.weaponFileName, d.weapons)
 	if err != nil {
 		return errors.Wrap(err, "can't save salmon weapon")
 	}
@@ -49,14 +49,14 @@ func (d *SalmonDumpling) Save() error {
 
 func (d *SalmonDumpling) Load() error {
 	if _, err := os.Stat(d.stageFileName); err == nil {
-		if err := unmarshalFromFile(d.stageFileName, &d.stages); err != nil {
+		if err := DumpingHelper.unmarshalFromFile(d.stageFileName, &d.stages); err != nil {
 			return errors.Wrap(err, "can't load salmon stage")
 		}
 	} else {
 		log.Warn("can't open salmon stage file", zap.Error(err))
 	}
 	if _, err := os.Stat(d.weaponFileName); err == nil {
-		if err := unmarshalFromFile(d.weaponFileName, &d.weapons); err != nil {
+		if err := DumpingHelper.unmarshalFromFile(d.weaponFileName, &d.weapons); err != nil {
 			return errors.Wrap(err, "can't load salmon weapons")
 		}
 	} else {
@@ -137,7 +137,7 @@ func (repo *SalmonScheduleRepo) updateByUid(uid int64) error {
 	wrapper := func(iksm string, timezone int, acceptLang string, _ ...interface{}) (interface{}, error) {
 		return nintendo.GetSalmonSchedules(iksm, timezone, acceptLang)
 	}
-	result, err := fetchResourceWithUpdate(uid, wrapper)
+	result, err := FetchResourceWithUpdate(uid, wrapper)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -218,14 +218,14 @@ func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.
 			}
 		}
 	}
-	imgs, err := downloadImages(urls)
+	imgs, err := ImageHelper.downloadImages(urls)
 	if err != nil {
 		return err
 	}
 	now := strconv.FormatInt(time.Now().Round(time.Hour).Unix(), 10)
 	furtherImg := concatSalmonScheduleImage(imgs[0:5])
 	laterImg := concatSalmonScheduleImage(imgs[5:10])
-	ids, err := uploadImages(
+	ids, err := ImageHelper.uploadImages(
 		[]image.Image{furtherImg, laterImg},
 		[]string{"further_salmon_schedule_"+now, "later_salmon_schedule_"+now})
 	if err != nil {
@@ -242,7 +242,7 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 	if schedules == nil {
 		return errors.Errorf("no cached schedules")
 	}
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -271,13 +271,13 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 	}
 	future := schedules.Schedules[:len(schedules.Schedules) - 2]
 	for _, s := range future {
-		startTime := getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
-		endTime := getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
+		startTime := TimeHelper.getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
+		endTime := TimeHelper.getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
 		keys = append(keys, NewI18nKey(salmonSchedulesScheduleTextKey, startTime, endTime))
 	}
 	for _, s := range schedules.Details {
-		startTime := getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
-		endTime := getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
+		startTime := TimeHelper.getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
+		endTime := TimeHelper.getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
 		keys = append(keys, NewI18nKey(salmonSchedulesDetailTextKey,
 			startTime, endTime, s.Stage.Name,
 			s.Weapons[0].Weapon.Name,

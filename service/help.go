@@ -7,7 +7,7 @@ import (
 
 func Help(update *botapi.Update) error {
 	user := update.Message.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -20,7 +20,7 @@ func Help(update *botapi.Update) error {
 
 func HelpStages(update *botapi.Update) error {
 	user := update.Message.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}

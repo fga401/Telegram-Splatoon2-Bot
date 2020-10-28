@@ -37,7 +37,7 @@ func Start(update *botapi.Update) error {
 
 func Settings(update *botapi.Update) error {
 	user := update.Message.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -52,7 +52,7 @@ func Settings(update *botapi.Update) error {
 func ReturnToSettings(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -76,7 +76,7 @@ func ReturnToSettings(update *botapi.Update) error {
 func SetLanguage(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -100,7 +100,7 @@ func SetLanguage(update *botapi.Update) error {
 func SelectLanguage(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -114,7 +114,7 @@ func SelectLanguage(update *botapi.Update) error {
 	}
 
 
-	lang := botutils.GetCallbackQueryOriginText(callback.Data)
+	lang := botutils.CallbackHelper.GetText(callback.Data)
 	if _, err = language.Parse(runtime.Language); err != nil {
 		return errors.Wrap(err, "unknown language")
 	}
@@ -135,7 +135,7 @@ func SelectLanguage(update *botapi.Update) error {
 func SetTimezone(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -159,7 +159,7 @@ func SetTimezone(update *botapi.Update) error {
 func SelectTimezone(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -172,7 +172,7 @@ func SelectTimezone(update *botapi.Update) error {
 		return errors.Wrap(err, "can't answer callback query")
 	}
 
-	data := botutils.GetCallbackQueryOriginText(callback.Data)
+	data := botutils.CallbackHelper.GetText(callback.Data)
 	timezone, err := strconv.Atoi(data)
 	if err != nil {
 		return errors.Wrap(err, "can't parse timezone")
@@ -201,7 +201,7 @@ func AccountSetting(update *botapi.Update) error {
 		return errors.Wrap(err, "can't answer callback query")
 	}
 
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -245,12 +245,12 @@ func DeleteAccount(update *botapi.Update) (err error) {
 		return errors.Wrap(err, "can't answer callback query")
 	}
 
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
 
-	tag := botutils.GetCallbackQueryOriginText(callback.Data)
+	tag := botutils.CallbackHelper.GetText(callback.Data)
 	sendFailureMessage := true
 	defer func() {
 		if err != nil && sendFailureMessage {
@@ -278,7 +278,7 @@ func DeleteAccount(update *botapi.Update) (err error) {
 func AddAccount(update *botapi.Update) error {
 	callback := update.CallbackQuery
 	user := callback.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
@@ -318,7 +318,7 @@ func AddAccount(update *botapi.Update) error {
 func InputRedirectLink(update *botapi.Update) (err error) {
 	text := update.Message.Text
 	user := update.Message.From
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime runtime")
 	}
@@ -410,7 +410,7 @@ func InputRedirectLink(update *botapi.Update) (err error) {
 	}
 
 	// notify job scheduler
-	tryStartJobSchedulers()
+	Scheduler.tryStart()
 
 	texts = getI18nText(runtime.Language, user, NewI18nKey(accountAddSuccessfullyTextKey, account.Tag))
 	editMsg := botapi.NewEditMessageText(update.Message.Chat.ID, respMsg.MessageID, texts[0])

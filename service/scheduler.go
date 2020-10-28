@@ -15,30 +15,25 @@ type Repo interface {
 	Update() error
 }
 
-func tryStartJobSchedulers() {
+type scheduler struct{}
+
+var Scheduler scheduler
+
+func (s scheduler)tryStart() {
 	if !salmonScheduleRepo.HasInit() {
 		log.Info("start salmon job scheduler")
-		startJobScheduler(salmonScheduleRepo)
+		s.start(salmonScheduleRepo)
 	}
 	if !stageScheduleRepo.HasInit() {
 		log.Info("start stage job scheduler")
-		startJobScheduler(stageScheduleRepo)
+		s.start(stageScheduleRepo)
 	}
 }
 
-func startJobScheduler(repo Repo) {
+func (scheduler)start(repo Repo) {
 	delay := time.Duration(updateDelayInSecond) * time.Second
 	name := repo.RepoName()
 	go func() {
-		////first attempt
-		//err := repo.Update()
-		//if err != nil {
-		//	log.Error(name+": can't update", zap.Error(err))
-		//	return
-		//}
-		//// update periodically
-		//nextUpdateTime := getSplatoonNextUpdateTime(time.Now()).Add(delay)
-		//log.Info(name+": update successfully. start periodical task.", zap.Time("next_update_time", nextUpdateTime))
 		nextUpdateTime := time.Now()
 		for {
 			task := time.After(time.Until(nextUpdateTime))
@@ -49,7 +44,7 @@ func startJobScheduler(repo Repo) {
 					nextUpdateTime = time.Now().Add(updateFailureRetryInterval)
 					log.Error(name+": can't update", zap.Time("next_update_time", nextUpdateTime), zap.Error(err))
 				} else {
-					nextUpdateTime = getSplatoonNextUpdateTime(time.Now()).Add(delay)
+					nextUpdateTime = TimeHelper. getSplatoonNextUpdateTime(time.Now()).Add(delay)
 					log.Info(name+": update successfully. set next update task", zap.Time("next_update_time", nextUpdateTime))
 				}
 			}
@@ -63,7 +58,11 @@ type Dumping interface {
 	Save() error
 }
 
-func marshalToFile(fileName string, obj interface{}) error {
+type dumpingHelper struct{}
+
+var DumpingHelper dumpingHelper
+
+func (dumpingHelper)marshalToFile(fileName string, obj interface{}) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
 		return errors.Wrap(err, "can't marshal object")
@@ -76,7 +75,7 @@ func marshalToFile(fileName string, obj interface{}) error {
 	return nil
 }
 
-func unmarshalFromFile(fileName string, obj interface{}) error {
+func (dumpingHelper)unmarshalFromFile(fileName string, obj interface{}) error {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return errors.Wrap(err, "can't read object to file:"+fileName)

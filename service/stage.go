@@ -34,7 +34,7 @@ func NewStageDumpling() *StageDumpling {
 }
 
 func (d *StageDumpling) Save() error {
-	err := marshalToFile(d.stageFileName, d.stages)
+	err := DumpingHelper.marshalToFile(d.stageFileName, d.stages)
 	if err != nil {
 		return errors.Wrap(err, "can't save stage")
 	}
@@ -43,7 +43,7 @@ func (d *StageDumpling) Save() error {
 
 func (d *StageDumpling) Load() error {
 	if _, err := os.Stat(d.stageFileName); err == nil {
-		if err := unmarshalFromFile(d.stageFileName, &d.stages); err != nil {
+		if err := DumpingHelper.unmarshalFromFile(d.stageFileName, &d.stages); err != nil {
 			return errors.Wrap(err, "can't load stage stage")
 		}
 	} else {
@@ -134,7 +134,7 @@ func (repo *StageScheduleRepo) updateByUid(uid int64) error {
 	wrapper := func(iksm string, timezone int, acceptLang string, _ ...interface{}) (interface{}, error) {
 		return nintendo.GetStageSchedules(iksm, timezone, acceptLang)
 	}
-	result, err := fetchResourceWithUpdate(uid, wrapper)
+	result, err := FetchResourceWithUpdate(uid, wrapper)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -228,7 +228,7 @@ func (repo *StageScheduleRepo) wrapSchedules(stageSchedules *nintendo.StageSched
 	for _, stage := range leagueNewStages {
 		urls = append(urls, stage.StageA.Image, stage.StageB.Image)
 	}
-	imgs, err := downloadImages(urls)
+	imgs, err := ImageHelper.downloadImages(urls)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func (repo *StageScheduleRepo) wrapSchedules(stageSchedules *nintendo.StageSched
 		concatImgs = append(concatImgs, img)
 		concatImgNames = append(concatImgNames, "league_"+strconv.FormatInt(stageSchedules.League[i/2].StartTime, 10)+"_"+now)
 	}
-	ids, err := uploadImages(concatImgs, concatImgNames)
+	ids, err := ImageHelper.uploadImages(concatImgs, concatImgNames)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't upload images")
 	}
@@ -430,7 +430,7 @@ func NewBetweenHourSecondaryFilter(begin string, end string, offset int) TimeSec
 	}
 
 	now := time.Now()
-	userCurrentHour := getLocalTime(now.Unix(), offset).Hour()
+	userCurrentHour := TimeHelper.getLocalTime(now.Unix(), offset).Hour()
 	beginHourOffset := expectedBeginHour - userCurrentHour
 	endHourOffset := expectedEndHour - userCurrentHour
 	if beginHourOffset < 0 {
@@ -453,25 +453,34 @@ func NewNextNSecondaryFilter(text string) TimeSecondaryFilter {
 		n = 1
 	}
 	now := time.Now()
-	beginTime := getSplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(-2)).Unix()
-	endTime := getSplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(n*2-2)).Unix()
+	beginTime := TimeHelper.getSplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(-2)).Unix()
+	endTime := TimeHelper.getSplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(n*2-2)).Unix()
 	return TimeSecondaryFilter{begin: beginTime, end: endTime}
 }
 
-var primaryFilterRegExp = regexp.MustCompile(`^(?P<primary>[lgrLGR]+)$`)
-var ruleSecondaryFilterRegExp = regexp.MustCompile(`^(?P<primary>[czrtCZRT]+)$`)
-var nextNSecondFilterRegExp = regexp.MustCompile(`(?P<n>^\d+$)`)
-var betweenHourSecondFilterRegExp = regexp.MustCompile(`^[bB](?P<begin>\d+)-(?P<end>\d+)$`)
+type stageScheduleHelper struct {
+	primaryFilterRegExp           *regexp.Regexp
+	ruleSecondaryFilterRegExp     *regexp.Regexp
+	nextNSecondFilterRegExp       *regexp.Regexp
+	betweenHourSecondFilterRegExp *regexp.Regexp
+}
+
+var StageScheduleHelper = stageScheduleHelper{
+	primaryFilterRegExp:           regexp.MustCompile(`^(?P<primary>[lgrLGR]+)$`),
+	ruleSecondaryFilterRegExp:     regexp.MustCompile(`^(?P<primary>[czrtCZRT]+)$`),
+	nextNSecondFilterRegExp:       regexp.MustCompile(`(?P<n>^\d+$)`),
+	betweenHourSecondFilterRegExp: regexp.MustCompile(`^[bB](?P<begin>\d+)-(?P<end>\d+)$`),
+}
 
 func NewSecondaryFilter(text string, offset int) (SecondaryFilter, error) {
 	text = strings.ToLower(text)
-	if args := ruleSecondaryFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
+	if args := StageScheduleHelper.ruleSecondaryFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
 		return NewRuleSecondaryFilter(args[1]), nil
 	}
-	if args := nextNSecondFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
+	if args := StageScheduleHelper.nextNSecondFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
 		return NewNextNSecondaryFilter(args[1]), nil
 	}
-	if args := betweenHourSecondFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
+	if args := StageScheduleHelper.betweenHourSecondFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
 		return NewBetweenHourSecondaryFilter(args[1], args[2], offset), nil
 	}
 	return nil, errors.Errorf("unknown supported filter format")
@@ -484,7 +493,7 @@ func QueryStageSchedules(update *botapi.Update) error {
 	if schedules == nil {
 		return errors.Errorf("no cached schedules")
 	}
-	runtime, err := fetchRuntime(int64(user.ID))
+	runtime, err := FetchRuntime(int64(user.ID))
 	if err != nil {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
@@ -494,9 +503,9 @@ func QueryStageSchedules(update *botapi.Update) error {
 	if argsText != "" {
 		args = strings.Split(argsText, " ")
 	}
-	if len(primaryFilterRegExp.FindStringSubmatch(args[0])) == 0 {
+	if len(StageScheduleHelper.primaryFilterRegExp.FindStringSubmatch(args[0])) == 0 {
 		primaryFilterArg := "lgr"
-		idx := firstIndexOfSecondaryFilterParam(args[0])
+		idx := StageScheduleHelper.firstIndexOfSecondaryFilterParam(args[0])
 		if idx > 0 {
 			primaryFilterArg = args[0][:idx]
 			args[0] = args[0][idx:]
@@ -505,7 +514,7 @@ func QueryStageSchedules(update *botapi.Update) error {
 	}
 	primaryFilter, err := NewPrimaryFilter(args[0])
 	if err != nil {
-		msg := newFilterErrorMessage(update.Message.Chat.ID, runtime, user)
+		msg := StageScheduleHelper.newFilterErrorMessage(update.Message.Chat.ID, runtime, user)
 		_ = sendWithRetry(bot, msg)
 		return err
 	}
@@ -513,7 +522,7 @@ func QueryStageSchedules(update *botapi.Update) error {
 	for _, arg := range args[1:] {
 		f, err := NewSecondaryFilter(arg, runtime.Timezone)
 		if err != nil {
-			msg := newFilterErrorMessage(update.Message.Chat.ID, runtime, user)
+			msg := StageScheduleHelper.newFilterErrorMessage(update.Message.Chat.ID, runtime, user)
 			_ = sendWithRetry(bot, msg)
 			return err
 		}
@@ -525,14 +534,14 @@ func QueryStageSchedules(update *botapi.Update) error {
 
 	stages := primaryFilter.Filter(schedules, secondaryFilters, proposedStageNumber)
 	if len(stages) >= proposedStageNumber {
-		msg := newNumberWarningMessage(update.Message.Chat.ID, runtime, user)
+		msg := StageScheduleHelper.newNumberWarningMessage(update.Message.Chat.ID, runtime, user)
 		err = sendWithRetry(bot, msg)
 		if err != nil {
 			return err
 		}
 	}
 	for i := len(stages) - 1; i >= 0; i-- {
-		msg := formatStage(stages[i], update.Message.Chat.ID, runtime, user)
+		msg := StageScheduleHelper.formatStage(stages[i], update.Message.Chat.ID, runtime, user)
 		err = sendWithRetry(bot, msg)
 		if err != nil {
 			return err
@@ -541,7 +550,7 @@ func QueryStageSchedules(update *botapi.Update) error {
 	return nil
 }
 
-func firstIndexOfSecondaryFilterParam(text string) int {
+func (stageScheduleHelper)firstIndexOfSecondaryFilterParam(text string) int {
 	for i, c := range text {
 		if c != 'l' && c != 'r' && c != 'g' {
 			return i
@@ -550,11 +559,11 @@ func firstIndexOfSecondaryFilterParam(text string) int {
 	return len(text)
 }
 
-func formatStage(stage StageScheduleWrapper, chatID int64, runtime *db.Runtime, user *botapi.User) botapi.Chattable {
+func (stageScheduleHelper)formatStage(stage StageScheduleWrapper, chatID int64, runtime *db.Runtime, user *botapi.User) botapi.Chattable {
 	msg := botapi.NewPhotoShare(chatID, stage.FileID)
 	timeTemplate := getI18nText(runtime.Language, user, NewI18nKey(TimeTemplateTextKey))[0]
-	startTime := getLocalTime(stage.Schedule.StartTime, runtime.Timezone).Format(timeTemplate)
-	endTime := getLocalTime(stage.Schedule.EndTime, runtime.Timezone).Format(timeTemplate)
+	startTime := TimeHelper.getLocalTime(stage.Schedule.StartTime, runtime.Timezone).Format(timeTemplate)
+	endTime := TimeHelper.getLocalTime(stage.Schedule.EndTime, runtime.Timezone).Format(timeTemplate)
 	texts := getI18nText(runtime.Language, user, NewI18nKey(stageSchedulesImageCaptionTextKey,
 		startTime, endTime,
 		stage.Schedule.GameMode.Name, stage.Schedule.Rule.Name,
@@ -567,14 +576,14 @@ func formatStage(stage StageScheduleWrapper, chatID int64, runtime *db.Runtime, 
 	return msg
 }
 
-func newFilterErrorMessage(chatID int64, runtime *db.Runtime, user *botapi.User) botapi.Chattable {
+func (stageScheduleHelper)newFilterErrorMessage(chatID int64, runtime *db.Runtime, user *botapi.User) botapi.Chattable {
 	texts := getI18nText(runtime.Language, user, NewI18nKey(stageSchedulesFilterErrorTextKey))
 	msg := botapi.NewMessage(chatID, texts[0])
 	msg.ParseMode = "Markdown"
 	return msg
 }
 
-func newNumberWarningMessage(chatID int64, runtime *db.Runtime, user *botapi.User) botapi.Chattable {
+func (stageScheduleHelper)newNumberWarningMessage(chatID int64, runtime *db.Runtime, user *botapi.User) botapi.Chattable {
 	texts := getI18nText(runtime.Language, user, NewI18nKey(stageSchedulesNumberWarningTextKey))
 	msg := botapi.NewMessage(chatID, texts[0])
 	msg.ParseMode = "Markdown"
