@@ -79,7 +79,7 @@ func (ur *UpdateRouter) Route(update *botapi.Update) *DescribedHandler {
 	}
 	if update.CallbackQuery != nil {
 		callbackQuery := update.CallbackQuery
-		prefix := GetCallbackQueryPrefix(callbackQuery.Data)
+		prefix := CallbackHelper.GetPrefix(callbackQuery.Data)
 		handler, in := ur.callbackQueryHandlers[prefix]
 		if !in {
 			log.Warn("prefix not existed", zap.String("prefix", prefix))
@@ -91,11 +91,13 @@ func (ur *UpdateRouter) Route(update *botapi.Update) *DescribedHandler {
 	return nil
 }
 
-func SetCallbackQueryPrefix(prefix, text string) string {
+type callbackHelper struct {}
+var CallbackHelper callbackHelper
+func (callbackHelper)SetPrefix(prefix, text string) string {
 	return prefix + ":" + text
 }
 
-func GetCallbackQueryPrefix(data string) string {
+func (callbackHelper)GetPrefix(data string) string {
 	index := strings.Index(data, ":")
 	if index == -1 {
 		return ""
@@ -103,7 +105,7 @@ func GetCallbackQueryPrefix(data string) string {
 	return data[:index]
 }
 
-func GetCallbackQueryOriginText(data string) string {
+func (callbackHelper)GetText(data string) string {
 	index := strings.Index(data, ":")
 	if index == -1 {
 		return data

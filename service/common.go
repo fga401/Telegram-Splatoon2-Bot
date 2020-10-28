@@ -84,10 +84,10 @@ func InitService(b *botapi.BotAPI) {
 		panic(errors.Wrap(err, "can't init NewStageScheduleRepo"))
 	}
 
-	tryStartJobSchedulers()
+	Scheduler.tryStart()
 }
 
-func updateCookies(runtime *db.Runtime) (string, error) {
+func UpdateCookies(runtime *db.Runtime) (string, error) {
 	// fetch
 	var iksm string
 	err := retry(func() error {
@@ -111,7 +111,7 @@ func updateCookies(runtime *db.Runtime) (string, error) {
 	return iksm, nil
 }
 
-func fetchRuntime(uid int64) (*db.Runtime, error) {
+func FetchRuntime(uid int64) (*db.Runtime, error) {
 	runtime, err := Cache.GetRuntime(uid)
 	// found in cache
 	if err == nil && runtime != nil {
@@ -180,23 +180,24 @@ func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 	return &respMsg, err
 }
 
-var updateInterval = int64(2 * time.Hour.Seconds())
+type timeHelper struct {updateInterval int64}
+var TimeHelper = timeHelper{updateInterval: int64(2 * time.Hour.Seconds())}
 
-func getSplatoonNextUpdateTime(t time.Time) time.Time {
+func (helper timeHelper)getSplatoonNextUpdateTime(t time.Time) time.Time {
 	nowTimestamp := t.Unix()
-	nextTimestamp := (nowTimestamp/updateInterval + 1) * updateInterval
+	nextTimestamp := (nowTimestamp/helper.updateInterval + 1) * helper.updateInterval
 	return time.Unix(nextTimestamp, 0)
 }
 
-func getLocalTime(timestamp int64, offsetInMinute int) time.Time {
+func (timeHelper)getLocalTime(timestamp int64, offsetInMinute int) time.Time {
 	return time.Unix(timestamp, 0).In(time.FixedZone("", offsetInMinute * 60))
 }
 
 // func(iksm string, timezone int, acceptLang string, args ...interface{}) (result interface{}, error)
 type Retriever func(string, int, string, ...interface{}) (interface{}, error)
 
-func fetchResourceWithUpdate(uid int64, retriever Retriever, args ...interface{}) (interface{}, error) {
-	runtime, err := fetchRuntime(uid)
+func FetchResourceWithUpdate(uid int64, retriever Retriever, args ...interface{}) (interface{}, error) {
+	runtime, err := FetchRuntime(uid)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't fetch runtime")
 	}
@@ -210,7 +211,7 @@ func fetchResourceWithUpdate(uid int64, retriever Retriever, args ...interface{}
 	if errors.Is(err, &nintendo.ExpirationError{}) {
 		// todo: add metric
 		var iksm string
-		iksm, err = updateCookies(runtime)
+		iksm, err = UpdateCookies(runtime)
 		if err != nil {
 			return nil, errors.Wrap(err, "cookie expired and can't update it")
 		}

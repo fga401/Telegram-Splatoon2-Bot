@@ -79,11 +79,11 @@ func prepareTest() {
 }
 
 func TestGetSplatoonNextUpdateTime(t *testing.T) {
-	ret := getSplatoonNextUpdateTime(time.Now())
+	ret := TimeHelper.getSplatoonNextUpdateTime(time.Now())
 	fmt.Println(ret)
-	ret = getSplatoonNextUpdateTime(time.Now().Add(time.Hour))
+	ret = TimeHelper.getSplatoonNextUpdateTime(time.Now().Add(time.Hour))
 	fmt.Println(ret)
-	ret = getSplatoonNextUpdateTime(getSplatoonNextUpdateTime(time.Now()))
+	ret = TimeHelper.getSplatoonNextUpdateTime(TimeHelper.getSplatoonNextUpdateTime(time.Now()))
 	fmt.Println(ret)
 	assert.Nil(t,nil)
 }

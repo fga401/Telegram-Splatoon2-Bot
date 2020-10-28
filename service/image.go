@@ -40,7 +40,16 @@ func InitImageClient() {
 	}
 }
 
-func downloadImageFromNet(url string) (image.Image, error) {
+type imageHelperPrivate struct {}
+type imageHelper struct {
+	privateMethod imageHelperPrivate
+}
+
+var (
+	ImageHelper imageHelper
+)
+
+func (imageHelperPrivate)downloadImageFromNet(url string) (image.Image, error) {
 	var resp *http.Response
 	err := retry(func() error {
 		var err error
@@ -61,7 +70,7 @@ func downloadImageFromNet(url string) (image.Image, error) {
 	return img, nil
 }
 
-func downloadImageFromFile(url string) (image.Image, error) {
+func (imageHelperPrivate)downloadImageFromFile(url string) (image.Image, error) {
 	filePath := url[7:]
 	imgFile, err := os.Open(filePath)
 	if err != nil {
@@ -78,26 +87,26 @@ func downloadImageFromFile(url string) (image.Image, error) {
 	return img, nil
 }
 
-func downloadImage(url string) (image.Image, error) {
+func (helper imageHelper)downloadImage(url string) (image.Image, error) {
 	switch {
 	case strings.HasPrefix(url, "file://"):
-		return downloadImageFromFile(url)
+		return helper.privateMethod.downloadImageFromFile(url)
 	case strings.HasPrefix(url, "https://"):
-		return downloadImageFromNet(url)
+		return helper.privateMethod.downloadImageFromNet(url)
 	case strings.HasPrefix(url, "http://"):
-		return downloadImageFromNet(url)
+		return helper.privateMethod.downloadImageFromNet(url)
 	default:
 		return nil, errors.Errorf("")
 	}
 
 }
 
-func downloadImages(urls []string) ([]image.Image, error) {
+func (helper imageHelper)downloadImages(urls []string) ([]image.Image, error) {
 	imgs := make([]image.Image, len(urls))
 	errChan := make(chan error, len(urls))
 	for i, url := range urls {
 		go func(idx int, u string) {
-			img, err := downloadImage(u)
+			img, err := helper.downloadImage(u)
 			imgs[idx] = img
 			errChan <- err
 		}(i, url)
@@ -111,7 +120,7 @@ func downloadImages(urls []string) ([]image.Image, error) {
 	return imgs, nil
 }
 
-func uploadImage(img image.Image, name string) (string, error) {
+func (imageHelper)uploadImage(img image.Image, name string) (string, error) {
 	buf := bytes.NewBuffer(nil)
 	err := png.Encode(buf, img)
 	if err != nil {
@@ -133,7 +142,7 @@ type FileItem struct {
 	Content  []byte //[]byte
 }
 
-func zipImageAndName(imgs []image.Image, names []string) ([]interface{}, error) {
+func (imageHelperPrivate)zipImageAndName(imgs []image.Image, names []string) ([]interface{}, error) {
 	ret := make([]interface{}, len(imgs))
 	for i := 0; i < len(imgs); i++ {
 		buf := bytes.NewBuffer(nil)
@@ -149,7 +158,7 @@ func zipImageAndName(imgs []image.Image, names []string) ([]interface{}, error) 
 	return ret, nil
 }
 
-func uploadImages(imgs []image.Image, names []string) ([]string, error) {
+func (helper imageHelper)uploadImages(imgs []image.Image, names []string) ([]string, error) {
 	if len(imgs) != len(names) {
 		return nil, errors.Errorf("numbers of image and name are misatched")
 	}
@@ -157,7 +166,7 @@ func uploadImages(imgs []image.Image, names []string) ([]string, error) {
 		return []string{}, nil
 	}
 	if len(imgs) == 1 {
-		id, err := uploadImage(imgs[0], names[0])
+		id, err := helper.uploadImage(imgs[0], names[0])
 		return []string{id}, err
 	}
 	ids := make([]string, len(imgs))
@@ -165,12 +174,12 @@ func uploadImages(imgs []image.Image, names []string) ([]string, error) {
 		sup := MinInt(i+10, len(imgs))
 		if sup-i == 1 {
 			var err error
-			ids[i], err = uploadImage(imgs[i], names[i])
+			ids[i], err = helper.uploadImage(imgs[i], names[i])
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			input, err := zipImageAndName(imgs[i:sup], names[i:sup])
+			input, err := helper.privateMethod.zipImageAndName(imgs[i:sup], names[i:sup])
 			if err != nil {
 				return nil, err
 			}
