@@ -99,8 +99,8 @@ func NewSalmonScheduleRepo(admins *SyncUserSet) (*SalmonScheduleRepo, error) {
 		return nil, errors.Wrap(err, "can't load salmon dumping files")
 	}
 	return &SalmonScheduleRepo{
-		admins:         admins,
-		salmonDumping:  salmonDumping,
+		admins:        admins,
+		salmonDumping: salmonDumping,
 	}, nil
 }
 
@@ -142,9 +142,15 @@ func (repo *SalmonScheduleRepo) updateByUid(uid int64) error {
 		return errors.Wrap(err, "can't fetch runtime")
 	}
 	schedules := result.(*nintendo.SalmonSchedules)
-
 	repo.sortSchedules(schedules)
 	repo.populateFields(schedules)
+
+	currentSchedules := repo.schedules
+	if currentSchedules != nil && currentSchedules.Details[0].StartTime == schedules.Details[0].StartTime {
+		log.Info("no new salmon schedules. skip update.")
+		return nil
+	}
+
 	err = repo.salmonDumping.Update(schedules)
 	if err != nil {
 		log.Warn("can't update salmon dumping file", zap.Error(err))
@@ -211,7 +217,7 @@ func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.
 		for _, weapon := range detail.Weapons {
 			if weapon.Weapon != nil {
 				urls = append(urls, weapon.Weapon.Image)
-			} else if weapon.SpecialWeapon != nil{
+			} else if weapon.SpecialWeapon != nil {
 				urls = append(urls, weapon.SpecialWeapon.Image)
 			} else {
 				return errors.Errorf("no image found")
@@ -227,7 +233,7 @@ func (repo *SalmonScheduleRepo) uploadSchedulesImages(salmonSchedules *nintendo.
 	laterImg := concatSalmonScheduleImage(imgs[5:10])
 	ids, err := ImageHelper.uploadImages(
 		[]image.Image{furtherImg, laterImg},
-		[]string{"further_salmon_schedule_"+now, "later_salmon_schedule_"+now})
+		[]string{"further_salmon_schedule_" + now, "later_salmon_schedule_" + now})
 	if err != nil {
 		return errors.Wrap(err, "can't upload images")
 	}
@@ -269,7 +275,7 @@ func QuerySalmonSchedules(update *botapi.Update) error {
 		NewI18nKey(salmonSchedulesNextTextKey),
 		NewI18nKey(textKey, hour, minute),
 	}
-	future := schedules.Schedules[:len(schedules.Schedules) - 2]
+	future := schedules.Schedules[:len(schedules.Schedules)-2]
 	for _, s := range future {
 		startTime := TimeHelper.getLocalTime(s.StartTime, runtime.Timezone).Format(timeTemplate)
 		endTime := TimeHelper.getLocalTime(s.EndTime, runtime.Timezone).Format(timeTemplate)
