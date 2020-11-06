@@ -40,10 +40,12 @@
     "updateFailureRetryInterval": "1m",
     "updateDelayInSecond": 5,
     "salmon":{
+      "disable": true,
       "stageFileName": "./data/salmon_stages.json",
       "weaponFileName": "./data/salmon_weapons.json"
     },
     "stage": {
+      "disable": true,
       "stageFileName": "./data/stages.json",
       "proposedNumber": 36
     }
