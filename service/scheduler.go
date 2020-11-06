@@ -19,18 +19,18 @@ type scheduler struct{}
 
 var Scheduler scheduler
 
-func (s scheduler)tryStart() {
-	if !salmonScheduleRepo.HasInit() {
+func (s scheduler) tryStart() {
+	if salmonScheduleRepo != nil && !salmonScheduleRepo.HasInit() {
 		log.Info("start salmon job scheduler")
 		s.start(salmonScheduleRepo)
 	}
-	if !stageScheduleRepo.HasInit() {
+	if stageScheduleRepo != nil && !stageScheduleRepo.HasInit() {
 		log.Info("start stage job scheduler")
 		s.start(stageScheduleRepo)
 	}
 }
 
-func (scheduler)start(repo Repo) {
+func (scheduler) start(repo Repo) {
 	delay := time.Duration(updateDelayInSecond) * time.Second
 	name := repo.RepoName()
 	go func() {
@@ -44,7 +44,7 @@ func (scheduler)start(repo Repo) {
 					nextUpdateTime = time.Now().Add(updateFailureRetryInterval)
 					log.Error(name+": can't update", zap.Time("next_update_time", nextUpdateTime), zap.Error(err))
 				} else {
-					nextUpdateTime = TimeHelper. getSplatoonNextUpdateTime(time.Now()).Add(delay)
+					nextUpdateTime = TimeHelper.getSplatoonNextUpdateTime(time.Now()).Add(delay)
 					log.Info(name+": update successfully. set next update task", zap.Time("next_update_time", nextUpdateTime))
 				}
 			}
@@ -62,7 +62,7 @@ type dumpingHelper struct{}
 
 var DumpingHelper dumpingHelper
 
-func (dumpingHelper)marshalToFile(fileName string, obj interface{}) error {
+func (dumpingHelper) marshalToFile(fileName string, obj interface{}) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
 		return errors.Wrap(err, "can't marshal object")
@@ -75,7 +75,7 @@ func (dumpingHelper)marshalToFile(fileName string, obj interface{}) error {
 	return nil
 }
 
-func (dumpingHelper)unmarshalFromFile(fileName string, obj interface{}) error {
+func (dumpingHelper) unmarshalFromFile(fileName string, obj interface{}) error {
 	data, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return errors.Wrap(err, "can't read object to file:"+fileName)

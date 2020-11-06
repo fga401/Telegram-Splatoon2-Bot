@@ -73,17 +73,20 @@ func InitService(b *botapi.BotAPI) {
 	loadUsers()
 
 	// salmon
-	salmonScheduleRepo, err = NewSalmonScheduleRepo(admins)
-	if err != nil {
-		panic(errors.Wrap(err, "can't init NewSalmonScheduleRepo"))
+	if !viper.GetBool("service.+salmon.disable") {
+		salmonScheduleRepo, err = NewSalmonScheduleRepo(admins)
+		if err != nil {
+			panic(errors.Wrap(err, "can't init NewSalmonScheduleRepo"))
+		}
 	}
 
 	// stage
-	stageScheduleRepo, err = NewStageScheduleRepo(admins)
-	if err != nil {
-		panic(errors.Wrap(err, "can't init NewStageScheduleRepo"))
+	if !viper.GetBool("service.stage.disable") {
+		stageScheduleRepo, err = NewStageScheduleRepo(admins)
+		if err != nil {
+			panic(errors.Wrap(err, "can't init NewStageScheduleRepo"))
+		}
 	}
-
 	Scheduler.tryStart()
 }
 
@@ -180,17 +183,18 @@ func sendWithRetryAndResponse(bot *botapi.BotAPI, msg botapi.Chattable) (*botapi
 	return &respMsg, err
 }
 
-type timeHelper struct {updateInterval int64}
+type timeHelper struct{ updateInterval int64 }
+
 var TimeHelper = timeHelper{updateInterval: int64(2 * time.Hour.Seconds())}
 
-func (helper timeHelper)getSplatoonNextUpdateTime(t time.Time) time.Time {
+func (helper timeHelper) getSplatoonNextUpdateTime(t time.Time) time.Time {
 	nowTimestamp := t.Unix()
 	nextTimestamp := (nowTimestamp/helper.updateInterval + 1) * helper.updateInterval
 	return time.Unix(nextTimestamp, 0)
 }
 
-func (timeHelper)getLocalTime(timestamp int64, offsetInMinute int) time.Time {
-	return time.Unix(timestamp, 0).In(time.FixedZone("", offsetInMinute * 60))
+func (timeHelper) getLocalTime(timestamp int64, offsetInMinute int) time.Time {
+	return time.Unix(timestamp, 0).In(time.FixedZone("", offsetInMinute*60))
 }
 
 // func(iksm string, timezone int, acceptLang string, args ...interface{}) (result interface{}, error)
