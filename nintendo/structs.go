@@ -148,6 +148,7 @@ var BattleType = struct {
 type BattleResultType string
 type BattleResult interface {
 	GetType() BattleResultType
+	GetBase() BaseBattleResult
 }
 type BaseBattleResult struct {
 	BattleNumber string    `json:"battle_number"`
@@ -227,6 +228,18 @@ func (r LeagueBattleResult) GetType() BattleResultType {
 func (r FesBattleResult) GetType() BattleResultType {
 	return BattleType.Festival
 }
+func (r RegularBattleResult) GetBase() BaseBattleResult {
+	return r.BaseBattleResult
+}
+func (r GachiBattleResult) GetBase() BaseBattleResult {
+	return r.BaseBattleResult
+}
+func (r LeagueBattleResult) GetBase() BaseBattleResult {
+	return r.BaseBattleResult
+}
+func (r FesBattleResult) GetBase() BaseBattleResult {
+	return r.BaseBattleResult
+}
 // Deprecated
 type BattleResult_ struct {
 	BattleNumber string    `json:"battle_number"`
@@ -287,6 +300,7 @@ type BattleResult_ struct {
 	FesPoint                *float32   `json:"fes_point"`
 	ContributionPointTotal  *float32   `json:"contribution_point_total"`
 }
+type BattleResultSlice []BattleResult
 type BattleResults struct {
 	ID      string         `json:"unique_id"`
 	Summary *BattleSummary `json:"summary"`
