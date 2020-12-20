@@ -1,4 +1,4 @@
-# [WIP] Splatoon2 Telgram Bot
+# [WIP] [Refactoring] Splatoon2 Telgram Bot
 A telegram bot copying all functions in Nintendo app but running on telegram.
 
 The Bot in Version [0.2.0](https://github.com/fga401/Telegram-Splatoon2-Bot/releases/tag/0.2.0) has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
