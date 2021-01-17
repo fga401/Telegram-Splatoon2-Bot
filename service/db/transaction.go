@@ -10,7 +10,7 @@ type TransactionImpl struct {
 }
 
 func (impl *TransactionImpl) InsertUserAndRuntime(user *User, runtime *Runtime) (err error) {
-	return transact(impl.db, func (tx *sqlx.Tx) error {
+	return transact(impl.db, func(tx *sqlx.Tx) error {
 		if _, err = tx.NamedExec(userNamedStmts[userNamedStmtInsert].stmt, user); err != nil {
 			return errors.Wrap(err, "can't insert user")
 		}
@@ -22,7 +22,7 @@ func (impl *TransactionImpl) InsertUserAndRuntime(user *User, runtime *Runtime) 
 }
 
 func (impl *TransactionImpl) AddNewAccount(account *Account) (err error) {
-	return transact(impl.db, func (tx *sqlx.Tx) error {
+	return transact(impl.db, func(tx *sqlx.Tx) error {
 		if _, err = tx.Exec(userStmts[userStmtIncreaseAccount].stmt, account.Uid); err != nil {
 			return errors.Wrap(err, "can't update user's account number")
 		}
@@ -34,7 +34,7 @@ func (impl *TransactionImpl) AddNewAccount(account *Account) (err error) {
 }
 
 func (impl *TransactionImpl) DeleteAccount(uid int64, tag string) (err error) {
-	return transact(impl.db, func (tx *sqlx.Tx) error {
+	return transact(impl.db, func(tx *sqlx.Tx) error {
 		if _, err = tx.Exec(userStmts[userStmtDecreaseAccount].stmt, uid); err != nil {
 			return errors.Wrap(err, "can't update user's account number")
 		}

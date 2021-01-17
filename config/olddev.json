@@ -1,0 +1,53 @@
+{
+  "nintendo": {
+    "useProxy": false
+  },
+  "bot": {
+    "useProxy": true,
+    "worker": 16,
+    "debug": true
+  },
+  "log": {
+    "level": "debug"
+  },
+  "db": {
+    "url": "./data/sqlite3.db",
+    "maxIdleConns": 3,
+    "maxOpenConns": 0
+  },
+  "cache": {
+    "fastcache": {
+      "maxBytes": 2147483648
+    },
+    "gocache": {
+      "expiration": "5m",
+      "cleanUp": "10m"
+    }
+  },
+  "account": {
+    "maxAccount": 3,
+    "allowPolling": true
+  },
+  "service": {
+    "language": [
+      "en",
+      "zh-CN",
+      "zh-TW",
+      "ja"
+    ],
+    "callbackQueryCachedSecond": 3,
+    "retryTimes": 3,
+    "updateFailureRetryInterval": "1m",
+    "updateDelayInSecond": 5,
+    "salmon":{
+      "disable": false,
+      "stageFileName": "./data/salmon_stages.json",
+      "weaponFileName": "./data/salmon_weapons.json"
+    },
+    "stage": {
+      "disable": true,
+      "stageFileName": "./data/stages.json",
+      "proposedNumber": 36
+    }
+  }
+}

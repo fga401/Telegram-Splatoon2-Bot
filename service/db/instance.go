@@ -5,7 +5,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"telegram-splatoon2-bot/common/log"
 )
 
 var (
@@ -42,7 +44,7 @@ func (impl *TableImpl) mustPrepare(tableName string) {
 		if v.prepared {
 			impl.preparedNamedStmts[k], err = impl.db.PrepareNamed(v.stmt)
 			if err != nil {
-				panic(errors.Wrap(err, tableName+" prepare named statement failed"))
+				log.Panic(tableName+" prepare named statement failed", zap.Error(err))
 			}
 		}
 	}
@@ -51,7 +53,7 @@ func (impl *TableImpl) mustPrepare(tableName string) {
 		if v.prepared {
 			impl.preparedStmts[k], err = impl.db.Preparex(v.stmt)
 			if err != nil {
-				panic(errors.Wrap(err, tableName+" prepare statement failed"))
+				log.Panic(tableName+" prepare statement failed", zap.Error(err))
 			}
 		}
 	}
@@ -99,7 +101,7 @@ func (impl *TableImpl) get(name stmtName, dest interface{}, args ...interface{})
 	return err
 }
 
-func (impl *TableImpl)sel(name stmtName, dest interface{}, args ...interface{}) error {
+func (impl *TableImpl) sel(name stmtName, dest interface{}, args ...interface{}) error {
 	var err error
 	if impl.stmtsDeclaration[name].prepared {
 		stmt := impl.preparedStmts[name]

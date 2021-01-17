@@ -5,7 +5,7 @@ type Runtime struct {
 	SessionToken string `db:"session_token"`
 	IKSM         string `db:"iksm"`
 	Language     string `db:"language"`
-	Timezone     int    `db:"timezone"`
+	Timezone     int32    `db:"timezone"`
 }
 
 type RuntimeTableImpl struct {

@@ -1,53 +1,46 @@
 {
-  "nintendo": {
-    "useProxy": false
-  },
-  "bot": {
-    "useProxy": true,
-    "worker": 16,
-    "debug": true
-  },
   "log": {
     "level": "debug"
   },
-  "db": {
+  "bot": {
+    "client": {
+      "enableProxy": true,
+      "timeout": "1s"
+    },
+    "retryTimes": 3,
+    "callBackQuery": {
+      "cacheTimeInSecond": 3
+    }
+  },
+  "router": {
+    "mode": "polling",
+    "maxWorker": -1,
+    "polling": {
+      "timeoutInSecond": 60
+    }
+  },
+  "database": {
     "url": "./data/sqlite3.db",
+    "driver": "sqlite3",
     "maxIdleConns": 3,
     "maxOpenConns": 0
   },
-  "cache": {
-    "fastcache": {
-      "maxBytes": 2147483648
-    },
-    "gocache": {
-      "expiration": "5m",
-      "cleanUp": "10m"
+  "fastcache": {
+    "maxBytes": 2147483648
+  },
+  "user": {
+    "accountExpiration": "5m",
+    "permission": {
+      "maxAccount": 3,
+      "allowPolling": true,
+      "timezone": 480,
+      "language": "en"
     }
   },
-  "account": {
-    "maxAccount": 3,
-    "allowPolling": true
-  },
-  "service": {
-    "language": [
-      "en",
-      "zh-CN",
-      "zh-TW",
-      "ja"
-    ],
-    "callbackQueryCachedSecond": 3,
-    "retryTimes": 3,
-    "updateFailureRetryInterval": "1m",
-    "updateDelayInSecond": 5,
-    "salmon":{
-      "disable": true,
-      "stageFileName": "./data/salmon_stages.json",
-      "weaponFileName": "./data/salmon_weapons.json"
-    },
-    "stage": {
-      "disable": true,
-      "stageFileName": "./data/stages.json",
-      "proposedNumber": 36
-    }
-  }
+  "language": [
+    "en",
+    "ja",
+    "zh-CN",
+    "zh-TW"
+  ]
 }

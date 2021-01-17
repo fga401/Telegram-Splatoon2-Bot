@@ -4,11 +4,13 @@ go 1.13
 
 require (
 	github.com/VictoriaMetrics/fastcache v1.5.7
+	github.com/Workiva/go-datastructures v1.0.52
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.12.2
 	github.com/google/uuid v1.1.1
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.6
+	github.com/mailru/easyjson v0.7.6
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/patrickmn/go-cache v2.1.0+incompatible
