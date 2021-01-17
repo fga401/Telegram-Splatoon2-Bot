@@ -1,28 +1,26 @@
-CREATE TABLE account (
-    uid BIGINT NOT NULL,
-    session_token VARCHAR(512) NOT NULL,
-    tag VARCHAR(64) NOT NULL,
-    PRIMARY KEY (uid, tag)
+create table account (
+    uid bigint not null,
+    session_token varchar(512) not null,
+    tag varchar(64) not null,
+    primary key (uid, tag)
 );
 
-CREATE TABLE user (
-    uid BIGINT NOT NULL,
-    user_name VARCHAR(32) NOT NULL,
-    is_block BOOLEAN NOT NULL,
-    max_account TINYINT NOT NULL,
-    n_account TINYINT NOT NULL,
-    is_admin BOOLEAN NOT NULL,
-    allow_polling BOOLEAN NOT NULL,
-    PRIMARY KEY (uid)
+create table user (
+    uid bigint not null primary key,
+    user_name varchar(32) not null,
+    is_block boolean not null,
+    max_account tinyint not null,
+    n_account tinyint not null,
+    is_admin boolean not null,
+    allow_polling boolean not null
 );
 
-CREATE TABLE runtime (
-    uid BIGINT NOT NULL,
-    session_token VARCHAR(512) NOT NULL,
-    iksm CHARACTER(40) NOT NULL,
-    language VARCHAR(10) NOT NULL,
-    timezone INT NOT NULL,
-    PRIMARY KEY (uid)
+create table runtime (
+    uid bigint not null primary key,
+    session_token varchar(512) not null,
+    iksm character(40) not null,
+    language varchar(10) not null,
+    timezone int not null
 );
 
-CREATE INDEX idx_user_name ON user(user_name);
+create index idx_user_name on user(user_name);

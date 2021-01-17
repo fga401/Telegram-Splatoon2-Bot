@@ -1,4 +1,4 @@
-DROP TABLE account;
-DROP TABLE runtime_info;
-DROP TABLE user;
-DROP INDEX idx_user_name;
+drop table account;
+drop table runtime_info;
+drop table user;
+drop index idx_user_name;
