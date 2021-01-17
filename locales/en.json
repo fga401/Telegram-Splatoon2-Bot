@@ -1,0 +1,412 @@
+[
+  {
+    "key": "lang:en",
+    "text": "English"
+  },
+  {
+    "key": "lang:zh-TW",
+    "text": "Chinese(Traditional)"
+  },
+  {
+    "key": "lang:zh-CN",
+    "text": "Chinese(Simplified)"
+  },
+  {
+    "key": "lang:ja",
+    "text": "Japanese"
+  },
+  {
+    "key": "local:-720",
+    "text": "UTC-12 (IDLW)"
+  },
+  {
+    "key": "local:-660",
+    "text": "UTC-11 (SST)"
+  },
+  {
+    "key": "local:-600",
+    "text": "UTC-10 (HST)"
+  },
+  {
+    "key": "local:-570",
+    "text": "UTC-9:30 (MIT)"
+  },
+  {
+    "key": "local:-540",
+    "text": "UTC-9 (AKST)"
+  },
+  {
+    "key": "local:-480",
+    "text": "UTC-8 (PST)"
+  },
+  {
+    "key": "local:-420",
+    "text": "UTC-7 (MST)"
+  },
+  {
+    "key": "local:-360",
+    "text": "UTC-6 (CST)"
+  },
+  {
+    "key": "local:-300",
+    "text": "UTC-5 (EST)"
+  },
+  {
+    "key": "local:-240",
+    "text": "UTC-4 (AST)"
+  },
+  {
+    "key": "local:-210",
+    "text": "UTC-3:30 (NST)"
+  },
+  {
+    "key": "local:-180",
+    "text": "UTC-3 (BRT)"
+  },
+  {
+    "key": "local:-120",
+    "text": "UTC-2 (FNT)"
+  },
+  {
+    "key": "local:-60",
+    "text": "UTC-1 (CVT)"
+  },
+  {
+    "key": "local:0",
+    "text": "UTC (GNT)"
+  },
+  {
+    "key": "local:60",
+    "text": "UTC+1 (CET)"
+  },
+  {
+    "key": "local:120",
+    "text": "UTC+2 (EET)"
+  },
+  {
+    "key": "local:180",
+    "text": "UTC+3 (MSK)"
+  },
+  {
+    "key": "local:210",
+    "text": "UTC+3:30 (IRST)"
+  },
+  {
+    "key": "local:240",
+    "text": "UTC+4 (GST)"
+  },
+  {
+    "key": "local:270",
+    "text": "UTC+4:30 (AFT)"
+  },
+  {
+    "key": "local:300",
+    "text": "UTC+5 (PKT)"
+  },
+  {
+    "key": "local:330",
+    "text": "UTC+5:30 (IST)"
+  },
+  {
+    "key": "local:345",
+    "text": "UTC+5:45 (NPT)"
+  },
+  {
+    "key": "local:360",
+    "text": "UTC+6 (BHT)"
+  },
+  {
+    "key": "local:390",
+    "text": "UTC+6:30 (MMT)"
+  },
+  {
+    "key": "local:420",
+    "text": "UTC+7 (ICT)"
+  },
+  {
+    "key": "local:480",
+    "text": "UTC+8 (CST)"
+  },
+  {
+    "key": "local:540",
+    "text": "UTC+9 (JST)"
+  },
+  {
+    "key": "local:570",
+    "text": "UTC+9:30 (ACST)"
+  },
+  {
+    "key": "local:600",
+    "text": "UTC+10 (AEST)"
+  },
+  {
+    "key": "local:630",
+    "text": "UTC+10:30 (LHST)"
+  },
+  {
+    "key": "local:660",
+    "text": "UTC+11 (VUT)"
+  },
+  {
+    "key": "local:720",
+    "text": "UTC+12 (NZST)"
+  },
+  {
+    "key": "local:765",
+    "text": "UTC+12:45 (CHAST)"
+  },
+  {
+    "key": "local:780",
+    "text": "UTC+13 (PHOT)"
+  },
+  {
+    "key": "local:840",
+    "text": "UTC+14 (LINT)"
+  },
+  {
+    "key": "« Go Back",
+    "text": "« Go Back"
+  },
+  {
+    "key": "Welcome to use this bot.",
+    "text": "Welcome to use this bot."
+  },
+  {
+    "key": "What do you want to change?",
+    "text": "What do you want to change?"
+  },
+  {
+    "key": "Please select your timezone:",
+    "text": "Please select your timezone:"
+  },
+  {
+    "key": "Change your timezone to *%s* successfully!",
+    "text": "Change your timezone to *%s* successfully!"
+  },
+  {
+    "key": "Please select your preferred language:",
+    "text": "Please select your preferred language:"
+  },
+  {
+    "key": "Change your language to *%s* successfully.",
+    "text": "Change your language to *%s* successfully."
+  },
+  {
+    "key": "Switch or manage your accounts:",
+    "text": "Switch or manage your ${accounts}:",
+    "vars": [
+      {
+        "key": "accounts",
+        "plural": {
+          "arg": 1,
+          "format": "%d",
+          "cases": [
+            {
+              "cond": "=1",
+              "text": "Account"
+            },
+            {
+              "cond": "other",
+              "text": "Accounts"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "   %s",
+    "text": "   %s"
+  },
+  {
+    "key": " * %s",
+    "text": " * %s"
+  },
+  {
+    "key": "   Delete %s",
+    "text": " * Delete %s"
+  },
+  {
+    "key": "Manage Accounts",
+    "text": "Manage ${accounts}",
+    "vars": [
+      {
+        "key": "accounts",
+        "plural": {
+          "arg": 1,
+          "format": "%d",
+          "cases": [
+            {
+              "cond": "=1",
+              "text": "Account"
+            },
+            {
+              "cond": "other",
+              "text": "Accounts"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "You have no account now *(%d/%d)*. You can add a new account:",
+    "text": "You have no account now *(%d/%d)*. You can add a new account:"
+  },
+  {
+    "key": "Your number of account reaches the limitation *(%d/%d)*. You can delete some accounts:",
+    "text": "Your number of account reaches the limitation *(%d/%d)*. You can delete some accounts:"
+  },
+  {
+    "key": "Here are your accounts *(%d/%d)*. You can delete some accounts or add a new account:",
+    "text": "Here ${are your accounts} *(%d/%d)*. You can delete ${some accounts} or add a new account:",
+    "vars": [
+      {
+        "key": "are your accounts",
+        "plural": {
+          "arg": 1,
+          "format": "%d",
+          "cases": [
+            {
+              "cond": "=1",
+              "text": "is your account"
+            },
+            {
+              "cond": "other",
+              "text": "are your accounts"
+            }
+          ]
+        }
+      },
+      {
+        "key": "some accounts",
+        "plural": {
+          "arg": 1,
+          "format": "%d",
+          "cases": [
+            {
+              "cond": "=1",
+              "text": "this account"
+            },
+            {
+              "cond": "other",
+              "text": "some accounts"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "key": "Add Account",
+    "text": "Add Account"
+  },
+  {
+    "key": "Switching account...",
+    "text": "Switching account..."
+  },
+  {
+    "key": "Switch your account to *%s* successfully.",
+    "text": "Switch your account to *%s* successfully."
+  },
+  {
+    "key": "Please open the following link and:\n*1.* Login;\n*2.* Right click / Long press the *<Select this account>* button;\n*3.* Copy the link address;\n*4.* Paste and send to this bot.",
+    "text": "Please open the following link and:\n*1.* Login;\n*2.* Right click / Long press the *<Select this account>* button;\n*3.* Copy the link address;\n*4.* Paste and send to this bot."
+  },
+  {
+    "key": "Login Link",
+    "text": "Login Link"
+  },
+  {
+    "key": "Invalid input. Please use /help to get usage.",
+    "text": "Invalid input. Please use /help to get usage."
+  },
+  {
+    "key": "Fetching account from Nintendo server...",
+    "text": "Fetching account from Nintendo server..."
+  },
+  {
+    "key": "Your link is expired. Please use *Add* *Account* to regenerate.",
+    "text": "Your link is expired. Please use *Add* *Account* to regenerate."
+  },
+  {
+    "key": "Your account is already existed. Please use *Add* *Account* to add another one.",
+    "text": "Your account is already existed. Please use *Add* *Account* to add another one."
+  },
+  {
+    "key": "Internal error. Please paste your link and retry.",
+    "text": "Internal error. Please paste your link and retry."
+  },
+  {
+    "key": "Account *%s* has been added.",
+    "text": "Account *%s* has been added."
+  },
+  {
+    "key": "Are you sure to delete this account?\n*%s*",
+    "text": "Are you sure to delete this account?\n*%s*"
+  },
+  {
+    "key": "Yes",
+    "text": "Yes"
+  },
+  {
+    "key": "No",
+    "text": "No"
+  },
+  {
+    "key": "Deleting account....",
+    "text": "Deleting account..."
+  },
+  {
+    "key": "Delete account *%s* successfully.",
+    "text": "Delete account *%s* successfully."
+  },
+  {
+    "key": "01-02 15:04",
+    "text": "01-02 15:04"
+  },
+  {
+    "key": "Salmon schedules have not been ready yet.",
+    "text": "Salmon schedules have not been ready yet."
+  },
+  {
+    "key": "#Future",
+    "text": "#Future"
+  },
+  {
+    "key": "#Next",
+    "text": "#Next"
+  },
+  {
+    "key": "#Open: *Will be over in %dh %dm!*",
+    "text": "#Open: *Will be over in %dh %dm!*"
+  },
+  {
+    "key": "#Soon: *Will start in %dh %dm!*",
+    "text": "#Soon: *Will start in %dh %dm!*"
+  },
+  {
+    "key": "*Time*: `%s ~ %s`\n",
+    "text": "*Time*: `%s ~ %s`\n"
+  },
+  {
+    "key": "*Time*: `%s ~ %s`\n*Stage*: %s\n*Weapons*:\n- %s\n- %s\n- %s\n- %s\n",
+    "text": "*Time*: `%s ~ %s`\n*Stage*: %s\n*Weapons*:\n- %s\n- %s\n- %s\n- %s\n"
+  },
+  {
+    "key": "Stage schedules have not been ready yet.",
+    "text": "Stage schedules have not been ready yet."
+  },
+  {
+    "key": "Wrong arguments. Please use /help\\_stages to get help.",
+    "text": "Wrong arguments. Please use /help\\_stages to get help."
+  },
+  {
+    "key": "_Note: Your query returned too many results. Some of them have been omitted to avoid reaching telegram rate limit._",
+    "text": "_Note: Your query returned too many results. Some of them have been omitted to avoid reaching telegram rate limit._"
+  },
+  {
+    "key": "*Time*:\n`%s ~ %s`\n*Mode*: %s\n*Rule*: %s\n*Stage*:\n- %s\n- %s\n#%s  #%s",
+    "text": "*Time*:\n`%s ~ %s`\n*Mode*: %s\n*Rule*: %s\n*Stage*:\n- %s\n- %s\n#%s  #%s"
+  }
+]
