@@ -1,76 +1,81 @@
 package cleaner
 
 import (
+	"container/heap"
 	"sync"
 	"time"
 
 	"telegram-splatoon2-bot/driver/cache"
-	"telegram-splatoon2-bot/driver/cache/internal/cleaner/heap"
-	"telegram-splatoon2-bot/driver/cache/internal/cleaner/model"
+	"telegram-splatoon2-bot/driver/cache/internal/cleaner/internal"
 )
 
 // Cleaner cleans expired item in time.
 type Cleaner struct {
-	heap  *heap.Heap
-	cache cache.Cache
+	keys   *internal.ExpiredKeys
+	update map[string]time.Time
+	cache  cache.Cache
 
 	mutex    sync.Mutex
-	taskChan chan *model.ExpiredKey
+	taskChan chan internal.ExpiredKey
 	timer    *time.Timer
 }
 
 // New returns a new Cleaner
 func New(cache cache.Cache) *Cleaner {
 	cleaner := &Cleaner{
-		heap:     heap.New(nil),
+		keys:     internal.NewExpiredKeys(),
 		cache:    cache,
 		timer:    time.NewTimer(0),
-		taskChan: make(chan *model.ExpiredKey),
+		taskChan: make(chan internal.ExpiredKey),
 	}
-	go cleaner.clean()
+	heap.Init(cleaner.keys)
+	go cleaner.cleanRoutine()
 	return cleaner
 }
 
 // Set sets the expired key.
 func (c *Cleaner) Set(key []byte, expiration time.Time) {
-	// don't block the caller
-	go func() {
-		c.taskChan <- &model.ExpiredKey{
-			Key:        key,
-			Expiration: expiration,
-		}
-	}()
+	c.taskChan <- internal.ExpiredKey{
+		Key:        key,
+		Expiration: expiration,
+	}
 }
 
-func (c *Cleaner) clean() {
+func (c *Cleaner) cleanRoutine() {
 	// drain the channel
 	// the first value was created by New
 	<-c.timer.C
+	drained := true
 	for {
 		select {
 		case task := <-c.taskChan:
 			c.mutex.Lock()
-			nextElem := c.heap.Peek()
-			if nextElem == nil {
-				// no task in queue, timer is already stopped
-				c.timer.Reset(time.Until(task.Expiration))
-			} else if task.Expiration.Unix() < nextElem.Expiration.Unix() {
-				// timer is running
-				if !c.timer.Stop() {
-					// timer is stopped, drain the channel
-					// the channel must not be empty since read operation only happen on 'case <-c.timer.C'
-					<-c.timer.C
+			if len(c.keys.Slice()) > 0 {
+				pos := c.keys.Pos(task)
+				if pos != internal.EmptyPos {
+					// task already in heap
+					c.keys.Slice()[pos] = task
+					heap.Fix(c.keys, pos)
 				}
-				c.timer.Reset(time.Until(task.Expiration))
 			}
-			c.heap.Push(task)
+			heap.Push(c.keys, task)
+			nextElem := c.keys.Slice()[0]
+			// timer is running
+			if !c.timer.Stop() && !drained {
+				// timer is stopped, drain the channel
+				// the channel must not be empty since read operation only happen on 'case <-c.timer.C'
+				<-c.timer.C
+			}
+			c.timer.Reset(time.Until(nextElem.Expiration))
+			drained = false
 			c.mutex.Unlock()
 		case <-c.timer.C:
 			c.mutex.Lock()
-			elem := c.heap.Pop()
+			drained = true
+			elem := heap.Pop(c.keys).(internal.ExpiredKey)
 			c.cache.Del(elem.Key)
-			nextElem := c.heap.Peek()
-			if nextElem != nil {
+			if len(c.keys.Slice()) > 0 {
+				nextElem := c.keys.Slice()[0]
 				c.timer.Reset(time.Until(nextElem.Expiration))
 			}
 			c.mutex.Unlock()

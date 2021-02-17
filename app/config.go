@@ -2,6 +2,7 @@ package app
 
 import (
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -10,11 +11,19 @@ import (
 	"telegram-splatoon2-bot/common/log"
 	proxyClient "telegram-splatoon2-bot/common/proxyclient"
 	"telegram-splatoon2-bot/driver/cache/fastcache"
+	"telegram-splatoon2-bot/driver/cache/gocache"
 	"telegram-splatoon2-bot/driver/database"
+	imgDownloader "telegram-splatoon2-bot/service/image/downloader"
+	tgImageUploader "telegram-splatoon2-bot/service/image/uploader/telegram"
 	"telegram-splatoon2-bot/service/language"
+	"telegram-splatoon2-bot/service/nintendo"
+	"telegram-splatoon2-bot/service/repository"
+	"telegram-splatoon2-bot/service/repository/salmon"
+	"telegram-splatoon2-bot/service/repository/stage"
 	"telegram-splatoon2-bot/service/timezone"
 	userSvc "telegram-splatoon2-bot/service/user"
 	"telegram-splatoon2-bot/telegram/bot"
+	repositoryCtrl "telegram-splatoon2-bot/telegram/controller/repository"
 	"telegram-splatoon2-bot/telegram/router"
 )
 
@@ -60,9 +69,9 @@ func token() string {
 func botAPiClientConfig() proxyClient.Config {
 	return proxyClient.Config{
 		EnableProxy: viper.GetBool("bot.client.enableProxy"),
-		ProxyUrl:    "",
-		EnableHttp2: false,
-		Timeout: viper.GetDuration("bot.client.timeout"),
+		ProxyUrl:    viper.GetString("bot.client.proxyURL"),
+		EnableHttp2: true,
+		Timeout:     viper.GetDuration("bot.client.timeout"),
 	}
 }
 
@@ -107,10 +116,28 @@ func fastcacheConfig() fastcache.Config {
 	}
 }
 
+func proofKeyCacheConfig() gocache.Config {
+	return gocache.Config{
+		Expiration: viper.GetDuration("gocache.proofKey.expiration"),
+		CleanUp:    viper.GetDuration("gocache.proofKey.cleanUp"),
+	}
+}
+
+func nintendoConfig() nintendo.Config {
+	return nintendo.Config{
+		Timeout:    viper.GetDuration("nintendo.client.timeout"),
+		RetryTimes: viper.GetInt("nintendo.retryTimes"),
+	}
+}
+
 func userSvcConfig() userSvc.Config {
-	adminsConfig := viper.GetIntSlice("admin")
+	adminsConfig := viper.GetStringSlice("admin")
 	adminsID := make([]userSvc.ID, 0, len(adminsConfig))
-	for _, id := range adminsConfig {
+	for _, s := range adminsConfig {
+		id, err := strconv.Atoi(s)
+		if err != nil {
+			log.Panic("can't load admin", zap.Error(err))
+		}
 		adminsID = append(adminsID, userSvc.ID(id))
 	}
 	return userSvc.Config{
@@ -123,11 +150,63 @@ func userSvcConfig() userSvc.Config {
 			IsBlock:      false,
 		},
 		AccountsCacheExpiration: viper.GetDuration("user.accountExpiration"),
+		ProofKeyCacheExpiration: viper.GetDuration("user.proofKeyExpiration"),
 	}
 }
 
 func languageSvcConfig() language.Config {
 	return language.Config{
 		SupportedLanguages: viper.GetStringSlice("language"),
+	}
+}
+
+func tgImgUploaderConfig() tgImageUploader.Config {
+	storeChannelID, err := strconv.ParseInt(viper.GetString("store_channel"), 10, 64)
+	if err != nil {
+		log.Panic("can't parse Image Config: StoreChannelID", zap.Error(err))
+	}
+	return tgImageUploader.Config{
+		StoreChannelID: storeChannelID,
+	}
+}
+
+func imgDownloaderConfig() imgDownloader.Config {
+	return imgDownloader.Config{
+		Proxy: proxyClient.Config{
+			EnableProxy: false,
+			ProxyUrl:    "",
+			EnableHttp2: false,
+			Timeout:     0,
+		},
+		RetryTimes: viper.GetInt("image.retryTimes"),
+	}
+}
+
+func salmonRepositoryConfig() salmon.Config {
+	return salmon.Config{
+		Dumper: salmon.DumperConfig{
+			StageFile:  viper.GetString("repository.salmon.stageFileName"),
+			WeaponFile: viper.GetString("repository.salmon.weaponFileName"),
+		},
+	}
+}
+
+func stageRepositoryConfig() stage.Config {
+	return stage.Config{
+		Dumper: stage.DumperConfig{
+			StageFile: viper.GetString("repository.stage.stageFileName"),
+		},
+	}
+}
+
+func repositoryManagerConfig() repository.ManagerConfig {
+	return repository.ManagerConfig{
+		Delay: viper.GetDuration("repository.delay"),
+	}
+}
+
+func repositoryControllerConfig() repositoryCtrl.Config {
+	return repositoryCtrl.Config{
+		Limit: viper.GetInt("controller.limit"),
 	}
 }

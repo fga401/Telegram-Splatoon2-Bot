@@ -5,21 +5,23 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	log "telegram-splatoon2-bot/common/log"
+	"telegram-splatoon2-bot/service/language"
+	"telegram-splatoon2-bot/service/timezone"
 )
 
 // GetSalmonSchedules returns SalmonSchedules and error.
-// If error is caused by cookies expiration, it will return a ExpirationError
-func GetSalmonSchedules(iksm string, timezone int, acceptLang string) (*SalmonSchedules, error) {
+// If error is caused by cookies expiration, it will return a ErrIKSMExpired
+func (svc *impl) GetSalmonSchedules(iksm string, timezone timezone.Timezone, language language.Language) (SalmonSchedules, error) {
 	reqUrl := "https://app.splatoon2.nintendo.net/api/coop_schedules"
-	respJson, err := getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
+	respJson, err := svc.getSplatoon2RestfulJson(reqUrl, iksm, timezone.Minute(), language.IETF())
 	if isCookiesExpired(respJson) {
-		return nil, &ExpirationError{iksm}
+		return SalmonSchedules{}, &ErrIKSMExpired{iksm}
 	}
 	log.Debug("get salmon schedules", zap.ByteString("salmon_schedules", respJson))
-	salmonSchedules := &SalmonSchedules{}
-	err = json.Unmarshal(respJson, salmonSchedules)
+	salmonSchedules := SalmonSchedules{}
+	err = json.Unmarshal(respJson, &salmonSchedules)
 	if err != nil || salmonSchedules.Details == nil || salmonSchedules.Schedules == nil {
-		return nil, errors.Wrap(err, "can't parse json to SalmonSchedules")
+		return SalmonSchedules{}, errors.Wrap(err, "can't parse json to SalmonSchedules")
 	}
 	return salmonSchedules,  nil
 }

@@ -12,7 +12,9 @@ import (
 	userSvc "telegram-splatoon2-bot/service/user"
 	callbackQueryUtil "telegram-splatoon2-bot/telegram/callbackquery"
 	"telegram-splatoon2-bot/telegram/controller/internal/adapter"
-	messageUtil "telegram-splatoon2-bot/telegram/controller/internal/messageutil"
+	"telegram-splatoon2-bot/telegram/controller/internal/convert"
+	"telegram-splatoon2-bot/telegram/controller/internal/markup"
+	botMessage "telegram-splatoon2-bot/telegram/controller/internal/message"
 )
 
 func (ctrl *settingsCtrl) timezoneSetting(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
@@ -40,12 +42,12 @@ func (ctrl *settingsCtrl) timezoneSelection(update botApi.Update, argManager ada
 	)
 	msg := getTimezoneSelectionMessage(ctrl.languageSvc.Printer(status.Language), update, tz)
 	_, err = ctrl.bot.Send(msg)
-	return err
+	return convert.CallbackQueryToCommand(ctrl.Setting)(update)
 }
 
 const (
 	textKeyTimezoneSelection        = "Please select your timezone:"
-	textKeyTimezoneSelectionSuccess = "Change your timezone to *%s* successfully! Use /settings to change other settings."
+	textKeyTimezoneSelectionSuccess = "Change your timezone to *%s* successfully!"
 )
 
 func timezoneKey(t timezone.Timezone) string {
@@ -67,23 +69,18 @@ var timezoneSettingMarkup = func(printer *message.Printer) botApi.InlineKeyboard
 	ret := botApi.InlineKeyboardMarkup{
 		InlineKeyboard: list,
 	}
-	return messageUtil.AppendBackButton(ret, KeyboardPrefixReturnToSetting, printer)
+	return markup.AppendBackButton(ret, KeyboardPrefixSetting, printer)
 }
 
 func getTimezoneSettingMessage(printer *message.Printer, update botApi.Update) botApi.Chattable {
 	text := printer.Sprintf(textKeyTimezoneSelection)
 	markup := timezoneSettingMarkup(printer)
-	editMsg := update.CallbackQuery.Message
-	msg := botApi.NewEditMessageText(editMsg.Chat.ID, editMsg.MessageID, text)
-	msg.ReplyMarkup = &markup
-	msg.ParseMode = "Markdown"
+	msg := botMessage.NewByUpdate(update, text, &markup)
 	return msg
 }
 
 func getTimezoneSelectionMessage(printer *message.Printer, update botApi.Update, tz timezone.Timezone) botApi.Chattable {
 	text := printer.Sprintf(textKeyTimezoneSelectionSuccess, printer.Sprintf(timezoneKey(tz)))
-	editMsg := update.CallbackQuery.Message
-	msg := botApi.NewEditMessageText(editMsg.Chat.ID, editMsg.MessageID, text)
-	msg.ParseMode = "Markdown"
+	msg := botMessage.NewByUpdate(update, text, nil)
 	return msg
 }

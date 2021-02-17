@@ -5,5 +5,6 @@ import (
 )
 
 type Config struct {
-	proxy proxyclient.Config
+	Proxy proxyclient.Config
+	RetryTimes int
 }

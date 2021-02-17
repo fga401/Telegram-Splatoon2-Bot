@@ -77,14 +77,14 @@ func (b *rawBattleResults) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAllBattleResults(iksm string, timezone int, acceptLang string) (*BattleResults, error) {
+func (svc *impl) GetAllBattleResults(iksm string, timezone int, acceptLang string) (*BattleResults, error) {
 	reqUrl := "https://app.splatoon2.nintendo.net/api/results"
-	respJson, err := getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
+	respJson, err := svc.getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
 	}
 	if isCookiesExpired(respJson) {
-		return nil, &ExpirationError{iksm}
+		return nil, &ErrIKSMExpired{iksm}
 	}
 	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJson))
 	battleResults := &BattleResults{}
@@ -121,14 +121,14 @@ func (b *rawLatestBattleResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetLatestBattleResults(lastBattleNumber string, iksm string, timezone int, acceptLang string) ([]BattleResult, error) {
+func (svc *impl) GetLatestBattleResults(lastBattleNumber string, iksm string, timezone int, acceptLang string) ([]BattleResult, error) {
 	reqUrl := "https://app.splatoon2.nintendo.net/api/results"
-	respJson, err := getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
+	respJson, err := svc.getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
 	}
 	if isCookiesExpired(respJson) {
-		return nil, &ExpirationError{iksm}
+		return nil, &ErrIKSMExpired{iksm}
 	}
 	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJson))
 	latestBattleResults := &rawLatestBattleResult{lastBattleNumber: lastBattleNumber}

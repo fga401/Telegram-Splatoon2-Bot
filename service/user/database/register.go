@@ -9,7 +9,7 @@ func init() {
 	registerStatements([]database.Declaration{
 		{
 			Token:    tokenEnum.Permission.Insert,
-			Stmt:     "INSERT INTO permission (uid, user_name, is_block, max_account, is_admin, allow_polling) VALUES (:uid, :user_name, :is_block, :max_account, :is_admin, :allow_polling);",
+			Stmt:     "INSERT INTO permission (uid, is_block, max_account, is_admin, allow_polling) VALUES (:uid, :is_block, :max_account, :is_admin, :allow_polling);",
 			Named:    true,
 			Prepared: false,
 		},

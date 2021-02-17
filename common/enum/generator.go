@@ -1,5 +1,9 @@
 package enum
 
+const (
+	EmptyValue = 0
+)
+
 var gen *generator
 
 func init() {
@@ -16,7 +20,7 @@ func (g *generator) Next() Enum {
 }
 
 func (g *generator) prepare() {
-	var count Enum
+	var count Enum = 1
 	go func() {
 		for {
 			g.c <- count

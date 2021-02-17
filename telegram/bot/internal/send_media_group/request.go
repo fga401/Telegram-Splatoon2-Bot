@@ -67,13 +67,17 @@ func (r *RequestBuilder) Build() (*http.Request, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "can't add media")
 	}
+	err = r.writer.Close()
+	if err != nil {
+		return nil, errors.Wrap(err, "can't close request writer")
+	}
 
 	request, err := http.NewRequest("POST", sendMediaGroupUrl(r.bot), r.buf)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't new a request")
 	}
 
-	request.Header.Add("Content-Type", r.writer.FormDataContentType())
+	request.Header.Set("content-Type", r.writer.FormDataContentType())
 	return request, nil
 }
 

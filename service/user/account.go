@@ -14,8 +14,14 @@ import (
 func (svc *serviceImpl) NewLoginLink(uid ID) (string, error) {
 	key := serializer.FromID(uid)
 	if value := svc.proofKeyCache.Get(key); value != nil {
-		// todo: login in link is existed, metrics
-		log.Warn("login in link is existed", zap.Any("user_id", uid))
+		// todo: metrics
+		log.Debug("login link existed, refresh expiration time", zap.Any("user_id", uid))
+		svc.proofKeyCache.SetExpiration(key, value, svc.proofKeyCacheExpiration)
+		link, err := svc.nintendoSvc.NewLoginLink(value)
+		if err != nil {
+			return "", errors.Wrap(err, "can't generate login link")
+		}
+		return link, nil
 	}
 	proofKey, err := svc.nintendoSvc.NewProofKey()
 	if err != nil {
@@ -29,47 +35,49 @@ func (svc *serviceImpl) NewLoginLink(uid ID) (string, error) {
 	return link, nil
 }
 
-func (svc *serviceImpl) AddAccount(uid ID, link string) error {
+func (svc *serviceImpl) AddAccount(uid ID, link string) (Account, error) {
 	key := serializer.FromID(uid)
 	accounts, err := svc.ListAccounts(uid)
 	if err != nil {
-		return errors.Wrap(err, "can't fetch accounts")
+		return Account{}, errors.Wrap(err, "can't fetch accounts")
 	}
-	svc.accountCache.Del(key)
-	log.Debug("accounts cache delete", zap.Any("user_id", uid))
-
 	proofKey := svc.proofKeyCache.Get(key)
-	svc.proofKeyCache.Del(key)
 	if proofKey == nil {
-		return errors.New("expired proof key")
+		return Account{}, newErrNoProofKey()
 	}
 	sessionToken, err := svc.nintendoSvc.GetSessionToken(link, proofKey, language.English)
 	if err != nil {
-		return errors.Wrap(err, "can't fetch session token")
+		return Account{}, errors.Wrap(err, "can't fetch session token")
 	}
 	nintendoAccount, err := svc.nintendoSvc.GetAccountMetadata(sessionToken, language.English)
 	if err != nil {
-		return errors.Wrap(err, "can't fetch nintendo account metadata")
+		return Account{}, errors.Wrap(err, "can't fetch nintendo account metadata")
 	}
 	account := Account{
 		UserID:       uid,
 		SessionToken: sessionToken,
 		Tag:          formatTag(nintendoAccount),
 	}
+	if a := getAccountFromAccounts(accounts, account.Tag); a.UserID == uid {
+		return Account{}, newErrAccountExisted()
+	}
 	if len(accounts) == 0 {
 		svc.statusCache.Del(key)
 		err = svc.db.InsertAndSwitchAccount(account, nintendoAccount.IKSM)
 		log.Debug("status cache delete", zap.Any("user_id", uid))
 		if err != nil {
-			return errors.Wrap(err, "can't add new account and switch to it in database")
+			return Account{}, errors.Wrap(err, "can't add new account and switch to it in database")
 		}
 	} else {
 		err = svc.db.InsertAccount(account)
 		if err != nil {
-			return errors.Wrap(err, "can't add account to database")
+			return Account{}, errors.Wrap(err, "can't add account to database")
 		}
 	}
-	return nil
+	svc.proofKeyCache.Del(key)
+	svc.accountCache.Del(key)
+	log.Debug("accounts cache delete", zap.Any("user_id", uid))
+	return account, nil
 }
 
 func formatTag(nintendoAccount nintendo.AccountMetadata) string {
@@ -86,11 +94,10 @@ func (svc *serviceImpl) DeleteAccount(uid ID, tag string) error {
 		return errors.Wrap(err, "can't fetch accounts")
 	}
 	account := getAccountFromAccounts(accounts, tag)
-	svc.accountCache.Del(serializer.FromID(uid))
+	accounts = removeAccountFromAccounts(accounts, tag)
 	log.Debug("accounts cache delete", zap.Any("user_id", uid))
 	if account.SessionToken == status.SessionToken {
 		key := serializer.FromID(uid)
-		svc.statusCache.Del(key)
 		log.Debug("status cache delete", zap.Any("user_id", uid))
 		sessionToken := emptySessionToken
 		iksm := emptyIKSM
@@ -106,12 +113,14 @@ func (svc *serviceImpl) DeleteAccount(uid ID, tag string) error {
 		if err != nil {
 			return errors.Wrap(err, "can't delete the account and switch to a new account in database")
 		}
+		svc.statusCache.Del(key)
 	} else {
 		err = svc.db.DeleteAccount(uid, tag)
 		if err != nil {
 			return errors.Wrap(err, "can't delete the account in database")
 		}
 	}
+	svc.accountCache.Del(serializer.FromID(uid))
 	return nil
 }
 
@@ -122,6 +131,19 @@ func getAccountFromAccounts(accounts []Account, tag string) Account {
 		}
 	}
 	return Account{}
+}
+
+func removeAccountFromAccounts(accounts []Account, tag string) []Account {
+	if len(accounts) == 0 {
+		return []Account{}
+	}
+	ret := make([]Account, 0, len(accounts)-1)
+	for _, account := range accounts {
+		if account.Tag != tag {
+			ret = append(ret, account)
+		}
+	}
+	return ret
 }
 
 func isValidAccount(account Account) bool {
@@ -150,6 +172,13 @@ func (svc *serviceImpl) SwitchAccount(uid ID, tag string) error {
 	account, err := svc.GetAccount(uid, tag)
 	if err != nil {
 		return errors.Wrap(err, "can't find the selected account")
+	}
+	status, err := svc.GetStatus(uid)
+	if err != nil {
+		return errors.Wrap(err, "can't fetch status")
+	}
+	if account.SessionToken == status.SessionToken {
+		return nil
 	}
 	nintendoAccount, err := svc.nintendoSvc.GetAccountMetadata(account.SessionToken, language.English)
 	if err != nil {

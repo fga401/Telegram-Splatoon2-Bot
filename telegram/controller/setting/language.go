@@ -10,7 +10,9 @@ import (
 	userSvc "telegram-splatoon2-bot/service/user"
 	callbackQueryUtil "telegram-splatoon2-bot/telegram/callbackquery"
 	"telegram-splatoon2-bot/telegram/controller/internal/adapter"
-	messageUtil "telegram-splatoon2-bot/telegram/controller/internal/messageutil"
+	"telegram-splatoon2-bot/telegram/controller/internal/convert"
+	"telegram-splatoon2-bot/telegram/controller/internal/markup"
+	botMessage "telegram-splatoon2-bot/telegram/controller/internal/message"
 )
 
 func (ctrl *settingsCtrl) languageSetting(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
@@ -38,12 +40,12 @@ func (ctrl *settingsCtrl) languageSelection(update botApi.Update, argManager ada
 	)
 	msg := getLanguageSelectionMessage(ctrl.languageSvc.Printer(status.Language), update, lang)
 	_, err = ctrl.bot.Send(msg)
-	return err
+	return convert.CallbackQueryToCommand(ctrl.Setting)(update)
 }
 
 const (
 	textKeyLanguageSelection        = "Please select your preferred language:"
-	textKeyLanguageSelectionSuccess = "Change your language to *%s* successfully. Use /settings to change other settings."
+	textKeyLanguageSelectionSuccess = "Change your language to *%s* successfully."
 )
 
 func languageKey(lang language.Language) string {
@@ -65,23 +67,18 @@ var languageSettingMarkup = func(printer *message.Printer, languageSvc language.
 	ret := botApi.InlineKeyboardMarkup{
 		InlineKeyboard: list,
 	}
-	return messageUtil.AppendBackButton(ret, KeyboardPrefixReturnToSetting, printer)
+	return markup.AppendBackButton(ret, KeyboardPrefixSetting, printer)
 }
 
 func getLanguageSettingMessage(printer *message.Printer, update botApi.Update, langSvc language.Service) botApi.Chattable {
 	text := printer.Sprintf(textKeyLanguageSelection)
-	editMsg := update.CallbackQuery.Message
-	msg := botApi.NewEditMessageText(editMsg.Chat.ID, editMsg.MessageID, text)
 	markup := languageSettingMarkup(printer, langSvc)
-	msg.ReplyMarkup = &markup
-	msg.ParseMode = "Markdown"
+	msg := botMessage.NewByUpdate(update, text, &markup)
 	return msg
 }
 
 func getLanguageSelectionMessage(printer *message.Printer, update botApi.Update, lang language.Language) botApi.Chattable {
 	text := printer.Sprintf(textKeyLanguageSelectionSuccess, printer.Sprintf(languageKey(lang)))
-	editMsg := update.CallbackQuery.Message
-	msg := botApi.NewEditMessageText(editMsg.Chat.ID, editMsg.MessageID, text)
-	msg.ParseMode = "Markdown"
+	msg := botMessage.NewByUpdate(update, text, nil)
 	return msg
 }

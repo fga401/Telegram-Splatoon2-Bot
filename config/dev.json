@@ -5,11 +5,12 @@
   "bot": {
     "client": {
       "enableProxy": true,
-      "timeout": "1s"
+      "timeout": "",
+      "proxyURL": ""
     },
     "retryTimes": 3,
     "callBackQuery": {
-      "cacheTimeInSecond": 3
+      "cacheTimeInSecond": 1
     }
   },
   "router": {
@@ -26,10 +27,23 @@
     "maxOpenConns": 0
   },
   "fastcache": {
-    "maxBytes": 2147483648
+    "maxBytes": 1073741824
+  },
+  "gocache": {
+    "proofKey": {
+      "expiration": "5m",
+      "cleanUp": "10m"
+    }
+  },
+  "nintendo": {
+    "client": {
+      "timeout": ""
+    },
+    "retryTimes": 3
   },
   "user": {
     "accountExpiration": "5m",
+    "proofKeyExpiration": "5m",
     "permission": {
       "maxAccount": 3,
       "allowPolling": true,
@@ -42,5 +56,21 @@
     "ja",
     "zh-CN",
     "zh-TW"
-  ]
+  ],
+  "image": {
+    "retryTimes": 3
+  },
+  "repository": {
+    "delay": "5m",
+    "salmon": {
+      "stageFileName": "./data/salmon_stages.json",
+      "weaponFileName": "./data/salmon_weapons.json"
+    },
+    "stage": {
+      "stageFileName": "./data/stages.json"
+    }
+  },
+  "controller": {
+    "limit": 12
+  }
 }

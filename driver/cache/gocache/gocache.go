@@ -34,13 +34,19 @@ func (impl *impl) SetExpiration(key, value []byte, duration time.Duration) {
 
 // Get returns the value against key.
 func (impl *impl) Get(key []byte) []byte {
-	ret, _ := impl.Cache.Get(string(key))
+	ret, found := impl.Cache.Get(string(key))
+	if !found {
+		return nil
+	}
 	return ret.([]byte)
 }
 
 // HasGet will return the value and true if key is in Cache. Otherwise it'll return nil and false.
 func (impl *impl) HasGet(key []byte) ([]byte, bool) {
 	ret, found := impl.Cache.Get(string(key))
+	if !found {
+		return nil, false
+	}
 	return ret.([]byte), found
 }
 

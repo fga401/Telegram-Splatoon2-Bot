@@ -111,7 +111,7 @@ func TestUpdateStage(t *testing.T) {
 		stage.StartTime += 7200
 		stage.EndTime += 7200
 	}
-	stageScheduleRepo, _ := stage.NewStageScheduleRepo(user.admins)
+	stageScheduleRepo, _ := stage.NewRepository(user.admins)
 	stageScheduleRepo.sortSchedules(stageSchedulesOld)
 	stageScheduleRepo.populateFields(stageSchedulesOld)
 	s, err := stageScheduleRepo.wrapSchedules(stageSchedulesOld)

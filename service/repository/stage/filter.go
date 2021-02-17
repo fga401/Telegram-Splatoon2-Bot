@@ -1,40 +1,43 @@
 package stage
 
 import (
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"telegram-splatoon2-bot/common/enum"
 	"telegram-splatoon2-bot/common/util"
+	"telegram-splatoon2-bot/service/timezone"
 )
 
-type GameModeName string
+type Mode enum.Enum
 
-const (
-	GameModeRegular GameModeName = "r"
-	GameModeGachi   GameModeName = "g"
-	GameModeLeague  GameModeName = "l"
-)
-
-type PrimaryFilter struct {
-	orderByName []GameModeName
+type modeEnum struct {
+	Regular Mode
+	Gachi   Mode
+	League  Mode
 }
 
-func (filter PrimaryFilter) Filter(schedules *content, secondaryFilters []SecondaryFilter, proposedN int) []CompositeSchedule {
-	order := make([][]CompositeSchedule, 0)
-	for _, name := range filter.orderByName {
+var ModeEnum = enum.Assign(&modeEnum{}).(*modeEnum)
+
+const (
+	ruleSplatZones   = "splat_zones"
+	ruleTowerControl = "tower_control"
+	ruleClamBlitz    = "clam_blitz"
+	ruleRainmaker    = "rainmaker"
+)
+
+func (c *content) Filter(primaryFilter PrimaryFilter, secondaryFilters []SecondaryFilter, limit int) []WrappedSchedule {
+	order := make([][]WrappedSchedule, 0)
+	for _, name := range primaryFilter.orderByName {
 		switch name {
-		case GameModeLeague:
-			order = append(order, schedules.leagueSchedules)
-		case GameModeGachi:
-			order = append(order, schedules.gachiSchedules)
-		case GameModeRegular:
-			order = append(order, schedules.regularSchedules)
+		case ModeEnum.League:
+			order = append(order, c.LeagueSchedules)
+		case ModeEnum.Gachi:
+			order = append(order, c.GachiSchedules)
+		case ModeEnum.Regular:
+			order = append(order, c.RegularSchedules)
 		}
 	}
-	ret := make([]CompositeSchedule, 0)
+	ret := make([]WrappedSchedule, 0)
 	for i := 0; i < 12; i++ {
 		for j := range order {
 			s := order[j][i]
@@ -49,65 +52,67 @@ func (filter PrimaryFilter) Filter(schedules *content, secondaryFilters []Second
 				ret = append(ret, s)
 			}
 		}
-		if len(ret) >= proposedN {
+		if len(ret) >= limit {
 			break
 		}
 	}
 	return ret
 }
 
-func NewPrimaryFilter(text string) (PrimaryFilter, error) {
-	existed := make(map[GameModeName]struct{})
+type PrimaryFilter struct {
+	orderByName []Mode
+}
+
+func NewPrimaryFilter(modes []Mode) PrimaryFilter {
+	existed := make(map[Mode]struct{})
 	ret := PrimaryFilter{}
-	for _, c := range text {
-		switch c {
-		case 'l':
-			if _, found := existed[GameModeLeague]; !found {
-				ret.orderByName = append(ret.orderByName, GameModeLeague)
-				existed[GameModeLeague] = struct{}{}
+	for _, mode := range modes {
+		switch mode {
+		case ModeEnum.League:
+			if _, found := existed[ModeEnum.League]; !found {
+				ret.orderByName = append(ret.orderByName, ModeEnum.League)
+				existed[ModeEnum.League] = struct{}{}
 			}
-		case 'r':
-			if _, found := existed[GameModeRegular]; !found {
-				ret.orderByName = append(ret.orderByName, GameModeRegular)
-				existed[GameModeRegular] = struct{}{}
+		case ModeEnum.Regular:
+			if _, found := existed[ModeEnum.Regular]; !found {
+				ret.orderByName = append(ret.orderByName, ModeEnum.Regular)
+				existed[ModeEnum.Regular] = struct{}{}
 			}
-		case 'g':
-			if _, found := existed[GameModeGachi]; !found {
-				ret.orderByName = append(ret.orderByName, GameModeGachi)
-				existed[GameModeGachi] = struct{}{}
+		case ModeEnum.Gachi:
+			if _, found := existed[ModeEnum.Gachi]; !found {
+				ret.orderByName = append(ret.orderByName, ModeEnum.Gachi)
+				existed[ModeEnum.Gachi] = struct{}{}
 			}
-		default:
-			return ret, errors.Errorf("unknown character")
 		}
 	}
-	return ret, nil
+	return ret
 }
 
 type SecondaryFilter interface {
-	Filter(stage CompositeSchedule) bool
+	Filter(stage WrappedSchedule) bool
 }
 
 type RuleSecondaryFilter struct {
 	allowRules map[string]struct{}
 }
 
-func (filter RuleSecondaryFilter) Filter(stage CompositeSchedule) bool {
+func (filter RuleSecondaryFilter) Filter(stage WrappedSchedule) bool {
 	_, found := filter.allowRules[stage.Schedule.Rule.Key]
 	return found
 }
-func NewRuleSecondaryFilter(text string) RuleSecondaryFilter {
+func NewRuleSecondaryFilter(zone, tower, clam, rainmaker bool) RuleSecondaryFilter {
 	filter := RuleSecondaryFilter{allowRules: make(map[string]struct{})}
-	for _, c := range text {
-		switch c {
-		case 'z':
-			filter.allowRules["splat_zones"] = struct{}{}
-		case 't':
-			filter.allowRules["tower_control"] = struct{}{}
-		case 'c':
-			filter.allowRules["clam_blitz"] = struct{}{}
-		case 'r':
-			filter.allowRules["rainmaker"] = struct{}{}
-		}
+	if zone {
+		filter.allowRules[ruleSplatZones] = struct{}{}
+	}
+	if tower {
+		filter.allowRules[ruleTowerControl] = struct{}{}
+	}
+	if clam {
+		filter.allowRules[ruleClamBlitz] = struct{}{}
+	}
+	if rainmaker {
+		filter.allowRules[ruleRainmaker] = struct{}{}
 	}
 	return filter
 }
@@ -116,7 +121,7 @@ type TimeSecondaryFilter struct {
 	begin, end int64
 }
 
-func (filter TimeSecondaryFilter) Filter(stage CompositeSchedule) bool {
+func (filter TimeSecondaryFilter) Filter(stage WrappedSchedule) bool {
 	if filter.begin <= stage.Schedule.StartTime && stage.Schedule.StartTime < filter.end {
 		return true
 	}
@@ -125,20 +130,11 @@ func (filter TimeSecondaryFilter) Filter(stage CompositeSchedule) bool {
 	}
 	return false
 }
-func NewBetweenHourSecondaryFilter(begin string, end string, offset int) TimeSecondaryFilter {
-	expectedBeginHour, err := strconv.Atoi(begin)
-	if err != nil {
-		expectedBeginHour = time.Now().Hour()
-	}
-	expectedEndHour, err := strconv.Atoi(end)
-	if err != nil {
-		expectedEndHour = (expectedBeginHour + 23) % 24
-	}
-
+func NewBetweenHourSecondaryFilter(beginHour int, endHour int, timezone timezone.Timezone) TimeSecondaryFilter {
 	now := time.Now()
-	userCurrentHour := util.Time.LocalTime(now.Unix(), offset).Hour()
-	beginHourOffset := expectedBeginHour - userCurrentHour
-	endHourOffset := expectedEndHour - userCurrentHour
+	userCurrentHour := util.Time.LocalTime(now.Unix(), timezone.Minute()).Hour()
+	beginHourOffset := beginHour - userCurrentHour
+	endHourOffset := endHour - userCurrentHour
 	if beginHourOffset < 0 {
 		beginHourOffset += 24
 	}
@@ -153,50 +149,10 @@ func NewBetweenHourSecondaryFilter(begin string, end string, offset int) TimeSec
 
 	return TimeSecondaryFilter{begin: beginTime, end: endTime}
 }
-func NewNextNSecondaryFilter(text string) TimeSecondaryFilter {
-	n, err := strconv.Atoi(text)
-	if err != nil {
-		n = 1
-	}
+
+func NewNextNSecondaryFilter(n int) TimeSecondaryFilter {
 	now := time.Now()
 	beginTime := util.Time.SplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(-2)).Unix()
 	endTime := util.Time.SplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(n*2-2)).Unix()
 	return TimeSecondaryFilter{begin: beginTime, end: endTime}
-}
-
-type stageScheduleHelper struct {
-	primaryFilterRegExp           *regexp.Regexp
-	ruleSecondaryFilterRegExp     *regexp.Regexp
-	nextNSecondFilterRegExp       *regexp.Regexp
-	betweenHourSecondFilterRegExp *regexp.Regexp
-}
-
-var StageScheduleHelper = stageScheduleHelper{
-	primaryFilterRegExp:           regexp.MustCompile(`^(?P<primary>[lgrLGR]+)$`),
-	ruleSecondaryFilterRegExp:     regexp.MustCompile(`^(?P<primary>[czrtCZRT]+)$`),
-	nextNSecondFilterRegExp:       regexp.MustCompile(`(?P<n>^\d+$)`),
-	betweenHourSecondFilterRegExp: regexp.MustCompile(`^[bB](?P<begin>\d+)-(?P<end>\d+)$`),
-}
-
-func NewSecondaryFilter(text string, offset int) (SecondaryFilter, error) {
-	text = strings.ToLower(text)
-	if args := StageScheduleHelper.ruleSecondaryFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
-		return NewRuleSecondaryFilter(args[1]), nil
-	}
-	if args := StageScheduleHelper.nextNSecondFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
-		return NewNextNSecondaryFilter(args[1]), nil
-	}
-	if args := StageScheduleHelper.betweenHourSecondFilterRegExp.FindStringSubmatch(text); len(args) != 0 {
-		return NewBetweenHourSecondaryFilter(args[1], args[2], offset), nil
-	}
-	return nil, errors.Errorf("unknown supported filter format")
-}
-
-func (stageScheduleHelper) firstIndexOfSecondaryFilterParam(text string) int {
-	for i, c := range text {
-		if c != 'l' && c != 'r' && c != 'g' {
-			return i
-		}
-	}
-	return len(text)
 }

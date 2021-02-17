@@ -50,12 +50,12 @@ func (svc *serviceImpl) Existed(uid ID) (bool, error) {
 }
 
 func New(
-	nintendoSvc nintendo.Service,
 	db database.Service,
 	adminsCache cache.IterableCache,
 	statusCache cache.Cache,
 	accountCache cache.Cache,
 	proofKeyCache cache.Cache,
+	nintendoSvc nintendo.Service,
 	config Config,
 ) Service {
 	set := make(map[ID]struct{})
@@ -68,6 +68,7 @@ func New(
 		statusCache:   statusCache,
 		accountCache:  accountCache,
 		proofKeyCache: proofKeyCache,
+		nintendoSvc:   nintendoSvc,
 
 		defaultPermission: defaultPermission{
 			Admins:       set,

@@ -10,8 +10,8 @@ func init() {
 		{
 			Token:    tokenEnum.Account.Insert,
 			Stmt:     "INSERT INTO account (uid, session_token, tag) VALUES (:uid, :session_token, :tag);",
-			Named:    false,
-			Prepared: true,
+			Named:    true,
+			Prepared: false,
 		},
 		{
 			Token:    tokenEnum.Account.Delete,

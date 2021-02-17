@@ -7,7 +7,7 @@ import (
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
-	nintendo2 "telegram-splatoon2-bot/service/nintendo"
+	nintendo "telegram-splatoon2-bot/service/nintendo"
 )
 
 // suppress unused package warning
@@ -28,16 +28,8 @@ func easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositoryStage(in *jlexer
 		for !in.IsDelim('}') {
 			key := string(in.String())
 			in.WantColon()
-			var v1 *nintendo2.Stage
-			if in.IsNull() {
-				in.Skip()
-				v1 = nil
-			} else {
-				if v1 == nil {
-					v1 = new(nintendo2.Stage)
-				}
-				(*v1).UnmarshalEasyJSON(in)
-			}
+			var v1 nintendo.Stage
+			easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo(in, &v1)
 			(*out)[key] = v1
 			in.WantComma()
 		}
@@ -61,11 +53,7 @@ func easyjson1870c743EncodeTelegramSplatoon2BotServiceRepositoryStage(out *jwrit
 			}
 			out.String(string(v2Name))
 			out.RawByte(':')
-			if v2Value == nil {
-				out.RawString("null")
-			} else {
-				(*v2Value).MarshalEasyJSON(out)
-			}
+			easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo(out, v2Value)
 		}
 		out.RawByte('}')
 	}
@@ -93,4 +81,60 @@ func (v *stageCollection) UnmarshalJSON(data []byte) error {
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *stageCollection) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositoryStage(l, v)
+}
+func easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo(in *jlexer.Lexer, out *nintendo.Stage) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		case "image":
+			out.Image = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo(out *jwriter.Writer, in nintendo.Stage) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix)
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"image\":"
+		out.RawString(prefix)
+		out.String(string(in.Image))
+	}
+	out.RawByte('}')
 }

@@ -4,65 +4,105 @@ import (
 	"image"
 	"image/draw"
 	"sort"
-	"strings"
+	"time"
 
-	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	log "telegram-splatoon2-bot/common/log"
-	"telegram-splatoon2-bot/service/db"
+	"telegram-splatoon2-bot/common/log"
+	"telegram-splatoon2-bot/common/util"
 	imageSvc "telegram-splatoon2-bot/service/image"
-	nintendoSvc "telegram-splatoon2-bot/service/nintendo"
+	"telegram-splatoon2-bot/service/language"
+	"telegram-splatoon2-bot/service/nintendo"
 	"telegram-splatoon2-bot/service/repository"
-	"telegram-splatoon2-bot/service/todo"
+	"telegram-splatoon2-bot/service/repository/internal/dump"
 	"telegram-splatoon2-bot/service/user"
 )
 
-type UID = int64
+var (
+	dumperKey = struct {
+		Stage string
+	}{"stage"}
+)
 
-type CompositeSchedule struct {
-	FileID   imageSvc.Identifier
-	Schedule *nintendoSvc.StageSchedule
+type WrappedSchedule struct {
+	ImageID  imageSvc.Identifier
+	Schedule nintendo.StageSchedule
 }
 
 type content struct {
-	regularSchedules []CompositeSchedule
-	gachiSchedules   []CompositeSchedule
-	leagueSchedules  []CompositeSchedule
+	RegularSchedules []WrappedSchedule
+	GachiSchedules   []WrappedSchedule
+	LeagueSchedules  []WrappedSchedule
+}
+
+type Repository interface {
+	repository.Repository
+	Content(primaryFilter PrimaryFilter, secondaryFilters []SecondaryFilter, limit int) []WrappedSchedule
 }
 
 type repoImpl struct {
-	imageSvc  imageSvc.Service
-	userSvc   user.Service
-	schedules *content
-	dumper    *DumperImpl
+	nintendoSvc nintendo.Service
+	imageSvc    imageSvc.Service
+	userSvc     user.Service
+	dumper      dump.Dumper
+
+	writerChan chan *content
+	readerChan chan (chan *content)
+
+	content *content
 }
 
-func NewStageScheduleRepo(userSvc user.Service, imageSvc imageSvc.Service, config Config) (repository.Repository, error) {
-	dumper := NewDumper(config.dumper)
-	err := dumper.Load()
-	if err != nil {
-		return nil, errors.Wrap(err, "can't load stage dumping files")
+func (repo *repoImpl) Content(primaryFilter PrimaryFilter, secondaryFilters []SecondaryFilter, limit int) []WrappedSchedule {
+	content := repo.getContent()
+	if content == nil {
+		return nil
 	}
-	return &repoImpl{
-		userSvc: userSvc,
-		dumper:  dumper,
-	}, nil
+	return content.Filter(primaryFilter, secondaryFilters, limit)
 }
 
-func (repo *repoImpl) HasInit() bool {
-	return repo.schedules != nil
+func NewRepository(nintendoSvc nintendo.Service, userSvc user.Service, imageSvc imageSvc.Service, config Config) Repository {
+	dumpConfig := dump.Config{}
+	dumpConfig.AddTarget(dumperKey.Stage, config.Dumper.StageFile)
+	dumper := dump.New(dumpConfig)
+	ret := &repoImpl{
+		nintendoSvc: nintendoSvc,
+		userSvc:     userSvc,
+		imageSvc:    imageSvc,
+		dumper:      dumper,
+		writerChan:  make(chan *content),
+		readerChan:  make(chan chan *content),
+	}
+	ret.runUpdater()
+	return ret
+}
+
+func (repo *repoImpl) getContent() *content {
+	retChan := make(chan *content)
+	defer close(retChan)
+	repo.readerChan <- retChan
+	return <-retChan
+}
+
+func (repo *repoImpl) NextUpdateTime() time.Time {
+	if repo.getContent() == nil {
+		return time.Now()
+	}
+	return util.Time.SplatoonNextUpdateTime(time.Now())
 }
 
 func (repo *repoImpl) Name() string {
-	return "StageScheduleRepo"
+	return "Stage Schedule"
 }
 
 func (repo *repoImpl) Update() error {
 	var err error
-	for _, admin := range repo.userSvc.Admins() {
-		err := repo.updateByUid(admin)
+	admins := repo.userSvc.Admins()
+	if len(admins) == 0 {
+		return errors.New("no admin")
+	}
+	for _, admin := range admins {
+		err = repo.updateByUid(admin)
 		if err == nil {
 			return nil
 		}
@@ -70,38 +110,33 @@ func (repo *repoImpl) Update() error {
 	return errors.Wrap(err, "can't update stage schedules by admins")
 }
 
-func (repo *repoImpl) updateByUid(uid UID) error {
-	wrapper := func(iksm string, timezone int, acceptLang string, _ ...interface{}) (interface{}, error) {
-		return nintendoSvc.GetStageSchedules(iksm, timezone, acceptLang)
-	}
-	result, err := todo.FetchResourceWithUpdate(uid, wrapper)
+func (repo *repoImpl) updateByUid(uid user.ID) error {
+	status, err := repo.userSvc.GetStatus(uid)
 	if err != nil {
-		return errors.Wrap(err, "can't fetch runtime")
+		return errors.Wrap(err, "can't fetch admin status")
 	}
-	schedules := result.(*nintendoSvc.StageSchedules)
-
-	repo.sortSchedules(schedules)
-	repo.populateSchedules(schedules)
-	err = repo.dumper.Update(schedules)
+	schedules, err := repo.nintendoSvc.GetStageSchedules(status.IKSM, status.Timezone, language.English)
 	if err != nil {
-		log.Warn("can't update stage dumping file", zap.Error(err))
-	}
-	err = repo.dumper.Save()
-	if err != nil {
-		log.Warn("can't update stage dumping file", zap.Error(err))
-	} else {
-		log.Info("dumped stages to files")
+		return errors.Wrap(err, "can't fetch stage schedules")
 	}
 
-	wrappedSchedules, err := repo.wrapSchedules(schedules)
+	repo.sortSchedules(&schedules)
+	repo.populateSchedules(&schedules)
+	err = repo.updateDumper(schedules)
+	if err != nil {
+		// go ahead
+		log.Warn("can't update stage dumping file", zap.Error(err))
+	}
+
+	wrappedSchedules, err := repo.wrapSchedules(&schedules)
 	if err != nil {
 		return errors.Wrap(err, "can't upload stage schedules images")
 	}
-	repo.schedules = wrappedSchedules
+	repo.writerChan <- wrappedSchedules
 	return nil
 }
 
-func (repo *repoImpl) sortSchedules(stageSchedules *nintendoSvc.StageSchedules) {
+func (repo *repoImpl) sortSchedules(stageSchedules *nintendo.StageSchedules) {
 	// sort by start time in ascendant order
 	sort.Slice(stageSchedules.League, func(i, j int) bool {
 		return stageSchedules.League[i].StartTime < stageSchedules.League[j].StartTime
@@ -114,22 +149,25 @@ func (repo *repoImpl) sortSchedules(stageSchedules *nintendoSvc.StageSchedules) 
 	})
 }
 
-func (repo *repoImpl) populateSchedules(stageSchedules *nintendoSvc.StageSchedules) {
-	for _, stage := range stageSchedules.Regular {
-		stage.StageA.Image = nintendoSvc.Endpoint + stage.StageA.Image
-		stage.StageB.Image = nintendoSvc.Endpoint + stage.StageB.Image
+func (repo *repoImpl) populateSchedules(stageSchedules *nintendo.StageSchedules) {
+	for i := range stageSchedules.Regular {
+		stage := &stageSchedules.Regular[i]
+		stage.StageA.Image = nintendo.Endpoint + stage.StageA.Image
+		stage.StageB.Image = nintendo.Endpoint + stage.StageB.Image
 	}
-	for _, stage := range stageSchedules.Gachi {
-		stage.StageA.Image = nintendoSvc.Endpoint + stage.StageA.Image
-		stage.StageB.Image = nintendoSvc.Endpoint + stage.StageB.Image
+	for i := range stageSchedules.Gachi {
+		stage := &stageSchedules.Gachi[i]
+		stage.StageA.Image = nintendo.Endpoint + stage.StageA.Image
+		stage.StageB.Image = nintendo.Endpoint + stage.StageB.Image
 	}
-	for _, stage := range stageSchedules.League {
-		stage.StageA.Image = nintendoSvc.Endpoint + stage.StageA.Image
-		stage.StageB.Image = nintendoSvc.Endpoint + stage.StageB.Image
+	for i := range stageSchedules.League {
+		stage := &stageSchedules.League[i]
+		stage.StageA.Image = nintendo.Endpoint + stage.StageA.Image
+		stage.StageB.Image = nintendo.Endpoint + stage.StageB.Image
 	}
 }
 
-func (repo *repoImpl) getNewItems(stages []*nintendoSvc.StageSchedule, imageIDs []CompositeSchedule) []*nintendoSvc.StageSchedule {
+func (repo *repoImpl) getNewItems(stages []nintendo.StageSchedule, imageIDs []WrappedSchedule) []nintendo.StageSchedule {
 	var lastUpdateTimestamp int64
 	if len(imageIDs) > 0 {
 		lastUpdateTimestamp = imageIDs[len(imageIDs)-1].Schedule.StartTime
@@ -139,25 +177,27 @@ func (repo *repoImpl) getNewItems(stages []*nintendoSvc.StageSchedule, imageIDs 
 			return stages[i:]
 		}
 	}
-	return make([]*nintendoSvc.StageSchedule, 0)
+	return make([]nintendo.StageSchedule, 0)
 }
 
-func (repo *repoImpl) wrapSchedules(stageSchedules *nintendoSvc.StageSchedules) (*content, error) {
-	regularNewStages := stageSchedules.Regular
-	gachiNewStages := stageSchedules.Gachi
-	leagueNewStages := stageSchedules.League
-	if repo.HasInit() {
-		regularNewStages = repo.getNewItems(stageSchedules.Regular, repo.schedules.regularSchedules)
-		gachiNewStages = repo.getNewItems(stageSchedules.Gachi, repo.schedules.gachiSchedules)
-		leagueNewStages = repo.getNewItems(stageSchedules.League, repo.schedules.leagueSchedules)
+func (repo *repoImpl) wrapSchedules(schedules *nintendo.StageSchedules) (*content, error) {
+	regularNewStages := schedules.Regular
+	gachiNewStages := schedules.Gachi
+	leagueNewStages := schedules.League
+	c := repo.getContent()
+	if c != nil {
+		regularNewStages = repo.getNewItems(schedules.Regular, c.RegularSchedules)
+		gachiNewStages = repo.getNewItems(schedules.Gachi, c.GachiSchedules)
+		leagueNewStages = repo.getNewItems(schedules.League, c.LeagueSchedules)
 	}
 	regularNewStagesCount := len(regularNewStages)
 	gachiNewStagesCount := len(gachiNewStages)
 	leagueNewStagesCount := len(leagueNewStages)
-	log.Info("find new stages",
+	log.Info("found new stages",
 		zap.Int("regular", regularNewStagesCount),
 		zap.Int("gachi", gachiNewStagesCount),
-		zap.Int("league", leagueNewStagesCount))
+		zap.Int("league", leagueNewStagesCount),
+	)
 	urls := make([]string, 0)
 	for _, stage := range regularNewStages {
 		urls = append(urls, stage.StageA.Image, stage.StageB.Image)
@@ -198,143 +238,86 @@ func (repo *repoImpl) wrapSchedules(stageSchedules *nintendoSvc.StageSchedules) 
 	}
 
 	newSchedules := &content{
-		regularSchedules: make([]CompositeSchedule, 0),
-		gachiSchedules:   make([]CompositeSchedule, 0),
-		leagueSchedules:  make([]CompositeSchedule, 0),
+		RegularSchedules: make([]WrappedSchedule, 0),
+		GachiSchedules:   make([]WrappedSchedule, 0),
+		LeagueSchedules:  make([]WrappedSchedule, 0),
 	}
 
-	if repo.HasInit() {
-		if len(repo.schedules.regularSchedules) > 0 {
-			newSchedules.regularSchedules = repo.schedules.regularSchedules[regularNewStagesCount:]
+	if c != nil {
+		if len(c.RegularSchedules) > 0 {
+			newSchedules.RegularSchedules = c.RegularSchedules[regularNewStagesCount:]
 		}
-		if len(repo.schedules.gachiSchedules) > 0 {
-			newSchedules.gachiSchedules = repo.schedules.gachiSchedules[gachiNewStagesCount:]
+		if len(c.GachiSchedules) > 0 {
+			newSchedules.GachiSchedules = c.GachiSchedules[gachiNewStagesCount:]
 		}
-		if len(repo.schedules.leagueSchedules) > 0 {
-			newSchedules.leagueSchedules = repo.schedules.leagueSchedules[leagueNewStagesCount:]
+		if len(c.LeagueSchedules) > 0 {
+			newSchedules.LeagueSchedules = c.LeagueSchedules[leagueNewStagesCount:]
 		}
 	}
 
 	offset = 0
 	for i := 0; i < regularNewStagesCount; i++ {
-		newSchedules.regularSchedules = append(newSchedules.regularSchedules, CompositeSchedule{
-			FileID:   ids[offset+i],
+		newSchedules.RegularSchedules = append(newSchedules.RegularSchedules, WrappedSchedule{
+			ImageID:  ids[offset+i],
 			Schedule: regularNewStages[i],
 		})
 	}
 	offset += regularNewStagesCount
 	for i := 0; i < gachiNewStagesCount; i++ {
-		newSchedules.gachiSchedules = append(newSchedules.gachiSchedules, CompositeSchedule{
-			FileID:   ids[offset+i],
+		newSchedules.GachiSchedules = append(newSchedules.GachiSchedules, WrappedSchedule{
+			ImageID:  ids[offset+i],
 			Schedule: gachiNewStages[i],
 		})
 	}
 	offset += gachiNewStagesCount
 	for i := 0; i < leagueNewStagesCount; i++ {
-		newSchedules.leagueSchedules = append(newSchedules.leagueSchedules, CompositeSchedule{
-			FileID:   ids[offset+i],
+		newSchedules.LeagueSchedules = append(newSchedules.LeagueSchedules, WrappedSchedule{
+			ImageID:  ids[offset+i],
 			Schedule: leagueNewStages[i],
 		})
 	}
 	return newSchedules, nil
 }
 
-// QueryStageSchedules handle this  command: /stage ([rgl]+)? ((\d+)|([czrt]+)|(b\d+-\d+))+
-func QueryStageSchedules(update *botApi.Update) error {
-	user := update.Message.From
-	schedules := stageScheduleRepo.schedules
-	if schedules == nil {
-		return errors.Errorf("no cached schedules")
-	}
-	runtime, err := todo.FetchRuntime(int64(user.ID))
+func (repo *repoImpl) updateDumper(schedules nintendo.StageSchedules) error {
+	stagesPtr, err := repo.dumper.Get(dumperKey.Stage, &stageCollection{})
 	if err != nil {
-		return errors.Wrap(err, "can't fetch runtime")
+		return errors.Wrap(err, "can't get stage dumper object")
 	}
-
-	var args = []string{"lgr", "1"} // default filter
-	argsText := update.Message.CommandArguments()
-	if argsText != "" {
-		args = strings.Split(argsText, " ")
+	stages := *stagesPtr.(*stageCollection)
+	for _, stage := range schedules.Regular {
+		stages[stage.StageA.Name] = stage.StageA
+		stages[stage.StageB.Name] = stage.StageB
 	}
-	if len(StageScheduleHelper.primaryFilterRegExp.FindStringSubmatch(args[0])) == 0 {
-		primaryFilterArg := "lgr"
-		idx := StageScheduleHelper.firstIndexOfSecondaryFilterParam(args[0])
-		if idx > 0 {
-			primaryFilterArg = args[0][:idx]
-			args[0] = args[0][idx:]
-		}
-		args = append([]string{primaryFilterArg}, args...) // add primary filter
+	for _, stage := range schedules.Gachi {
+		stages[stage.StageA.Name] = stage.StageA
+		stages[stage.StageB.Name] = stage.StageB
 	}
-	primaryFilter, err := NewPrimaryFilter(args[0])
+	for _, stage := range schedules.League {
+		stages[stage.StageA.Name] = stage.StageA
+		stages[stage.StageB.Name] = stage.StageB
+	}
+	err = repo.dumper.Save(dumperKey.Stage, &stages)
 	if err != nil {
-		msg := StageScheduleHelper.newFilterErrorMessage(update.Message.Chat.ID, runtime, user)
-		_ = service.sendWithRetry(service.bot, msg)
-		return err
-	}
-	secondaryFilters := make([]SecondaryFilter, 0)
-	for _, arg := range args[1:] {
-		f, err := NewSecondaryFilter(arg, runtime.Timezone)
-		if err != nil {
-			msg := StageScheduleHelper.newFilterErrorMessage(update.Message.Chat.ID, runtime, user)
-			_ = service.sendWithRetry(service.bot, msg)
-			return err
-		}
-		secondaryFilters = append(secondaryFilters, f)
-	}
-	if len(secondaryFilters) == 0 {
-		secondaryFilters = append(secondaryFilters, NewNextNSecondaryFilter("2"))
-	}
-
-	stages := primaryFilter.Filter(schedules, secondaryFilters, service.proposedStageNumber)
-	if len(stages) >= service.proposedStageNumber {
-		msg := StageScheduleHelper.newNumberWarningMessage(update.Message.Chat.ID, runtime, user)
-		err = service.sendWithRetry(service.bot, msg)
-		if err != nil {
-			return err
-		}
-	}
-	for i := len(stages) - 1; i >= 0; i-- {
-		msg := StageScheduleHelper.formatStage(stages[i], update.Message.Chat.ID, runtime, user)
-		err = service.sendWithRetry(service.bot, msg)
-		if err != nil {
-			return err
-		}
+		return errors.Wrap(err, "can't save stage dumper object")
 	}
 	return nil
 }
 
-func (stageScheduleHelper) formatStage(stage CompositeSchedule, chatID int64, runtime *db.Runtime, user *botApi.User) botApi.Chattable {
-	msg := botApi.NewPhotoShare(chatID, stage.FileID)
-	timeTemplate := service.getI18nText(runtime.Language, user, todo.NewI18nKey(todo.TimeTemplateTextKey))[0]
-	startTime := todo.TimeHelper.getLocalTime(stage.Schedule.StartTime, runtime.Timezone).Format(timeTemplate)
-	endTime := todo.TimeHelper.getLocalTime(stage.Schedule.EndTime, runtime.Timezone).Format(timeTemplate)
-	texts := service.getI18nText(runtime.Language, user, todo.NewI18nKey(service.stageSchedulesImageCaptionTextKey,
-		startTime, endTime,
-		stage.Schedule.GameMode.Name, stage.Schedule.Rule.Name,
-		stage.Schedule.StageB.Name, stage.Schedule.StageA.Name,
-		strings.Replace(stage.Schedule.GameMode.Name, " ", `\_`, -1),
-		strings.Replace(stage.Schedule.Rule.Name, " ", `\_`, -1),
-	))
-	msg.Caption = texts[0]
-	msg.ParseMode = "Markdown"
-	return msg
+func (repo *repoImpl) runUpdater() {
+	go func() {
+		for {
+			select {
+			case content := <-repo.writerChan:
+				repo.content = content
+			case rc := <-repo.readerChan:
+				rc <- repo.content
+			}
+		}
+	}()
 }
 
-func (stageScheduleHelper) newFilterErrorMessage(chatID int64, runtime *db.Runtime, user *botApi.User) botApi.Chattable {
-	texts := service.getI18nText(runtime.Language, user, todo.NewI18nKey(service.stageSchedulesFilterErrorTextKey))
-	msg := botApi.NewMessage(chatID, texts[0])
-	msg.ParseMode = "Markdown"
-	return msg
-}
-
-func (stageScheduleHelper) newNumberWarningMessage(chatID int64, runtime *db.Runtime, user *botApi.User) botApi.Chattable {
-	texts := service.getI18nText(runtime.Language, user, todo.NewI18nKey(service.stageSchedulesNumberWarningTextKey))
-	msg := botApi.NewMessage(chatID, texts[0])
-	msg.ParseMode = "Markdown"
-	return msg
-}
-
-func MinInt(a, b int) int {
+func minInt(a, b int) int {
 	if a < b {
 		return a
 	} else {
@@ -343,8 +326,8 @@ func MinInt(a, b int) int {
 }
 
 func drawImage(imgA, imgB image.Image) image.Image {
-	width := MinInt(imgA.Bounds().Dx(), imgB.Bounds().Dx())
-	halfHeight := MinInt(imgA.Bounds().Dy(), imgB.Bounds().Dy())
+	width := minInt(imgA.Bounds().Dx(), imgB.Bounds().Dx())
+	halfHeight := minInt(imgA.Bounds().Dy(), imgB.Bounds().Dy())
 	height := halfHeight * 2
 	// resize
 	imgA = resize.Resize(uint(width), uint(halfHeight), imgA, resize.Lanczos3)

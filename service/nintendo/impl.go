@@ -7,15 +7,17 @@ import (
 )
 
 type impl struct {
-	client *http.Client
+	client     *http.Client
+	retryTimes int
 }
 
 func New(config Config) Service {
 	client := proxyClient.New(proxyClient.Config{
 		EnableHttp2: false,
-		Timeout: config.Timeout,
+		Timeout:     config.Timeout,
 	})
 	return &impl{
-		client: client,
+		client:     client,
+		retryTimes: config.RetryTimes,
 	}
 }

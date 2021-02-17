@@ -2,7 +2,7 @@ package image
 
 import "image"
 
-type Identifier = string
+type Identifier string
 
 type Service interface {
 	Uploader

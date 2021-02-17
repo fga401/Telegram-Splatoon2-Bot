@@ -27,7 +27,7 @@ type Udemae struct {
 	Number          int32  `json:"number"`
 	IsNumberReached bool   `json:"is_number_reached"`
 	IsX             bool   `json:"is_x"`
-	SPlusNumber     *int32 `json:"s_plus_number"`
+	SPlusNumber     int32 `json:"s_plus_number"`
 	Name            string `json:"name"`
 }
 type Rank struct {
@@ -44,19 +44,19 @@ type GearSkill struct {
 	Image string `json:"image"`
 }
 type GearSkills struct {
-	Subs []*GearSkill `json:"subs"`
-	Main GearSkill    `json:"main"`
+	Subs []GearSkill `json:"subs"`
+	Main GearSkill   `json:"main"`
 }
 type Brand struct {
-	ID            string     `json:"id"`
-	Name          string     `json:"name"`
-	Image         string     `json:"image"`
-	FrequentSkill *GearSkill `json:"frequent_skill"`
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	Image         string    `json:"image"`
+	FrequentSkill GearSkill `json:"frequent_skill"`
 }
 type Gear struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
-	Brand     *Brand `json:"brand"`
+	Brand     Brand  `json:"brand"`
 	Thumbnail string `json:"thumbnail"`
 	Image     string `json:"image"`
 	Rarity    int32  `json:"rarity"`
@@ -68,26 +68,26 @@ type WeaponSkill struct {
 	ImageB string `json:"image_b"`
 }
 type Weapon struct {
-	ID        string       `json:"id"`
-	Name      string       `json:"name"`
-	Image     string       `json:"image"`
-	Thumbnail string       `json:"thumbnail"`
-	Special   *WeaponSkill `json:"special"`
-	Sub       *WeaponSkill `json:"sub"`
+	ID        string      `json:"id"`
+	Name      string      `json:"name"`
+	Image     string      `json:"image"`
+	Thumbnail string      `json:"thumbnail"`
+	Special   WeaponSkill `json:"special"`
+	Sub       WeaponSkill `json:"sub"`
 }
 type Player struct {
 	PrincipalID string `json:"principal_id"`
 	Nickname    string `json:"nickname"`
 	Rank
-	Udemae        *Udemae     `json:"udemae"`
-	PlayType      *PlayType   `json:"play_type"`
-	Weapon        *Weapon     `json:"weapon"`
-	Head          *Gear       `json:"head"`
-	HeadSkills    *GearSkills `json:"head_skills"`
-	Clothes       *Gear       `json:"clothes"`
-	ClothesSkills *GearSkills `json:"clothes_skills"`
-	Shoes         *Gear       `json:"shoes"`
-	ShoesSkills   *GearSkills `json:"shoes_skills"`
+	Udemae        Udemae     `json:"udemae"`
+	PlayType      PlayType   `json:"play_type"`
+	Weapon        Weapon     `json:"weapon"`
+	Head          Gear       `json:"head"`
+	HeadSkills    GearSkills `json:"head_skills"`
+	Clothes       Gear       `json:"clothes"`
+	ClothesSkills GearSkills `json:"clothes_skills"`
+	Shoes         Gear       `json:"shoes"`
+	ShoesSkills   GearSkills `json:"shoes_skills"`
 }
 
 // Battle
@@ -106,39 +106,39 @@ type BattleResult interface {
 }
 
 type BattleResultMetadata struct {
-	BattleNumber string    `json:"battle_number"`
-	Rule         *Rule     `json:"rule"`
-	Type         string    `json:"type"`
-	Stage        *Stage    `json:"stage"`
-	GameMode     *GameMode `json:"game_mode"`
+	BattleNumber string   `json:"battle_number"`
+	Rule         Rule     `json:"rule"`
+	Type         string   `json:"type"`
+	Stage        Stage    `json:"stage"`
+	GameMode     GameMode `json:"game_mode"`
 	Rank
-	PlayResult       *PlayResult `json:"play_result"`
-	StartTime        int64       `json:"start_time"`
-	MyTeamResult     *TeamResult `json:"my_team_result"`
-	OtherTeamResult  *TeamResult `json:"other_team_result"`
-	WeaponPaintPoint int32       `json:"weapon_paint_point"`
+	PlayResult       PlayResult `json:"play_result"`
+	StartTime        int64      `json:"start_time"`
+	MyTeamResult     TeamResult `json:"my_team_result"`
+	OtherTeamResult  TeamResult `json:"other_team_result"`
+	WeaponPaintPoint int32      `json:"weapon_paint_point"`
 }
 type RegularBattleResult struct {
 	BattleResultMetadata
-	WinMeter            *float32 `json:"win_meter"`
-	MyTeamPercentage    *float32 `json:"my_team_percentage"`
-	OtherTeamPercentage *float32 `json:"other_team_percentage"`
+	WinMeter            float32 `json:"win_meter"`
+	MyTeamPercentage    float32 `json:"my_team_percentage"`
+	OtherTeamPercentage float32 `json:"other_team_percentage"`
 }
 type GachiBattleResult struct {
 	BattleResultMetadata
-	Udemae             *Udemae  `json:"udemae"`
-	XPower             *float32 `json:"x_power"`
-	ElapsedTime        int32    `json:"elapsed_time"`
-	MyTeamCount        int32    `json:"my_team_count"`
-	OtherTeamCount     int32    `json:"other_team_count"`
-	EstimateGachiPower float32  `json:"estimate_gachi_power"`
-	EstimateXPower     float32  `json:"estimate_x_power"`
+	Udemae             Udemae  `json:"udemae"`
+	XPower             float32 `json:"x_power"`
+	ElapsedTime        int32   `json:"elapsed_time"`
+	MyTeamCount        int32   `json:"my_team_count"`
+	OtherTeamCount     int32   `json:"other_team_count"`
+	EstimateGachiPower float32 `json:"estimate_gachi_power"`
+	EstimateXPower     float32 `json:"estimate_x_power"`
 	// todo: CrownPlayers
 }
 type LeagueBattleResult struct {
 	BattleResultMetadata
 	TagID                    string  `json:"tag_id"`
-	Udemae                   *Udemae `json:"udemae"`
+	Udemae                   Udemae `json:"udemae"`
 	ElapsedTime              int32   `json:"elapsed_time"`
 	MyTeamCount              int32   `json:"my_team_count"`
 	OtherTeamCount           int32   `json:"other_team_count"`
@@ -148,7 +148,6 @@ type LeagueBattleResult struct {
 	OtherEstimateLeaguePoint float32 `json:"other_estimate_league_point"`
 	EstimateGachiPower       float32 `json:"estimate_gachi_power"`
 }
-
 
 func (r RegularBattleResult) Type() BattleResultType {
 	return BattleResultTypeEnum.Regular
@@ -172,7 +171,7 @@ func (r LeagueBattleResult) Metadata() BattleResultMetadata {
 
 type BattleResults struct {
 	ID      string         `json:"unique_id"`
-	Summary *BattleSummary `json:"summary"`
+	Summary BattleSummary `json:"summary"`
 	Results []BattleResult `json:"results"`
 }
 type BattleSummary struct {
@@ -196,70 +195,70 @@ type PlayResult struct {
 	AssertCount    int32   `json:"assert_count"`
 	SpecialCount   int32   `json:"special_count"`
 	SortScore      int32   `json:"sort_score"`
-	Player         *Player `json:"player"`
+	Player         Player `json:"player"`
 }
 
 // Raw Battle
 
 type RawBattleResult struct {
 	BattleNumber string    `json:"battle_number"`
-	Rule         *Rule     `json:"rule"`
+	Rule         Rule     `json:"rule"`
 	Type         string    `json:"type"`
-	Stage        *Stage    `json:"stage"`
-	GameMode     *GameMode `json:"game_mode"`
+	Stage        Stage    `json:"stage"`
+	GameMode     GameMode `json:"game_mode"`
 	Rank
-	PlayResult       *PlayResult `json:"play_result"`
+	PlayResult       PlayResult `json:"play_result"`
 	StartTime        int64       `json:"start_time"`
-	MyTeamResult     *TeamResult `json:"my_team_result"`
-	OtherTeamResult  *TeamResult `json:"other_team_result"`
+	MyTeamResult     TeamResult `json:"my_team_result"`
+	OtherTeamResult  TeamResult `json:"other_team_result"`
 	WeaponPaintPoint int32       `json:"weapon_paint_point"`
 
 	// Regular
-	WinMeter            *float32 `json:"win_meter"`
-	MyTeamPercentage    *float32 `json:"my_team_percentage"`
-	OtherTeamPercentage *float32 `json:"other_team_percentage"`
+	WinMeter            float32 `json:"win_meter"`
+	MyTeamPercentage    float32 `json:"my_team_percentage"`
+	OtherTeamPercentage float32 `json:"other_team_percentage"`
 
 	// Gachi
-	XPower             *float32 `json:"x_power"`
-	ElapsedTime        *int32   `json:"elapsed_time"`
-	MyTeamCount        *int32   `json:"my_team_count"`
-	OtherTeamCount     *int32   `json:"other_team_count"`
-	EstimateGachiPower *float32 `json:"estimate_gachi_power"`
-	EstimateXPower     *float32 `json:"estimate_x_power"`
-	Udemae             *Udemae  `json:"udemae"`
+	XPower             float32 `json:"x_power"`
+	ElapsedTime        int32   `json:"elapsed_time"`
+	MyTeamCount        int32   `json:"my_team_count"`
+	OtherTeamCount     int32   `json:"other_team_count"`
+	EstimateGachiPower float32 `json:"estimate_gachi_power"`
+	EstimateXPower     float32 `json:"estimate_x_power"`
+	Udemae             Udemae  `json:"udemae"`
 	// todo: CrownPlayers
 
 	// League
-	MaxLeaguePoint               *float32 `json:"max_league_point"`
-	MyTeamEstimateLeaguePoint    *float32 `json:"my_team_estimate_league_point"`
-	OtherTeamEstimateLeaguePoint *float32 `json:"other_team_estimate_league_point"`
-	TagID                        *string  `json:"tag_id"`
-	LeaguePoint                  *float32 `json:"league_point"`
+	MaxLeaguePoint               float32 `json:"max_league_point"`
+	MyTeamEstimateLeaguePoint    float32 `json:"my_team_estimate_league_point"`
+	OtherTeamEstimateLeaguePoint float32 `json:"other_team_estimate_league_point"`
+	TagID                        string  `json:"tag_id"`
+	LeaguePoint                  float32 `json:"league_point"`
 	// Duplicated
-	// MyTeamCount               *int32   `json:"my_team_count"`
-	// OtherTeamCount            *int32   `json:"other_team_count"`
-	// Udemae                    *Udemae  `json:"udemae"`
+	// MyTeamCount               int32   `json:"my_team_count"`
+	// OtherTeamCount            int32   `json:"other_team_count"`
+	// Udemae                    Udemae  `json:"udemae"`
 
 	// Festival
-	FesMode                 *GameMode  `json:"fes_mode"`
-	FesID                   *int64     `json:"fes_id"`
-	EventType               *EventType `json:"event_type"`
-	MyTeamFesTheme          *Theme     `json:"my_team_fes_theme"`
-	OtherTeamFesTheme       *Theme     `json:"other_team_fes_theme"`
-	MyEstimateFesPower      *float32   `json:"my_estimate_fes_power"`
-	OtherEstimateFesPower   *float32   `json:"other_estimate_fes_power"`
-	MyTeamAnotherName       *string    `json:"my_team_another_name"`
-	OtherTeamAnotherName    *string    `json:"other_team_another_name"`
-	MyTeamConsecutiveWin    *int32     `json:"my_team_consecutive_win"`
-	OtherTeamConsecutiveWin *int32     `json:"other_team_consecutive_win"`
-	FesPower                *float32   `json:"fes_power"`
-	MaxFesPower             *float32   `json:"max_fes_power"`
-	UniformBonus            *float32   `json:"uniform_bonus"`
-	Version                 *int32     `json:"version"`
-	FesGrade                *FesGrade  `json:"fes_grade"`
-	ContributionPoint       *float32   `json:"contribution_point"`
-	FesPoint                *float32   `json:"fes_point"`
-	ContributionPointTotal  *float32   `json:"contribution_point_total"`
+	FesMode                 GameMode  `json:"fes_mode"`
+	FesID                   int64     `json:"fes_id"`
+	EventType               EventType `json:"event_type"`
+	MyTeamFesTheme          Theme     `json:"my_team_fes_theme"`
+	OtherTeamFesTheme       Theme     `json:"other_team_fes_theme"`
+	MyEstimateFesPower      float32   `json:"my_estimate_fes_power"`
+	OtherEstimateFesPower   float32   `json:"other_estimate_fes_power"`
+	MyTeamAnotherName       string    `json:"my_team_another_name"`
+	OtherTeamAnotherName    string    `json:"other_team_another_name"`
+	MyTeamConsecutiveWin    int32     `json:"my_team_consecutive_win"`
+	OtherTeamConsecutiveWin int32     `json:"other_team_consecutive_win"`
+	FesPower                float32   `json:"fes_power"`
+	MaxFesPower             float32   `json:"max_fes_power"`
+	UniformBonus            float32   `json:"uniform_bonus"`
+	Version                 int32     `json:"version"`
+	FesGrade                FesGrade  `json:"fes_grade"`
+	ContributionPoint       float32   `json:"contribution_point"`
+	FesPoint                float32   `json:"fes_point"`
+	ContributionPointTotal  float32   `json:"contribution_point_total"`
 }
 
 // Salmon
@@ -284,29 +283,29 @@ type SalmonStage struct {
 	Image string `json:"image"`
 }
 type SalmonScheduleDetail struct {
-	Weapons []*SalmonWeaponType `json:"weapons"`
-	Stage   *SalmonStage        `json:"stage"`
-	*ScheduleTime
+	Weapons []SalmonWeaponType `json:"weapons"`
+	Stage   SalmonStage        `json:"stage"`
+	ScheduleTime
 }
 type SalmonSchedules struct {
-	Details   []*SalmonScheduleDetail `json:"details"`
-	Schedules []*ScheduleTime         `json:"schedules"`
+	Details   []SalmonScheduleDetail `json:"details"`
+	Schedules []ScheduleTime         `json:"schedules"`
 }
 
 // Stage
 
 type StageSchedule struct {
 	ID       int64     `json:"id"`
-	Rule     *Rule     `json:"rule"`
-	GameMode *GameMode `json:"game_mode"`
-	StageA   *Stage    `json:"stage_a"`
-	StageB   *Stage    `json:"stage_b"`
-	*ScheduleTime
+	Rule     Rule     `json:"rule"`
+	GameMode GameMode `json:"game_mode"`
+	StageA   Stage    `json:"stage_a"`
+	StageB   Stage    `json:"stage_b"`
+	ScheduleTime
 }
 type StageSchedules struct {
-	League  []*StageSchedule `json:"league"`
-	Gachi   []*StageSchedule `json:"gachi"`
-	Regular []*StageSchedule `json:"regular"`
+	League  []StageSchedule `json:"league"`
+	Gachi   []StageSchedule `json:"gachi"`
+	Regular []StageSchedule `json:"regular"`
 }
 
 // Festival
@@ -319,7 +318,7 @@ type Color struct {
 	CSSRGB string  `json:"css_rgb"`
 }
 type Theme struct {
-	Color *Color `json:"color"`
+	Color Color `json:"color"`
 	Key   string `json:"key"`
 	Name  string `json:"name"`
 }
@@ -336,13 +335,13 @@ type FesGrade struct {
 
 type FesBattleResult struct {
 	RegularBattleResult
-	FesMode                 *GameMode  `json:"fes_mode"`
+	FesMode                 GameMode  `json:"fes_mode"`
 	FesID                   int64      `json:"fes_id"`
 	UniformBonus            float32    `json:"uniform_bonus"`
-	EventType               *EventType `json:"event_type"`
-	FesGrade                *FesGrade  `json:"fes_grade"`
-	MyTeamFesTheme          *Theme     `json:"my_team_fes_theme"`
-	OtherTeamFesTheme       *Theme     `json:"other_team_fes_theme"`
+	EventType               EventType `json:"event_type"`
+	FesGrade                FesGrade  `json:"fes_grade"`
+	MyTeamFesTheme          Theme     `json:"my_team_fes_theme"`
+	OtherTeamFesTheme       Theme     `json:"other_team_fes_theme"`
 	MyEstimateFesPower      float32    `json:"my_estimate_fes_power"`
 	OtherEstimateFesPower   float32    `json:"other_estimate_fes_power"`
 	MyTeamAnotherName       string     `json:"my_team_another_name"`
@@ -364,4 +363,3 @@ func (r FesBattleResult) Type() BattleResultType {
 func (r FesBattleResult) Metadata() BattleResultMetadata {
 	return r.BattleResultMetadata
 }
-

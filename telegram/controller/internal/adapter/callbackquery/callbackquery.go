@@ -23,12 +23,15 @@ func (a *callbackQueryAdapter) ArgNum() int {
 func (a *callbackQueryAdapter) Adapt(fn adapter.AdaptedFunc, argManager adapter.Manager) adapter.AdaptedFunc {
 	argManager.Add(a)
 	return func(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
-		callback := update.CallbackQuery
-		err := a.bot.AnswerCallbackQuery(callback.ID)
-		if err != nil {
-			return errors.Wrap(err, "can't answer callback query")
+		text := ""
+		if update.CallbackQuery != nil {
+			callback := update.CallbackQuery
+			err := a.bot.AnswerCallbackQuery(callback.ID)
+			if err != nil {
+				return errors.Wrap(err, "can't answer callback query")
+			}
+			text = callbackQueryUtil.GetText(callback.Data)
 		}
-		text := callbackQueryUtil.GetText(callback.Data)
 		return fn(update, argManager, append(args, text)...)
 	}
 }

@@ -18,5 +18,5 @@ func init() {
 func (svc *serviceImpl) Existed(uid UserID) (bool, error) {
 	var count int
 	err := svc.db.Get(tokenEnum.Permission.Count, &count, uid)
-	return count >= 0, err
+	return count > 0, err
 }

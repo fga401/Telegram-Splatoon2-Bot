@@ -1,4 +1,4 @@
-package messageutil
+package markup
 
 import (
 	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	backTextKey = "« Back to Settings"
+	backTextKey = "« Go Back"
 )
 
 func AppendBackButton(markup botApi.InlineKeyboardMarkup, target string, printer *message.Printer) botApi.InlineKeyboardMarkup {

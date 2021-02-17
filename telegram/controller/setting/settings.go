@@ -6,7 +6,15 @@ import (
 	userSvc "telegram-splatoon2-bot/service/user"
 	callbackQueryUtil "telegram-splatoon2-bot/telegram/callbackquery"
 	"telegram-splatoon2-bot/telegram/controller/internal/adapter"
+	"telegram-splatoon2-bot/telegram/controller/internal/markup"
+	botMessage "telegram-splatoon2-bot/telegram/controller/internal/message"
 )
+
+func (ctrl *settingsCtrl) cancelSetting(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
+	msg := update.CallbackQuery.Message
+	_, err := ctrl.bot.Send(botApi.NewDeleteMessage(msg.Chat.ID, msg.MessageID))
+	return err
+}
 
 func (ctrl *settingsCtrl) setting(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
 	statusArgIdx := argManager.Index(ctrl.statusAdapter)[0]
@@ -21,7 +29,7 @@ const (
 )
 
 var mainSettingMarkup = func(printer *message.Printer) botApi.InlineKeyboardMarkup {
-	return botApi.NewInlineKeyboardMarkup(
+	ret := botApi.NewInlineKeyboardMarkup(
 		botApi.NewInlineKeyboardRow(
 			botApi.NewInlineKeyboardButtonData(
 				printer.Sprintf("Account"),
@@ -37,13 +45,12 @@ var mainSettingMarkup = func(printer *message.Printer) botApi.InlineKeyboardMark
 			),
 		),
 	)
+	return markup.AppendBackButton(ret, KeyboardPrefixCancelSetting, printer)
 }
 
 func getMainSettingMessage(printer *message.Printer, update botApi.Update) botApi.Chattable {
 	text := printer.Sprintf(textKeySetting)
 	markup := mainSettingMarkup(printer)
-	msg := botApi.NewMessage(update.Message.Chat.ID, text)
-	msg.ReplyMarkup = markup
-	msg.ParseMode = "Markdown"
+	msg := botMessage.NewByUpdate(update, text, &markup)
 	return msg
 }

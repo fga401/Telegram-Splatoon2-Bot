@@ -5,9 +5,10 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/text/message"
-	log "telegram-splatoon2-bot/common/log"
+	"telegram-splatoon2-bot/common/log"
 	"telegram-splatoon2-bot/service/language"
 	userSvc "telegram-splatoon2-bot/service/user"
+	botMessage "telegram-splatoon2-bot/telegram/controller/internal/message"
 )
 
 func (ctrl *settingsCtrl) Start(update botApi.Update) error {
@@ -38,7 +39,6 @@ const (
 
 func getStartMessage(printer *message.Printer, update botApi.Update) botApi.Chattable {
 	text := printer.Sprintf(textKeyWelcome)
-	msg := botApi.NewMessage(update.Message.Chat.ID, text)
-	msg.ParseMode = "Markdown"
+	msg := botMessage.NewByUpdate(update, text, nil)
 	return msg
 }

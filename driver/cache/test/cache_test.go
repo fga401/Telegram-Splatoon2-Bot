@@ -47,13 +47,17 @@ func testCache(t *testing.T, cache cache.Cache) {
 	for i := M; i >= 0; i-- {
 		cache.SetExpiration(IntToKey(i), IntToValue(i), time.Second*time.Duration(i))
 	}
-	<-time.After(time.Second * M / 2)
+	const P = 5
+	for i := 0; i < P; i++ {
+		cache.SetExpiration(IntToKey(i), IntToValue(i), time.Second*time.Duration(M))
+	}
+	<-time.After(time.Second * M / 2 + 500 * time.Millisecond)
 	for i := M; i >= 0; i-- {
 		key := IntToKey(i)
-		if i > M/2 {
-			require.True(t, cache.Has(key), "Half of key should be existed.")
+		if i > M/2 || i < P {
+			require.True(t, cache.Has(key), fmt.Sprintf("%s should be existed.", key))
 		} else {
-			require.False(t, cache.Has(key), "Half of key should be expired.")
+			require.False(t, cache.Has(key), fmt.Sprintf("%s should be expired.", key))
 		}
 	}
 }

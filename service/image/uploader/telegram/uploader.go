@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"image"
 	"image/png"
-	"net/http"
 	"strconv"
 
 	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -12,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	log "telegram-splatoon2-bot/common/log"
-	"telegram-splatoon2-bot/common/proxyclient"
 	imageSvc "telegram-splatoon2-bot/service/image"
 	"telegram-splatoon2-bot/telegram/bot"
 )
@@ -20,15 +18,13 @@ import (
 type telegramUploader struct {
 	storeChannelID int64
 
-	bot    bot.Bot
-	client *http.Client
+	bot bot.Bot
 }
 
-func NewUploader(bot bot.Bot, config UploaderConfig) imageSvc.Uploader {
+func NewUploader(bot bot.Bot, config Config) imageSvc.Uploader {
 	return &telegramUploader{
-		storeChannelID: config.storeChannelID,
+		storeChannelID: config.StoreChannelID,
 		bot:            bot,
-		client:         proxyclient.New(config.proxy),
 	}
 }
 
@@ -49,7 +45,7 @@ func (s *telegramUploader) Upload(img image.Image) (imageSvc.Identifier, error) 
 		return "", errors.Wrap(err, "no response photo")
 	}
 	photo := *respMsg.Photo
-	return photo[len(photo)-1].FileID, nil
+	return imageSvc.Identifier(photo[len(photo)-1].FileID), nil
 }
 
 func (s *telegramUploader) UploadAll(images []image.Image) ([]imageSvc.Identifier, error) {
@@ -58,6 +54,7 @@ func (s *telegramUploader) UploadAll(images []image.Image) ([]imageSvc.Identifie
 	}
 	if len(images) == 1 {
 		id, err := s.Upload(images[0])
+		log.Info("upload image done", zap.String("file_id", string(id)))
 		return []imageSvc.Identifier{id}, err
 	}
 	ids := make([]imageSvc.Identifier, len(images))
@@ -84,11 +81,15 @@ func (s *telegramUploader) UploadAll(images []image.Image) ([]imageSvc.Identifie
 			}
 			for j := i; j < sup; j++ {
 				photo := *messages[j-i].Photo
-				ids[j] = photo[len(photo)-1].FileID
+				ids[j] = imageSvc.Identifier(photo[len(photo)-1].FileID)
 			}
 		}
 	}
-	log.Info("upload multiple images done", zap.Strings("file_ids", ids))
+	var stringIDs []string
+	for _, id := range ids {
+		stringIDs = append(stringIDs, string(id))
+	}
+	log.Info("upload multiple images done", zap.Strings("file_ids", stringIDs))
 	return ids, nil
 }
 

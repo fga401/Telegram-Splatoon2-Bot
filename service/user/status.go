@@ -30,8 +30,16 @@ func (svc *serviceImpl) GetStatus(uid ID) (Status, error) {
 	return status, nil
 }
 
-func (svc *serviceImpl) UpdateStatusIKSM(uid ID, iksm string) error {
-	err := svc.db.UpdateStatusIKSM(uid, iksm)
+func (svc *serviceImpl) UpdateStatusIKSM(uid ID) error {
+	status, err := svc.GetStatus(uid)
+	if err != nil {
+		return errors.Wrap(err, "can't fetch status")
+	}
+	metadata, err := svc.nintendoSvc.GetAccountMetadata(status.SessionToken, language.English)
+	if err != nil {
+		return errors.Wrap(err, "can't get account metadata")
+	}
+	err = svc.db.UpdateStatusIKSM(uid, metadata.IKSM)
 	if err != nil {
 		return errors.Wrap(err, "can't update status IKSM in database")
 	}

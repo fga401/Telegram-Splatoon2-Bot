@@ -7,7 +7,7 @@ import (
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
-	nintendo2 "telegram-splatoon2-bot/service/nintendo"
+	nintendo "telegram-splatoon2-bot/service/nintendo"
 )
 
 // suppress unused package warning
@@ -28,16 +28,8 @@ func easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositorySalmon(in *jlexe
 		for !in.IsDelim('}') {
 			key := string(in.String())
 			in.WantColon()
-			var v1 *nintendo2.SalmonWeaponType
-			if in.IsNull() {
-				in.Skip()
-				v1 = nil
-			} else {
-				if v1 == nil {
-					v1 = new(nintendo2.SalmonWeaponType)
-				}
-				(*v1).UnmarshalEasyJSON(in)
-			}
+			var v1 nintendo.SalmonWeaponType
+			easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo(in, &v1)
 			(*out)[key] = v1
 			in.WantComma()
 		}
@@ -61,11 +53,7 @@ func easyjson1870c743EncodeTelegramSplatoon2BotServiceRepositorySalmon(out *jwri
 			}
 			out.String(string(v2Name))
 			out.RawByte(':')
-			if v2Value == nil {
-				out.RawString("null")
-			} else {
-				(*v2Value).MarshalEasyJSON(out)
-			}
+			easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo(out, v2Value)
 		}
 		out.RawByte('}')
 	}
@@ -94,6 +82,198 @@ func (v *weaponCollection) UnmarshalJSON(data []byte) error {
 func (v *weaponCollection) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositorySalmon(l, v)
 }
+func easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo(in *jlexer.Lexer, out *nintendo.SalmonWeaponType) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = string(in.String())
+		case "weapon":
+			if in.IsNull() {
+				in.Skip()
+				out.Weapon = nil
+			} else {
+				if out.Weapon == nil {
+					out.Weapon = new(nintendo.SalmonWeapon)
+				}
+				easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo1(in, out.Weapon)
+			}
+		case "coop_special_weapon":
+			if in.IsNull() {
+				in.Skip()
+				out.SpecialWeapon = nil
+			} else {
+				if out.SpecialWeapon == nil {
+					out.SpecialWeapon = new(nintendo.SalmonSpecialWeapon)
+				}
+				easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo2(in, out.SpecialWeapon)
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo(out *jwriter.Writer, in nintendo.SalmonWeaponType) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.ID))
+	}
+	{
+		const prefix string = ",\"weapon\":"
+		out.RawString(prefix)
+		if in.Weapon == nil {
+			out.RawString("null")
+		} else {
+			easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo1(out, *in.Weapon)
+		}
+	}
+	{
+		const prefix string = ",\"coop_special_weapon\":"
+		out.RawString(prefix)
+		if in.SpecialWeapon == nil {
+			out.RawString("null")
+		} else {
+			easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo2(out, *in.SpecialWeapon)
+		}
+	}
+	out.RawByte('}')
+}
+func easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo2(in *jlexer.Lexer, out *nintendo.SalmonSpecialWeapon) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "name":
+			out.Name = string(in.String())
+		case "image":
+			out.Image = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo2(out *jwriter.Writer, in nintendo.SalmonSpecialWeapon) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"image\":"
+		out.RawString(prefix)
+		out.String(string(in.Image))
+	}
+	out.RawByte('}')
+}
+func easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo1(in *jlexer.Lexer, out *nintendo.SalmonWeapon) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id":
+			out.ID = string(in.String())
+		case "name":
+			out.Name = string(in.String())
+		case "image":
+			out.Image = string(in.String())
+		case "thumbnail":
+			out.Thumbnail = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo1(out *jwriter.Writer, in nintendo.SalmonWeapon) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.ID))
+	}
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix)
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"image\":"
+		out.RawString(prefix)
+		out.String(string(in.Image))
+	}
+	{
+		const prefix string = ",\"thumbnail\":"
+		out.RawString(prefix)
+		out.String(string(in.Thumbnail))
+	}
+	out.RawByte('}')
+}
 func easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositorySalmon1(in *jlexer.Lexer, out *stageCollection) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
@@ -104,16 +284,8 @@ func easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositorySalmon1(in *jlex
 		for !in.IsDelim('}') {
 			key := string(in.String())
 			in.WantColon()
-			var v3 *nintendo2.SalmonStage
-			if in.IsNull() {
-				in.Skip()
-				v3 = nil
-			} else {
-				if v3 == nil {
-					v3 = new(nintendo2.SalmonStage)
-				}
-				(*v3).UnmarshalEasyJSON(in)
-			}
+			var v3 nintendo.SalmonStage
+			easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo3(in, &v3)
 			(*out)[key] = v3
 			in.WantComma()
 		}
@@ -137,11 +309,7 @@ func easyjson1870c743EncodeTelegramSplatoon2BotServiceRepositorySalmon1(out *jwr
 			}
 			out.String(string(v4Name))
 			out.RawByte(':')
-			if v4Value == nil {
-				out.RawString("null")
-			} else {
-				(*v4Value).MarshalEasyJSON(out)
-			}
+			easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo3(out, v4Value)
 		}
 		out.RawByte('}')
 	}
@@ -169,4 +337,53 @@ func (v *stageCollection) UnmarshalJSON(data []byte) error {
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *stageCollection) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson1870c743DecodeTelegramSplatoon2BotServiceRepositorySalmon1(l, v)
+}
+func easyjson1870c743DecodeTelegramSplatoon2BotServiceNintendo3(in *jlexer.Lexer, out *nintendo.SalmonStage) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "name":
+			out.Name = string(in.String())
+		case "image":
+			out.Image = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson1870c743EncodeTelegramSplatoon2BotServiceNintendo3(out *jwriter.Writer, in nintendo.SalmonStage) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"image\":"
+		out.RawString(prefix)
+		out.String(string(in.Image))
+	}
+	out.RawByte('}')
 }

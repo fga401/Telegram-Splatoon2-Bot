@@ -80,7 +80,7 @@ func InitService(b *botApi.BotAPI) {
 
 	// salmon
 	if !viper.GetBool("service.+salmon.disable") {
-		salmon.salmonScheduleRepo, err = salmon.NewRepo(user.admins)
+		salmon.salmonScheduleRepo, err = salmon.NewRepository(user.admins)
 		if err != nil {
 			panic(errors.Wrap(err, "can't init NewSalmonScheduleRepo"))
 		}
@@ -88,7 +88,7 @@ func InitService(b *botApi.BotAPI) {
 
 	// stage
 	if !viper.GetBool("service.stage.disable") {
-		stage.stageScheduleRepo, err = stage.NewStageScheduleRepo(user.admins)
+		stage.stageScheduleRepo, err = stage.NewRepository(user.admins)
 		if err != nil {
 			panic(errors.Wrap(err, "can't init NewStageScheduleRepo"))
 		}
@@ -195,7 +195,7 @@ func FetchResourceWithUpdate(uid int64, retriever Retriever, args ...interface{}
 		return err
 	}, RetryTimes)
 
-	if errors.Is(err, &nintendo.ExpirationError{}) {
+	if errors.Is(err, &nintendo.ErrIKSMExpired{}) {
 		// todo: add metric
 		var iksm string
 		iksm, err = UpdateCookies(runtime)

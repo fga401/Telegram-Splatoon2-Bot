@@ -1,15 +1,19 @@
 package nintendo
+
 import (
 	"bytes"
 	"compress/gzip"
 	"crypto/rand"
 	"encoding/base64"
-	json "github.com/json-iterator/go"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
+
+	json "github.com/json-iterator/go"
+	"github.com/pkg/errors"
+	"telegram-splatoon2-bot/common/util"
 )
 
 // base64UrlEncode encodes a []byte to a base64 coding url
@@ -49,7 +53,7 @@ func base64UrlDecode(base64Url []byte) ([]byte, error) {
 	return ret[:len(ret)-padding], nil
 }
 
-func randBytes(n int) ([]byte,error){
+func randBytes(n int) ([]byte, error) {
 	buf := make([]byte, n)
 	_, err := rand.Read(buf)
 	if err != nil {
@@ -83,36 +87,39 @@ func getAppHeader(iksm string, timezone int, acceptLang string, gzip bool) map[s
 	}
 }
 
-type ExpirationError struct {
-	iksm string
-}
-
-func (err *ExpirationError) Error() string {
-	return "expired iksm: " + err.iksm
-}
-
 func isCookiesExpired(respJson []byte) bool {
 	return json.Get(respJson, "code").ToString() == "AUTHENTICATION_ERROR"
 }
 
-func getSplatoon2RestfulJson(url string, iksm string, timezone int, acceptLang string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "can't generate request")
-	}
-	req.Header = getAppHeader(iksm, timezone, acceptLang, true)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "can't get response")
-	}
-	defer closeBody(resp.Body)
-	respBody, err := gzip.NewReader(resp.Body)
-	if err != nil {
-		return nil, errors.Wrap(err, "can't unzip response body")
-	}
-	respJson, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		return nil, errors.Wrap(err, "can't read response body")
-	}
-	return respJson, nil
+func (svc *impl) getSplatoon2RestfulJson(url string, iksm string, timezone int, acceptLang string) ([]byte, error) {
+	var respJson []byte
+	err := util.Retry(func() error {
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return errors.Wrap(err, "can't generate request")
+		}
+		req.Header = getAppHeader(iksm, timezone, acceptLang, true)
+		resp, err := svc.client.Do(req)
+		if err != nil {
+			return errors.Wrap(err, "can't get response")
+		}
+		defer closeBody(resp.Body)
+		respBody := resp.Body
+		if isGzip(resp.Header) {
+			respBody, err = gzip.NewReader(respBody)
+			if err != nil {
+				return errors.Wrap(err, "can't unzip response body")
+			}
+		}
+		respJson, err = ioutil.ReadAll(respBody)
+		if err != nil {
+			return errors.Wrap(err, "can't read response body")
+		}
+		return nil
+	}, svc.retryTimes)
+	return respJson, err
+}
+
+func isGzip(header http.Header) bool {
+	return strings.Contains(header.Get("content-Encoding"), "gzip")
 }
