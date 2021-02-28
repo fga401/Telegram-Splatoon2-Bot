@@ -20,6 +20,7 @@ type impl struct {
 	retryTimes int
 }
 
+// NewDownloader returns a new Downloader.
 func NewDownloader(config Config) imageSvc.Downloader {
 	return &impl{
 		client:     proxyclient.New(config.Proxy),
@@ -70,7 +71,7 @@ func (s *impl) downloadFromNet(ctx context.Context, url string) (image.Image, er
 	var resp *http.Response
 	err := util.Retry(func() error {
 		var err error
-		req, err := http.NewRequestWithContext(ctx,"GET", url, nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 		if err != nil {
 			return errors.Wrap(err, "can't make request")
 		}

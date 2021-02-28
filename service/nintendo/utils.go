@@ -40,7 +40,7 @@ func base64UrlDecode(base64Url []byte) ([]byte, error) {
 	}
 	temp := make([]byte, len(base64Url)+padding)
 	copy(temp, base64Url)
-	for i := 0; i < padding; i += 1 {
+	for i := 0; i < padding; i ++ {
 		temp[len(base64Url)+i] = '='
 	}
 	temp = bytes.ReplaceAll(temp, []byte{'_'}, []byte{'/'})
@@ -87,12 +87,12 @@ func getAppHeader(iksm string, timezone int, acceptLang string, gzip bool) map[s
 	}
 }
 
-func isCookiesExpired(respJson []byte) bool {
-	return json.Get(respJson, "code").ToString() == "AUTHENTICATION_ERROR"
+func isCookiesExpired(respJSON []byte) bool {
+	return json.Get(respJSON, "code").ToString() == "AUTHENTICATION_ERROR"
 }
 
-func (svc *impl) getSplatoon2RestfulJson(url string, iksm string, timezone int, acceptLang string) ([]byte, error) {
-	var respJson []byte
+func (svc *impl) getSplatoon2RestfulJSON(url string, iksm string, timezone int, acceptLang string) ([]byte, error) {
+	var respJSON []byte
 	err := util.Retry(func() error {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
@@ -111,13 +111,13 @@ func (svc *impl) getSplatoon2RestfulJson(url string, iksm string, timezone int, 
 				return errors.Wrap(err, "can't unzip response body")
 			}
 		}
-		respJson, err = ioutil.ReadAll(respBody)
+		respJSON, err = ioutil.ReadAll(respBody)
 		if err != nil {
 			return errors.Wrap(err, "can't read response body")
 		}
 		return nil
 	}, svc.retryTimes)
-	return respJson, err
+	return respJSON, err
 }
 
 func isGzip(header http.Header) bool {

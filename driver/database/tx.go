@@ -2,6 +2,7 @@ package database
 
 import "github.com/jmoiron/sqlx"
 
+// txAdapter wraps a sqlx.Tx to Executable.
 type txAdapter struct {
 	tx    *sqlx.Tx
 	table *databaseImpl

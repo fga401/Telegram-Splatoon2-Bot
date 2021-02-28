@@ -5,8 +5,10 @@ import (
 	"telegram-splatoon2-bot/service/timezone"
 )
 
+// UserID is ID of user.
 type UserID int64
 
+// Permission database structure storing user permission.
 type Permission struct {
 	UserID       UserID `db:"uid"`
 	UserName     string `db:"user_name"`
@@ -16,12 +18,14 @@ type Permission struct {
 	AllowPolling bool   `db:"allow_polling"`
 }
 
+// Account database structure storing user accounts.
 type Account struct {
 	UserID       UserID `db:"uid"`
 	SessionToken string `db:"session_token"`
 	Tag          string `db:"tag"`
 }
 
+// Status database structure storing user status and preference.
 type Status struct {
 	UserID       UserID            `db:"uid"`
 	SessionToken string            `db:"session_token"`

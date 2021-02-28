@@ -7,7 +7,7 @@ import (
 	log "telegram-splatoon2-bot/common/log"
 )
 
-func unmarshalBattleResult(raw []byte) (ret BattleResult,err error) {
+func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
 	t := json.Get(raw, "type").ToString()
 	switch BattleResultType(t) {
 	case BattleResultTypeEnum.Regular:
@@ -78,17 +78,17 @@ func (b *rawBattleResults) UnmarshalJSON(data []byte) error {
 }
 
 func (svc *impl) GetAllBattleResults(iksm string, timezone int, acceptLang string) (*BattleResults, error) {
-	reqUrl := "https://app.splatoon2.nintendo.net/api/results"
-	respJson, err := svc.getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
+	reqURL := "https://app.splatoon2.nintendo.net/api/results"
+	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone, acceptLang)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
 	}
-	if isCookiesExpired(respJson) {
+	if isCookiesExpired(respJSON) {
 		return nil, &ErrIKSMExpired{iksm}
 	}
-	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJson))
+	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJSON))
 	battleResults := &BattleResults{}
-	err = json.Unmarshal(respJson, battleResults)
+	err = json.Unmarshal(respJSON, battleResults)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't parse json to StageSchedules")
 	}
@@ -97,8 +97,8 @@ func (svc *impl) GetAllBattleResults(iksm string, timezone int, acceptLang strin
 
 type rawLatestBattleResult struct {
 	lastBattleNumber string
-	RawResults []json.RawMessage `json:"results"`
-	Results []BattleResult
+	RawResults       []json.RawMessage `json:"results"`
+	Results          []BattleResult
 }
 
 func (b *rawLatestBattleResult) UnmarshalJSON(data []byte) error {
@@ -122,17 +122,17 @@ func (b *rawLatestBattleResult) UnmarshalJSON(data []byte) error {
 }
 
 func (svc *impl) GetLatestBattleResults(lastBattleNumber string, iksm string, timezone int, acceptLang string) ([]BattleResult, error) {
-	reqUrl := "https://app.splatoon2.nintendo.net/api/results"
-	respJson, err := svc.getSplatoon2RestfulJson(reqUrl, iksm, timezone, acceptLang)
+	reqURL := "https://app.splatoon2.nintendo.net/api/results"
+	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone, acceptLang)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
 	}
-	if isCookiesExpired(respJson) {
+	if isCookiesExpired(respJSON) {
 		return nil, &ErrIKSMExpired{iksm}
 	}
-	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJson))
+	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJSON))
 	latestBattleResults := &rawLatestBattleResult{lastBattleNumber: lastBattleNumber}
-	err = json.Unmarshal(respJson, latestBattleResults)
+	err = json.Unmarshal(respJSON, latestBattleResults)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't parse json to StageSchedules")
 	}

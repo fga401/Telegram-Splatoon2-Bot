@@ -11,6 +11,7 @@ import (
 	"telegram-splatoon2-bot/telegram/router"
 )
 
+// Prefixes using in CallbackQuery.
 const (
 	KeyboardPrefixCancelSetting = "<cxl>"
 	KeyboardPrefixSetting       = "<setting>"
@@ -29,6 +30,7 @@ const (
 	KeyboardPrefixTimezoneSelection = "<sel_tz>"
 )
 
+// Setting groups all handler about user settings.
 type Setting interface {
 	Start(update botApi.Update) error
 	Setting(update botApi.Update) error
@@ -75,6 +77,7 @@ type settingsCtrl struct {
 	accountRedirectLinkHandler    router.Handler
 }
 
+// New returns a Setting object.
 func New(bot bot.Bot,
 	userSvc userSvc.Service,
 	languageSvc language.Service,

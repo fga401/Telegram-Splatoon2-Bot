@@ -1,4 +1,4 @@
-package send_media_group
+package sendmediagroup
 
 import (
 	"fmt"
@@ -6,6 +6,6 @@ import (
 	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func sendMediaGroupUrl(bot *botApi.BotAPI) string {
+func sendMediaGroupURL(bot *botApi.BotAPI) string {
 	return fmt.Sprintf("https://api.telegram.org/bot%s/sendMediaGroup", bot.Token)
 }

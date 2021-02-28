@@ -8,6 +8,7 @@ import (
 	"telegram-splatoon2-bot/service/timezone"
 )
 
+// Mode of stage.
 type Mode enum.Enum
 
 type modeEnum struct {
@@ -16,6 +17,7 @@ type modeEnum struct {
 	League  Mode
 }
 
+// ModeEnum lists all Mode.
 var ModeEnum = enum.Assign(&modeEnum{}).(*modeEnum)
 
 const (
@@ -25,6 +27,8 @@ const (
 	ruleRainmaker    = "rainmaker"
 )
 
+// Filter applies primaryFilter and secondaryFilters to content.
+// The the exceeding part would be removed.
 func (c *content) Filter(primaryFilter PrimaryFilter, secondaryFilters []SecondaryFilter, limit int) []WrappedSchedule {
 	order := make([][]WrappedSchedule, 0)
 	for _, name := range primaryFilter.orderByName {
@@ -59,10 +63,12 @@ func (c *content) Filter(primaryFilter PrimaryFilter, secondaryFilters []Seconda
 	return ret
 }
 
+// PrimaryFilter determines the availability and order of Mode.
 type PrimaryFilter struct {
 	orderByName []Mode
 }
 
+// NewPrimaryFilter returns a PrimaryFilter.
 func NewPrimaryFilter(modes []Mode) PrimaryFilter {
 	existed := make(map[Mode]struct{})
 	ret := PrimaryFilter{}
@@ -88,18 +94,23 @@ func NewPrimaryFilter(modes []Mode) PrimaryFilter {
 	return ret
 }
 
+// SecondaryFilter filter schedules by other factor.
 type SecondaryFilter interface {
 	Filter(stage WrappedSchedule) bool
 }
 
+// RuleSecondaryFilter filter schedules by Rule.
 type RuleSecondaryFilter struct {
 	allowRules map[string]struct{}
 }
 
+// Filter applies RuleSecondaryFilter.
 func (filter RuleSecondaryFilter) Filter(stage WrappedSchedule) bool {
 	_, found := filter.allowRules[stage.Schedule.Rule.Key]
 	return found
 }
+
+// NewRuleSecondaryFilter returns a RuleSecondaryFilter.
 func NewRuleSecondaryFilter(zone, tower, clam, rainmaker bool) RuleSecondaryFilter {
 	filter := RuleSecondaryFilter{allowRules: make(map[string]struct{})}
 	if zone {
@@ -117,10 +128,12 @@ func NewRuleSecondaryFilter(zone, tower, clam, rainmaker bool) RuleSecondaryFilt
 	return filter
 }
 
+// TimeSecondaryFilter keeps stages from begin (hour) to end (hour) in user timezone.
 type TimeSecondaryFilter struct {
 	begin, end int64
 }
 
+// Filter applies TimeSecondaryFilter.
 func (filter TimeSecondaryFilter) Filter(stage WrappedSchedule) bool {
 	if filter.begin <= stage.Schedule.StartTime && stage.Schedule.StartTime < filter.end {
 		return true
@@ -130,6 +143,8 @@ func (filter TimeSecondaryFilter) Filter(stage WrappedSchedule) bool {
 	}
 	return false
 }
+
+// NewBetweenHourSecondaryFilter returns a TimeSecondaryFilter.
 func NewBetweenHourSecondaryFilter(beginHour int, endHour int, timezone timezone.Timezone) TimeSecondaryFilter {
 	now := time.Now()
 	userCurrentHour := util.Time.LocalTime(now.Unix(), timezone.Minute()).Hour()
@@ -150,6 +165,7 @@ func NewBetweenHourSecondaryFilter(beginHour int, endHour int, timezone timezone
 	return TimeSecondaryFilter{begin: beginTime, end: endTime}
 }
 
+// NewNextNSecondaryFilter returns a TimeSecondaryFilter that keeps the next n stages.
 func NewNextNSecondaryFilter(n int) TimeSecondaryFilter {
 	now := time.Now()
 	beginTime := util.Time.SplatoonNextUpdateTime(now).Add(time.Hour * time.Duration(-2)).Unix()

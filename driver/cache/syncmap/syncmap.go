@@ -47,6 +47,7 @@ func (impl *impl) Range(f func([]byte, []byte) bool) {
 	})
 }
 
+// New returns a new IterableCache implemented by sync.map.
 func New() cache.IterableCache {
 	ret := &impl{}
 	ret.cleaner = cleaner.New(ret)

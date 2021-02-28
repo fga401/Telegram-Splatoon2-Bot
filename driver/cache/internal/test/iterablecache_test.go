@@ -25,7 +25,7 @@ func testIterableCache(t *testing.T, cache cache.IterableCache) {
 	keys := getKeys(cache)
 	set := make(map[string]struct{})
 	require.Equal(t, N/2, len(keys), "Half of keys should be retrieved.")
-	for _, key := range keys{
+	for _, key := range keys {
 		set[string(key)] = struct{}{}
 		i := KeyToInt(key)
 		expected := IntToValue(i)

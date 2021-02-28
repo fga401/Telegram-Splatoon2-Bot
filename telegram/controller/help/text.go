@@ -22,4 +22,3 @@ _Default Case:_
 - If no secondary filter provided, it will add secondary filters '2'.
 `
 )
-

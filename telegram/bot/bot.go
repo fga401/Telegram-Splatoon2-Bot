@@ -9,9 +9,10 @@ import (
 	log "telegram-splatoon2-bot/common/log"
 	"telegram-splatoon2-bot/common/util"
 	"telegram-splatoon2-bot/telegram/bot/internal/limit"
-	sendMediaGroup "telegram-splatoon2-bot/telegram/bot/internal/send_media_group"
+	sendMediaGroup "telegram-splatoon2-bot/telegram/bot/internal/sendmediagroup"
 )
 
+// Bot wraps some common telegram API and introduces retry mechanism.
 type Bot interface {
 	Send(msg botApi.Chattable) (*botApi.Message, error)
 	SendMediaGroup(config sendMediaGroup.Config) ([]*botApi.Message, error)
@@ -23,6 +24,7 @@ type impl struct {
 	bot    *botApi.BotAPI
 }
 
+// New return a Bot object.
 func New(bot *botApi.BotAPI, config Config) Bot {
 	return &impl{
 		bot:    bot,

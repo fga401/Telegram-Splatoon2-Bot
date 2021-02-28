@@ -10,6 +10,7 @@ const (
 	textKeyBack = "« Go Back"
 )
 
+// AppendBackButton appends a 'Go Back' button to the tail of the markup.
 func AppendBackButton(markup botApi.InlineKeyboardMarkup, target string, printer *message.Printer) botApi.InlineKeyboardMarkup {
 	list := markup.InlineKeyboard
 	list = append(list,

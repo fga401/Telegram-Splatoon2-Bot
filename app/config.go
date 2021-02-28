@@ -66,11 +66,11 @@ func token() string {
 	return viper.GetString("token")
 }
 
-func botAPiClientConfig() proxyClient.Config {
+func botAPIClientConfig() proxyClient.Config {
 	return proxyClient.Config{
 		EnableProxy: viper.GetBool("bot.client.enableProxy"),
-		ProxyUrl:    viper.GetString("bot.client.proxyURL"),
-		EnableHttp2: true,
+		ProxyURL:    viper.GetString("bot.client.proxyURL"),
+		EnableHTTP2: true,
 		Timeout:     viper.GetDuration("bot.client.timeout"),
 	}
 }
@@ -175,8 +175,8 @@ func imgDownloaderConfig() imgDownloader.Config {
 	return imgDownloader.Config{
 		Proxy: proxyClient.Config{
 			EnableProxy: false,
-			ProxyUrl:    "",
-			EnableHttp2: false,
+			ProxyURL:    "",
+			EnableHTTP2: false,
 			Timeout:     0,
 		},
 		RetryTimes: viper.GetInt("image.retryTimes"),
@@ -190,7 +190,7 @@ func salmonRepositoryConfig() salmon.Config {
 			WeaponFile: viper.GetString("repository.salmon.weaponFileName"),
 		},
 		GrizzcoWeaponPath: viper.GetString("resource.path"),
-		RandomWeaponPath: viper.GetString("resource.path"),
+		RandomWeaponPath:  viper.GetString("resource.path"),
 	}
 }
 

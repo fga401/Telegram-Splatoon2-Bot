@@ -51,7 +51,7 @@ func testCache(t *testing.T, cache cache.Cache) {
 	for i := 0; i < P; i++ {
 		cache.SetExpiration(IntToKey(i), IntToValue(i), time.Second*time.Duration(M))
 	}
-	<-time.After(time.Second * M / 2 + 500 * time.Millisecond)
+	<-time.After(time.Second*M/2 + 500*time.Millisecond)
 	for i := M; i >= 0; i-- {
 		key := IntToKey(i)
 		if i > M/2 || i < P {

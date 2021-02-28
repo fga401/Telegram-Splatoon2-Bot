@@ -1,4 +1,4 @@
-package send_media_group
+package sendmediagroup
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// RequestBuilder uses to build a SendMediaGroup request.
 type RequestBuilder struct {
 	bot         *botApi.BotAPI
 	config      Config
@@ -20,7 +21,8 @@ type RequestBuilder struct {
 	mediaConfig []easyjson.RawMessage
 }
 
-	func NewRequestBuilder(bot *botApi.BotAPI, config Config) *RequestBuilder {
+// NewRequestBuilder returns a RequestBuilder.
+func NewRequestBuilder(bot *botApi.BotAPI, config Config) *RequestBuilder {
 	buf := new(bytes.Buffer)
 	return &RequestBuilder{
 		bot:         bot,
@@ -31,6 +33,7 @@ type RequestBuilder struct {
 	}
 }
 
+// Build builds the request.
 func (r *RequestBuilder) Build() (*http.Request, error) {
 	// add chat_id
 	err := r.writer.WriteField("chat_id", r.config.ChatID)
@@ -59,11 +62,11 @@ func (r *RequestBuilder) Build() (*http.Request, error) {
 		}
 	}
 	// add media
-	mediaJson, err := json.Marshal(r.mediaConfig)
+	mediaJSON, err := json.Marshal(r.mediaConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't marshal media")
 	}
-	err = r.writer.WriteField("media", string(mediaJson))
+	err = r.writer.WriteField("media", string(mediaJSON))
 	if err != nil {
 		return nil, errors.Wrap(err, "can't add media")
 	}
@@ -72,7 +75,7 @@ func (r *RequestBuilder) Build() (*http.Request, error) {
 		return nil, errors.Wrap(err, "can't close request writer")
 	}
 
-	request, err := http.NewRequest("POST", sendMediaGroupUrl(r.bot), r.buf)
+	request, err := http.NewRequest("POST", sendMediaGroupURL(r.bot), r.buf)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't new a request")
 	}
@@ -81,6 +84,7 @@ func (r *RequestBuilder) Build() (*http.Request, error) {
 	return request, nil
 }
 
+// AddFile adds a file to the request, which uses to upload media files.
 func (r *RequestBuilder) AddFile(file FileConfig) error {
 	basicFile := file.File()
 	fileWriter, err := r.writer.CreateFormFile(basicFile.Name, basicFile.Name)

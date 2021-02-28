@@ -87,9 +87,8 @@ func getUpdateType(update botApi.Update) updateType {
 	if update.Message != nil {
 		if update.Message.IsCommand() {
 			return updateTypeEnum.Command
-		} else {
-			return updateTypeEnum.Text
 		}
+		return updateTypeEnum.Text
 	}
 	if update.CallbackQuery != nil {
 		return updateTypeEnum.CallbackQuery

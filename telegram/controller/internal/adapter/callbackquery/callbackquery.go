@@ -36,6 +36,7 @@ func (a *callbackQueryAdapter) Adapt(fn adapter.AdaptedFunc, argManager adapter.
 	}
 }
 
+// New return a CallbackQuery Adapter which auto answers CallbackQuery and appends text of 'data' to arguments of AdaptedFunc.
 func New(bot bot.Bot) adapter.Adapter {
 	return &callbackQueryAdapter{
 		bot: bot,

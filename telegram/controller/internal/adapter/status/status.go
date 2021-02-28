@@ -39,6 +39,7 @@ func (a *statusAdapter) Adapt(fn adapter.AdaptedFunc, argManager adapter.Manager
 	}
 }
 
+// New return a Status Adapter which fetches Status of current user from database or cache.
 func New(userSvc userSvc.Service) adapter.Adapter {
 	return &statusAdapter{
 		userSvc: userSvc,

@@ -1,10 +1,10 @@
-package send_media_group
+package sendmediagroup
 
 import (
 	"encoding/json"
 )
 
-//easyjson:json
+// InputMediaPhoto sets up a photo JSON to upload.
 type InputMediaPhoto struct {
 	Type      string  `json:"type"`
 	Media     string  `json:"media"`
@@ -12,7 +12,7 @@ type InputMediaPhoto struct {
 	ParseMode *string `json:"parse_mode,omitempty"`
 }
 
-//easyjson:json
+// InputMediaVideo sets up a video JSON to upload.
 type InputMediaVideo struct {
 	Type              string  `json:"type"`
 	Media             string  `json:"media"`
@@ -25,7 +25,7 @@ type InputMediaVideo struct {
 	SupportsStreaming *bool   `json:"supports_streaming,omitempty"`
 }
 
-//easyjson:json
+// InputMediaDocument sets up a document JSON to upload.
 type InputMediaDocument struct {
 	Type                        string  `json:"type"`
 	Media                       string  `json:"media"`
@@ -35,7 +35,7 @@ type InputMediaDocument struct {
 	DisableContentTypeDetection *bool   `json:"disable_content_type_detection,omitempty"`
 }
 
-//easyjson:json
+// InputMediaAudio sets up a audio JSON to upload.
 type InputMediaAudio struct {
 	Type      string  `json:"type"`
 	Media     string  `json:"media"`
@@ -47,6 +47,7 @@ type InputMediaAudio struct {
 	Title     *string `json:"title,omitempty"`
 }
 
+// InputMedia sets up a file JSON to upload.
 type InputMedia interface {
 	json.Marshaler
 }

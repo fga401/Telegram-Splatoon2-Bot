@@ -9,7 +9,7 @@ import (
 func init() {
 	registerStatements([]database.Declaration{
 		{
-			Token:    tokenEnum.Status.SelectByUid,
+			Token:    tokenEnum.Status.SelectByUID,
 			Stmt:     "SELECT * FROM status WHERE uid=?;",
 			Named:    false,
 			Prepared: true,
@@ -37,7 +37,7 @@ func init() {
 
 func (svc *serviceImpl) SelectStatus(uid UserID) (Status, error) {
 	ret := Status{}
-	err := svc.db.Get(tokenEnum.Status.SelectByUid, &ret, uid)
+	err := svc.db.Get(tokenEnum.Status.SelectByUID, &ret, uid)
 	return ret, err
 }
 

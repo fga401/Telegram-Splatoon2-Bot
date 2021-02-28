@@ -1,15 +1,24 @@
-package send_media_group
+package sendmediagroup
 
+// BasicFileConfig sets up the base info of a file to upload.
 type BasicFileConfig struct {
-	Name      string
-	Data      []byte
+	// Name, the file name.
+	Name string
+	// Data, the file data.
+	Data []byte
 }
 
+// FileConfig sets up the file to upload.
 type FileConfig interface {
+	// InputMediaConfig converts a FileConfig to InputMedia
 	InputMediaConfig() InputMedia
+	// File returns the BasicFileConfig of FileConfig
 	File() BasicFileConfig
 }
 
+
+// Config sets up the SendMediaGroup request.
+// More info: https://core.telegram.org/bots/api#sendmediagroup
 type Config struct {
 	ChatID                   string
 	File                     []FileConfig
@@ -18,6 +27,8 @@ type Config struct {
 	AllowSendingWithoutReply *bool
 }
 
+// PhotoConfig sets up the Photo to upload.
+// More info: https://core.telegram.org/bots/api#inputmediaphoto
 type PhotoConfig struct {
 	Name      string
 	Data      []byte
@@ -25,6 +36,7 @@ type PhotoConfig struct {
 	ParseMode *string
 }
 
+// InputMediaConfig converts a PhotoConfig to InputMedia
 func (c PhotoConfig) InputMediaConfig() InputMedia {
 	return InputMediaPhoto{
 		Type:      "photo",
@@ -34,12 +46,15 @@ func (c PhotoConfig) InputMediaConfig() InputMedia {
 	}
 }
 
+// File returns the BasicFileConfig of PhotoConfig
 func (c PhotoConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,
 		Data: c.Data,
 	}}
 
+// VideoConfig sets up the Photo to upload.
+// More info: https://core.telegram.org/bots/api#inputmediavideo
 type VideoConfig struct {
 	Name              string
 	Data              []byte
@@ -52,6 +67,7 @@ type VideoConfig struct {
 	SupportsStreaming *bool
 }
 
+// InputMediaConfig converts a VideoConfig to InputMedia
 func (c VideoConfig) InputMediaConfig() InputMedia {
 	return InputMediaVideo{
 		Type:              "video",
@@ -66,6 +82,7 @@ func (c VideoConfig) InputMediaConfig() InputMedia {
 	}
 }
 
+// File returns the BasicFileConfig of VideoConfig
 func (c VideoConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,
@@ -73,6 +90,8 @@ func (c VideoConfig) File() BasicFileConfig {
 	}
 }
 
+// DocumentConfig sets up the Photo to upload.
+// More info: https://core.telegram.org/bots/api#inputmediadocument
 type DocumentConfig struct {
 	Name                        string
 	Data                        []byte
@@ -82,6 +101,7 @@ type DocumentConfig struct {
 	DisableContentTypeDetection *bool
 }
 
+// InputMediaConfig converts a DocumentConfig to InputMedia
 func (c DocumentConfig) InputMediaConfig() InputMedia {
 	return InputMediaDocument{
 		Type:                        "document",
@@ -93,12 +113,15 @@ func (c DocumentConfig) InputMediaConfig() InputMedia {
 	}
 }
 
+// File returns the BasicFileConfig of DocumentConfig
 func (c DocumentConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,
 		Data: c.Data,
 	}}
 
+// AudioConfig sets up the Photo to upload.
+// More info: https://core.telegram.org/bots/api#inputmediaaudio
 type AudioConfig struct {
 	Name      string
 	Data      []byte
@@ -110,6 +133,7 @@ type AudioConfig struct {
 	Title     *string
 }
 
+// InputMediaConfig converts a AudioConfig to InputMedia
 func (c AudioConfig) InputMediaConfig() InputMedia {
 	return InputMediaAudio{
 		Type:      "audio",
@@ -123,6 +147,7 @@ func (c AudioConfig) InputMediaConfig() InputMedia {
 	}
 }
 
+// File returns the BasicFileConfig of AudioConfig
 func (c AudioConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,

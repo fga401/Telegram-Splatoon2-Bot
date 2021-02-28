@@ -2,12 +2,15 @@ package proxyclient
 
 import "time"
 
+// Config sets up a proxy client.
 type Config struct {
-	// The Client will use proxy if EnableProxy is true
+	// EnableProxy identifies whether The Client uses proxy.
 	EnableProxy bool
-	// Proxy url. If it's an empty string, it will be set by environment variables.
-	ProxyUrl string
+	// ProxyURL If it's an empty string, it will be set by environment variables.
+	ProxyURL string
 
-	EnableHttp2 bool
-	Timeout     time.Duration
+	// EnableHTTP2 identifies whether The Client enables HTTP/2.
+	EnableHTTP2 bool
+	// Timeout of request.
+	Timeout time.Duration
 }

@@ -5,12 +5,18 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// UpdateLogger wraps Update as zapcore.ObjectMarshaler.
 type UpdateLogger botApi.Update
+// MessageLogger wraps Message as zapcore.ObjectMarshaler.
 type MessageLogger botApi.Message
+// CallbackQueryLogger wraps CallbackQuery as zapcore.ObjectMarshaler.
 type CallbackQueryLogger botApi.CallbackQuery
+// UserLogger wraps User as zapcore.ObjectMarshaler.
 type UserLogger botApi.User
+// ChatLogger wraps Chat as zapcore.ObjectMarshaler.
 type ChatLogger botApi.Chat
 
+// MarshalLogObject encodes UpdateLogger for logging.
 func (l UpdateLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddInt("id", l.UpdateID)
 	if l.Message != nil {
@@ -22,6 +28,7 @@ func (l UpdateLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	return nil
 }
 
+// MarshalLogObject encodes MessageLogger for logging.
 func (l *MessageLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddInt("id", l.MessageID)
 	if l.From != nil {
@@ -35,6 +42,7 @@ func (l *MessageLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	return nil
 }
 
+// MarshalLogObject encodes UserLogger for logging.
 func (l UserLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddInt("id", l.ID)
 	encoder.AddString("username", l.UserName)
@@ -42,6 +50,7 @@ func (l UserLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	return nil
 }
 
+// MarshalLogObject encodes ChatLogger for logging.
 func (l ChatLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddInt64("id", l.ID)
 	encoder.AddString("type", l.Type)
@@ -49,6 +58,7 @@ func (l ChatLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	return nil
 }
 
+// MarshalLogObject encodes CallbackQueryLogger for logging.
 func (l CallbackQueryLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
 	encoder.AddString("id", l.ID)
 	if l.From != nil {
@@ -65,7 +75,7 @@ func (l CallbackQueryLogger) MarshalLogObject(encoder zapcore.ObjectEncoder) err
 	return nil
 }
 
+// UserPtrLogger convert a pointer of User to UserLogger.
 func UserPtrLogger(ptr *botApi.User) UserLogger {
 	return UserLogger(*ptr)
 }
-

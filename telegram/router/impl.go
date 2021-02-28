@@ -19,6 +19,7 @@ type impl struct {
 	bot                   *botApi.BotAPI
 }
 
+// New returns a Router object.
 func New(bot *botApi.BotAPI, config Config) Router {
 	return &impl{
 		commandHandlers:       make(map[string]Handler),
@@ -45,12 +46,12 @@ func (r *impl) getUpdateChan() (botApi.UpdatesChannel, error) {
 		}
 		return updatesChan, nil
 	case ModeEnum.WebHook:
-		if !strings.HasSuffix(r.config.WebHook.Url, r.bot.Token) {
-			r.config.WebHook.Url += r.bot.Token
+		if !strings.HasSuffix(r.config.WebHook.URL, r.bot.Token) {
+			r.config.WebHook.URL += r.bot.Token
 		}
 		var config botApi.WebhookConfig
 		if r.config.WebHook.Cert == "" {
-			config = botApi.NewWebhook(r.config.WebHook.Url)
+			config = botApi.NewWebhook(r.config.WebHook.URL)
 			go func() {
 				err := http.ListenAndServe("0.0.0.0:"+r.config.WebHook.Port, nil)
 				if err != nil {
@@ -58,7 +59,7 @@ func (r *impl) getUpdateChan() (botApi.UpdatesChannel, error) {
 				}
 			}()
 		} else {
-			config = botApi.NewWebhookWithCert(r.config.WebHook.Url, r.config.WebHook.Cert)
+			config = botApi.NewWebhookWithCert(r.config.WebHook.URL, r.config.WebHook.Cert)
 			go func() {
 				err := http.ListenAndServeTLS("0.0.0.0:"+r.config.WebHook.Port, r.config.WebHook.Cert, r.config.WebHook.Key, nil)
 				if err != nil {

@@ -8,8 +8,9 @@ type serviceImpl struct {
 	db database.Database
 }
 
+// New return a Service object.
 func New(db database.Database) Service {
-	svc:= &serviceImpl{
+	svc := &serviceImpl{
 		db: db,
 	}
 	svc.db.MustPrepare(statement)
