@@ -189,8 +189,8 @@ func salmonRepositoryConfig() salmon.Config {
 			StageFile:  viper.GetString("repository.salmon.stageFileName"),
 			WeaponFile: viper.GetString("repository.salmon.weaponFileName"),
 		},
-		GrizzcoWeaponPath: viper.GetString("resource.path"),
-		RandomWeaponPath:  viper.GetString("resource.path"),
+		RandomWeaponPath: viper.GetString("repository.salmon.randomWeaponImagePath"),
+		GrizzcoWeaponPath:  viper.GetString("repository.salmon.grizzcoWeaponImagePath"),
 	}
 }
 
