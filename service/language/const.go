@@ -7,6 +7,7 @@ var all = []Language{
 	TraditionalChinese,
 }
 
+// all available timezones
 const (
 	English            = Language("en")
 	Japanese           = Language("ja")
@@ -14,6 +15,7 @@ const (
 	TraditionalChinese = Language("zh-TW")
 )
 
+// ByIETF returns a language given the IETF
 func ByIETF(ietf string) Language {
 	switch ietf {
 	case "en":

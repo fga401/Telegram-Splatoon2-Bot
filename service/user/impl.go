@@ -49,6 +49,7 @@ func (svc *serviceImpl) Existed(uid ID) (bool, error) {
 	return svc.db.Existed(uid)
 }
 
+// New returns a Service object.
 func New(
 	db database.Service,
 	adminsCache cache.IterableCache,

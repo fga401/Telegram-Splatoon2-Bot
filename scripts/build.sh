@@ -8,4 +8,5 @@ else
     git checkout "$version"
 fi
 cd "$(dirname "$0")" || exit 1
+cd ..
 docker build -t splatoon2_bot:"$version" .

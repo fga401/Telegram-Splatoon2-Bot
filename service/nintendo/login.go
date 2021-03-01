@@ -20,6 +20,7 @@ import (
 	"telegram-splatoon2-bot/service/language"
 )
 
+// IsRedirectLinkValid return true if the link doesn't start with the prefix.
 func IsRedirectLinkValid(link string) bool {
 	if !strings.HasPrefix(link, prefix) {
 		return false
@@ -48,7 +49,7 @@ func (svc *impl) NewLoginLink(proofKey []byte) (string, error) {
 	challenge := string(base64UrlEncode(hashProofKey[:]))
 	authState := string(base64UrlEncode(state))
 
-	hardcodeUrl := "https://accounts.nintendo.com/connect/1.0.0/authorize?" +
+	hardcodeURL := "https://accounts.nintendo.com/connect/1.0.0/authorize?" +
 		"redirect_uri=npf71b963c1b7b6d119://auth" +
 		"&client_id=71b963c1b7b6d119" +
 		"&scope=openid%20user%20user.birthday%20user.mii%20user.screenName" +
@@ -58,7 +59,7 @@ func (svc *impl) NewLoginLink(proofKey []byte) (string, error) {
 		"&state=" + authState +
 		"&session_token_code_challenge=" + challenge
 
-	return hardcodeUrl, nil
+	return hardcodeURL, nil
 }
 
 func (svc *impl) GetSessionToken(link string, proofKey []byte, language language.Language) (string, error) {
@@ -143,7 +144,7 @@ func (svc *impl) getSessionTokenCode(link string) (string, error) {
 }
 
 func (svc *impl) getSessionToken(proofKey []byte, sessionTokenCode string, acceptLang string) (string, error) {
-	reqUrl := "https://accounts.nintendo.com/connect/1.0.0/api/session_token"
+	reqURL := "https://accounts.nintendo.com/connect/1.0.0/api/session_token"
 	bodyMap := map[string][]string{
 		"client_id":                   {"71b963c1b7b6d119"},
 		"session_token_code":          {sessionTokenCode},
@@ -151,7 +152,7 @@ func (svc *impl) getSessionToken(proofKey []byte, sessionTokenCode string, accep
 	}
 	bodyText := url.Values(bodyMap).Encode()
 	reqBody := strings.NewReader(bodyText)
-	req, err := http.NewRequest("POST", reqUrl, reqBody)
+	req, err := http.NewRequest("POST", reqURL, reqBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't generate request")
 	}
@@ -170,7 +171,7 @@ func (svc *impl) getSessionToken(proofKey []byte, sessionTokenCode string, accep
 		return "", errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		n, _ :=ioutil.ReadAll(resp.Body)
+		n, _ := ioutil.ReadAll(resp.Body)
 		log.Debug("get session token", zap.ByteString("json", n))
 		return "", errors.New("status code not 200")
 	}
@@ -182,17 +183,17 @@ func (svc *impl) getSessionToken(proofKey []byte, sessionTokenCode string, accep
 			return "", errors.Wrap(err, "can't unzip response body")
 		}
 	}
-	respJson, err := ioutil.ReadAll(respBody)
+	respJSON, err := ioutil.ReadAll(respBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't read response body")
 	}
-	sessionToken := json.Get(respJson, "session_token").ToString()
-	log.Debug("get session token", zap.String("session token", sessionToken), zap.ByteString("json", respJson))
+	sessionToken := json.Get(respJSON, "session_token").ToString()
+	log.Debug("get session token", zap.String("session token", sessionToken), zap.ByteString("json", respJSON))
 	return sessionToken, nil
 }
 
 func (svc *impl) getAccessToken(sessionToken string, acceptLang string) (string, error) {
-	reqUrl := "https://accounts.nintendo.com/connect/1.0.0/api/token"
+	reqURL := "https://accounts.nintendo.com/connect/1.0.0/api/token"
 	bodyMap := map[string]string{
 		"client_id":     "71b963c1b7b6d119",
 		"session_token": sessionToken,
@@ -203,7 +204,7 @@ func (svc *impl) getAccessToken(sessionToken string, acceptLang string) (string,
 		return "", errors.Wrap(err, "can't generate request body")
 	}
 	reqBody := bytes.NewReader(bodyText)
-	req, err := http.NewRequest("POST", reqUrl, reqBody)
+	req, err := http.NewRequest("POST", reqURL, reqBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't generate request")
 	}
@@ -232,12 +233,12 @@ func (svc *impl) getAccessToken(sessionToken string, acceptLang string) (string,
 			return "", errors.Wrap(err, "can't unzip response body")
 		}
 	}
-	respJson, err := ioutil.ReadAll(respBody)
+	respJSON, err := ioutil.ReadAll(respBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't read response body")
 	}
-	accessToken := json.Get(respJson, "access_token").ToString()
-	log.Debug("get access token", zap.String("access token", accessToken), zap.ByteString("json", respJson))
+	accessToken := json.Get(respJSON, "access_token").ToString()
+	log.Debug("get access token", zap.String("access token", accessToken), zap.ByteString("json", respJSON))
 	return accessToken, nil
 }
 
@@ -249,8 +250,8 @@ type userInfo struct {
 }
 
 func (svc *impl) getUserInfo(accessToken string, acceptLang string) (*userInfo, error) {
-	reqUrl := "https://api.accounts.nintendo.com/2.0.0/users/me"
-	req, err := http.NewRequest("GET", reqUrl, nil)
+	reqURL := "https://api.accounts.nintendo.com/2.0.0/users/me"
+	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't generate request")
 	}
@@ -278,12 +279,12 @@ func (svc *impl) getUserInfo(accessToken string, acceptLang string) (*userInfo, 
 			return nil, errors.Wrap(err, "can't unzip response body")
 		}
 	}
-	respJson, err := ioutil.ReadAll(respBody)
+	respJSON, err := ioutil.ReadAll(respBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read response body")
 	}
 	userInfo := &userInfo{}
-	err = json.Unmarshal(respJson, userInfo)
+	err = json.Unmarshal(respJSON, userInfo)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't unmarshal response body")
 	}
@@ -292,7 +293,7 @@ func (svc *impl) getUserInfo(accessToken string, acceptLang string) (*userInfo, 
 		zap.String("country", userInfo.Country),
 		zap.String("birthday", userInfo.Birthday),
 		zap.String("language", userInfo.Language),
-		zap.ByteString("json", respJson))
+		zap.ByteString("json", respJSON))
 	return userInfo, nil
 }
 
@@ -312,8 +313,8 @@ func (svc *impl) getFlapgResponse(guid, accessToken string, timestamp int64, iid
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get hash")
 	}
-	reqUrl := "https://flapg.com/ika2/api/login?public"
-	req, err := http.NewRequest("GET", reqUrl, nil)
+	reqURL := "https://flapg.com/ika2/api/login?public"
+	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't generate request")
 	}
@@ -333,12 +334,12 @@ func (svc *impl) getFlapgResponse(guid, accessToken string, timestamp int64, iid
 		return nil, errors.New("status code not 200")
 	}
 	defer closeBody(resp.Body)
-	respJson, err := ioutil.ReadAll(resp.Body)
+	respJSON, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't read response body")
 	}
 	flapgResponse := &flapgResponse{}
-	err = json.Unmarshal(respJson, flapgResponse)
+	err = json.Unmarshal(respJSON, flapgResponse)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't unmarshal response body")
 	}
@@ -347,19 +348,19 @@ func (svc *impl) getFlapgResponse(guid, accessToken string, timestamp int64, iid
 		zap.String("p1", flapgResponse.Result.P1),
 		zap.String("p2", flapgResponse.Result.P2),
 		zap.String("p3", flapgResponse.Result.P3),
-		zap.ByteString("json", respJson))
+		zap.ByteString("json", respJSON))
 	return flapgResponse, nil
 }
 
 func (svc *impl) getS2SResponse(accessToken string, timestamp int64) (string, error) {
-	reqUrl := "https://elifessler.com/s2s/api/gen2"
+	reqURL := "https://elifessler.com/s2s/api/gen2"
 	bodyMap := map[string][]string{
 		"naIdToken": {accessToken},
 		"timestamp": {strconv.FormatInt(timestamp, 10)},
 	}
 	bodyText := url.Values(bodyMap).Encode()
 	reqBody := strings.NewReader(bodyText)
-	req, err := http.NewRequest("POST", reqUrl, reqBody)
+	req, err := http.NewRequest("POST", reqURL, reqBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't generate request")
 	}
@@ -374,17 +375,17 @@ func (svc *impl) getS2SResponse(accessToken string, timestamp int64) (string, er
 		return "", errors.New("status code not 200")
 	}
 	defer closeBody(resp.Body)
-	respJson, err := ioutil.ReadAll(resp.Body)
+	respJSON, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", errors.Wrap(err, "can't read response body")
 	}
-	hash := json.Get(respJson, "hash").ToString()
-	log.Debug("get hash", zap.String("hash", hash), zap.ByteString("json", respJson))
+	hash := json.Get(respJSON, "hash").ToString()
+	log.Debug("get hash", zap.String("hash", hash), zap.ByteString("json", respJSON))
 	return hash, nil
 }
 
 func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse, userInfo *userInfo, acceptLang string) (string, string, error) {
-	reqUrl := "https://api-lp1.znc.srv.nintendo.net/v1/Account/Login"
+	reqURL := "https://api-lp1.znc.srv.nintendo.net/v1/Account/Login"
 	bodyMap := map[string]map[string]string{
 		"parameter": {
 			"f":          flapgNsoResponse.Result.F,
@@ -401,7 +402,7 @@ func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse
 		return "", "", errors.Wrap(err, "can't generate request body")
 	}
 	reqBody := bytes.NewReader(bodyText)
-	req, err := http.NewRequest("POST", reqUrl, reqBody)
+	req, err := http.NewRequest("POST", reqURL, reqBody)
 	if err != nil {
 		return "", "", errors.Wrap(err, "can't generate request")
 	}
@@ -433,20 +434,20 @@ func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse
 			return "", "", errors.Wrap(err, "can't unzip response body")
 		}
 	}
-	respJson, err := ioutil.ReadAll(respBody)
+	respJSON, err := ioutil.ReadAll(respBody)
 	if err != nil {
 		return "", "", errors.Wrap(err, "can't read response body")
 	}
-	splatoonAccessToken := json.Get(respJson, "result", "webApiServerCredential", "accessToken").ToString()
-	nsName := json.Get(respJson, "result", "user", "name").ToString()
+	splatoonAccessToken := json.Get(respJSON, "result", "webApiServerCredential", "accessToken").ToString()
+	nsName := json.Get(respJSON, "result", "user", "name").ToString()
 	log.Debug("get splatoon access token first step",
 		zap.String("splatoon webApiServerCredential access token", splatoonAccessToken),
-		zap.ByteString("json", respJson))
+		zap.ByteString("json", respJSON))
 	return splatoonAccessToken, nsName, nil
 }
 
 func (svc *impl) getSplatoonAccessTokenSecondStep(accessToken string, flapgAppResponse *flapgResponse, acceptLang string) (string, error) {
-	reqUrl := "https://api-lp1.znc.srv.nintendo.net/v2/Game/GetWebServiceToken"
+	reqURL := "https://api-lp1.znc.srv.nintendo.net/v2/Game/GetWebServiceToken"
 	bodyMap := map[string]map[string]interface{}{
 		"parameter": {
 			"id":                int64(5741031244955648),
@@ -461,7 +462,7 @@ func (svc *impl) getSplatoonAccessTokenSecondStep(accessToken string, flapgAppRe
 		return "", errors.Wrap(err, "can't generate request body")
 	}
 	reqBody := bytes.NewReader(bodyText)
-	req, err := http.NewRequest("POST", reqUrl, reqBody)
+	req, err := http.NewRequest("POST", reqURL, reqBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't generate request")
 	}
@@ -493,14 +494,14 @@ func (svc *impl) getSplatoonAccessTokenSecondStep(accessToken string, flapgAppRe
 			return "", errors.Wrap(err, "can't unzip response body")
 		}
 	}
-	respJson, err := ioutil.ReadAll(respBody)
+	respJSON, err := ioutil.ReadAll(respBody)
 	if err != nil {
 		return "", errors.Wrap(err, "can't read response body")
 	}
-	splatoonAccessToken := json.Get(respJson, "result", "accessToken").ToString()
+	splatoonAccessToken := json.Get(respJSON, "result", "accessToken").ToString()
 	log.Debug("get splatoon access token",
 		zap.String("splatoon access token", splatoonAccessToken),
-		zap.ByteString("json", respJson))
+		zap.ByteString("json", respJSON))
 	return splatoonAccessToken, nil
 }
 
@@ -535,8 +536,8 @@ func (svc *impl) getSplatoonAccessToken(accessToken string, userInfo *userInfo, 
 }
 
 func (svc *impl) getIksmSession(splatoonAccessToken string, acceptLang string) (string, error) {
-	reqUrl := "https://app.splatoon2.nintendo.net/?lang=" + acceptLang
-	req, err := http.NewRequest("GET", reqUrl, nil)
+	reqURL := "https://app.splatoon2.nintendo.net/?lang=" + acceptLang
+	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "can't generate request")
 	}

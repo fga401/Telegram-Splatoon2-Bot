@@ -1,4 +1,4 @@
-package send_media_group
+package sendmediagroup
 
 import (
 	"encoding/json"
@@ -14,6 +14,8 @@ import (
 	botUtils "telegram-splatoon2-bot/telegram/bot/internal/limit"
 )
 
+// Do builds a request from config and sends it.
+// If too files sent and blocked by telegram, it will wait a moment and retry
 func Do(bot *botApi.BotAPI, config Config, retryTimes int) ([]*botApi.Message, error) {
 	builder := NewRequestBuilder(bot, config)
 	for _, file := range config.File {

@@ -13,6 +13,7 @@ import (
 	"telegram-splatoon2-bot/telegram/router"
 )
 
+// Repository groups all handler about schedules.
 type Repository interface {
 	Salmon(update botApi.Update) error
 	Stage(update botApi.Update) error
@@ -35,6 +36,7 @@ type repositoryCtrl struct {
 	limit int
 }
 
+// New returns a Repository object.
 func New(bot bot.Bot,
 	userSvc userSvc.Service,
 	languageSvc language.Service,

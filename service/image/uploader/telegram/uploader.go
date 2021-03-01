@@ -21,6 +21,7 @@ type telegramUploader struct {
 	bot bot.Bot
 }
 
+// NewUploader returns a new Uploader.
 func NewUploader(bot bot.Bot, config Config) imageSvc.Uploader {
 	return &telegramUploader{
 		storeChannelID: config.StoreChannelID,
@@ -118,7 +119,6 @@ func buildFiles(images []image.Image) ([]bot.FileConfig, error) {
 func min(a, b int) int {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+	return b
 }

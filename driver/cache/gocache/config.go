@@ -2,10 +2,9 @@ package gocache
 
 import (
 	"time"
-
-	"github.com/spf13/viper"
 )
 
+// Config sets up a Cache implemented by gocache.
 type Config struct {
 	// Expiration is default expiration time.
 	// If the expiration duration is less than one,
@@ -13,12 +12,5 @@ type Config struct {
 	Expiration time.Duration
 	// CleanUp is the interval between two automatic cleanup
 	// If the cleanup interval is less than one, expired items are not deleted from the cache.
-	CleanUp    time.Duration
-}
-
-func Load(viper viper.Viper) Config {
-	return Config{
-		Expiration: viper.GetDuration("cache.gocache.expiration"),
-		CleanUp: viper.GetDuration("cache.gocache.cleanUp"),
-	}
+	CleanUp time.Duration
 }

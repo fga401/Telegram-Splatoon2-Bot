@@ -1,4 +1,4 @@
-// serializer serializes/deserializes database struct to bytes.
+// Package serializer serializes/deserializes database struct to bytes.
 // No error is returned since Read and Write of bytes.Buffer
 // always return nil error.
 package serializer
@@ -10,6 +10,7 @@ import (
 	"telegram-splatoon2-bot/service/user/database"
 )
 
+// ToID deserialize UserID
 func ToID(key []byte) database.UserID {
 	var id database.UserID
 	buf := bytes.NewBuffer(key)
@@ -17,6 +18,7 @@ func ToID(key []byte) database.UserID {
 	return id
 }
 
+// FromID serialize UserID
 func FromID(id database.UserID) []byte {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, id)

@@ -26,6 +26,7 @@ var (
 		Stage  string
 	}{"weapon", "stage"}
 
+	// SchedulesIdx is the index of Further or Latest storing in Content
 	SchedulesIdx = struct {
 		Further int
 		Latest  int
@@ -37,11 +38,13 @@ var (
 	}{"-1", "-2"}
 )
 
+// Content stores salmon schedules and downloaded images.
 type Content struct {
 	Schedules nintendo.SalmonSchedules
 	ImageIDs  []imageSvc.Identifier
 }
 
+// Repository fetches salmon schedules.
 type Repository interface {
 	repository.Repository
 	Content() *Content
@@ -62,6 +65,7 @@ type repoImpl struct {
 	readerChan chan (chan *Content)
 }
 
+// NewRepository return a Repository object.
 func NewRepository(nintendoSvc nintendo.Service, userSvc user.Service, imageSvc imageSvc.Service, config Config) Repository {
 	dumpConfig := dump.Config{}
 	dumpConfig.AddTarget(dumperKey.Weapon, config.Dumper.WeaponFile)
@@ -106,7 +110,7 @@ func (repo *repoImpl) Update() error {
 		return errors.New("no admin")
 	}
 	for _, admin := range admins {
-		err = repo.updateByUid(admin)
+		err = repo.updateByUID(admin)
 		if err == nil {
 			return nil
 		}
@@ -117,7 +121,7 @@ func (repo *repoImpl) Update() error {
 	return nil
 }
 
-func (repo *repoImpl) updateByUid(uid user.ID) error {
+func (repo *repoImpl) updateByUID(uid user.ID) error {
 	status, err := repo.userSvc.GetStatus(uid)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch admin status")
@@ -168,7 +172,7 @@ func sortSchedules(schedules *nintendo.SalmonSchedules) {
 	})
 }
 
-func fileUrl(path string) string {
+func fileURL(path string) string {
 	return downloader.FileScheme() + "://" + path
 }
 
@@ -188,11 +192,11 @@ func (repo *repoImpl) populateSchedules(schedules *nintendo.SalmonSchedules) {
 					Name: weapon.SpecialWeapon.Name,
 				}
 				if weapon.Weapon.ID == weaponID.Random {
-					weapon.Weapon.Image = fileUrl(repo.randomWeaponPath)
-					weapon.Weapon.Thumbnail = fileUrl(repo.randomWeaponPath)
+					weapon.Weapon.Image = fileURL(repo.randomWeaponPath)
+					weapon.Weapon.Thumbnail = fileURL(repo.randomWeaponPath)
 				} else {
-					weapon.Weapon.Image = fileUrl(repo.grizzcoWeaponPath)
-					weapon.Weapon.Thumbnail = fileUrl(repo.grizzcoWeaponPath)
+					weapon.Weapon.Image = fileURL(repo.grizzcoWeaponPath)
+					weapon.Weapon.Thumbnail = fileURL(repo.grizzcoWeaponPath)
 				}
 				weapon.SpecialWeapon = nil
 			}

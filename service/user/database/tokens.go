@@ -15,7 +15,7 @@ type tokens struct {
 
 type statusTokens struct {
 	Insert                    database.Token
-	SelectByUid               database.Token
+	SelectByUID               database.Token
 	UpdateLanguage            database.Token
 	UpdateTimezone            database.Token
 	UpdateIKSM                database.Token
@@ -26,12 +26,12 @@ type userTokens struct {
 	Insert      database.Token
 	Count       database.Token
 	Admins      database.Token
-	SelectByUid database.Token
+	SelectByUID database.Token
 }
 
 type accountTokens struct {
 	Insert            database.Token
 	Delete            database.Token
-	SelectByUid       database.Token
-	SelectByUidAndTag database.Token
+	SelectByUID       database.Token
+	SelectByUIDAndTag database.Token
 }

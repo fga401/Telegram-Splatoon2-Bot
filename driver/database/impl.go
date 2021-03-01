@@ -2,7 +2,6 @@ package database
 
 import (
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"telegram-splatoon2-bot/common/log"
@@ -16,6 +15,7 @@ type databaseImpl struct {
 	stmts              map[Token]Declaration
 }
 
+// New returns a new Database object.
 func New(config Config) Database {
 	db := sqlx.MustOpen(config.Driver, config.URL)
 	db.SetMaxIdleConns(config.MaxIdleConns)

@@ -20,13 +20,13 @@ func init() {
 			Prepared: false,
 		},
 		{
-			Token:    tokenEnum.Account.SelectByUid,
+			Token:    tokenEnum.Account.SelectByUID,
 			Stmt:     "SELECT * FROM account WHERE uid=?;",
 			Named:    false,
 			Prepared: false,
 		},
 		{
-			Token:    tokenEnum.Account.SelectByUidAndTag,
+			Token:    tokenEnum.Account.SelectByUIDAndTag,
 			Stmt:     "SELECT * FROM account WHERE uid=? AND tag=?;",
 			Named:    false,
 			Prepared: false,
@@ -42,7 +42,7 @@ func init() {
 
 func (svc *serviceImpl) SelectAccount(uid UserID, tag string) (Account, error) {
 	var account Account
-	err := svc.db.Get(tokenEnum.Account.SelectByUidAndTag, &account, uid, tag)
+	err := svc.db.Get(tokenEnum.Account.SelectByUIDAndTag, &account, uid, tag)
 	return account, err
 }
 
@@ -89,6 +89,6 @@ func (svc *serviceImpl) DeleteAndSwitchAccount(uid UserID, tag string, sessionTo
 
 func (svc *serviceImpl) SelectAccounts(uid UserID) ([]Account, error) {
 	accounts := make([]Account, 0)
-	err := svc.db.Select(tokenEnum.Account.SelectByUid, &accounts, uid)
+	err := svc.db.Select(tokenEnum.Account.SelectByUID, &accounts, uid)
 	return accounts, err
 }

@@ -5,19 +5,26 @@ import (
 	"golang.org/x/text/message"
 )
 
+// Language of User.
 type Language string
 
+// IETF returns IETF tag.
 func (l Language) IETF() string {
 	return string(l)
 }
 
+// Tag returns language.Tag.
 func (l Language) Tag() language.Tag {
 	return language.MustParse(string(l))
 }
 
+// Service manages language and translation.
 type Service interface {
+	// Supported returns all supported language
 	Supported() []Language
+	// All returns all defined language.
 	All() []Language
+	// Printer returns a message.Printer against the language.
 	Printer(language Language) *message.Printer
 }
 
@@ -27,6 +34,7 @@ type impl struct {
 	localePath string
 }
 
+// NewService returns a new Service.
 func NewService(config Config) Service {
 	printers := make(map[Language]*message.Printer)
 	supported := make([]Language, 0)

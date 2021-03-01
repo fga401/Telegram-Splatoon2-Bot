@@ -10,6 +10,7 @@ import (
 	"telegram-splatoon2-bot/telegram/router"
 )
 
+// Help groups all handler about help.
 type Help interface {
 	Help(update botApi.Update) error
 	HelpStages(update botApi.Update) error
@@ -20,21 +21,22 @@ type helpCtrl struct {
 	userSvc     userSvc.Service
 	languageSvc language.Service
 
-	statusAdapter        adapter.Adapter
+	statusAdapter adapter.Adapter
 
 	helpHandler       router.Handler
 	helpStagesHandler router.Handler
 }
 
+// New returns a Help object.
 func New(bot bot.Bot,
 	userSvc userSvc.Service,
 	languageSvc language.Service,
 ) Help {
 	ctrl := &helpCtrl{
-		bot:                  bot,
-		userSvc:              userSvc,
-		languageSvc:          languageSvc,
-		statusAdapter:        statusAdapter.New(userSvc),
+		bot:           bot,
+		userSvc:       userSvc,
+		languageSvc:   languageSvc,
+		statusAdapter: statusAdapter.New(userSvc),
 	}
 	ctrl.helpHandler = adapter.Apply(ctrl.help, ctrl.statusAdapter)
 	ctrl.helpStagesHandler = adapter.Apply(ctrl.helpStages, ctrl.statusAdapter)

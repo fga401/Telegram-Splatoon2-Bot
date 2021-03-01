@@ -20,20 +20,21 @@ import (
 	userSvc "telegram-splatoon2-bot/service/user"
 	userDatabase "telegram-splatoon2-bot/service/user/database"
 	"telegram-splatoon2-bot/telegram/bot"
+	"telegram-splatoon2-bot/telegram/controller/help"
 	repositoryCtrl "telegram-splatoon2-bot/telegram/controller/repository"
 	"telegram-splatoon2-bot/telegram/controller/setting"
 	"telegram-splatoon2-bot/telegram/router"
-	"telegram-splatoon2-bot/telegram/controller/help"
 )
 
+// TelegramApp start an App for telegram.
 func TelegramApp() {
-	botClient := proxyClient.New(botAPiClientConfig())
-	botApi, err := botApi.NewBotAPIWithClient(token(), botClient)
+	botClient := proxyClient.New(botAPIClientConfig())
+	botAPI, err := botApi.NewBotAPIWithClient(token(), botClient)
 	if err != nil {
-		log.Panic("can't init botApi", zap.Error(err))
+		log.Panic("can't init botAPI", zap.Error(err))
 	}
-	bot := bot.New(botApi, botConfig())
-	router := router.New(botApi, routerConfig())
+	bot := bot.New(botAPI, botConfig())
+	router := router.New(botAPI, routerConfig())
 
 	database := database.New(databaseConfig())
 	userDatabase := userDatabase.New(database)

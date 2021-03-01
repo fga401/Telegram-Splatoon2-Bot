@@ -1,6 +1,7 @@
 package enum
 
 const (
+	// EmptyValue is the value not used by assigner.
 	EmptyValue = 0
 )
 
@@ -15,12 +16,12 @@ type generator struct {
 	c chan Enum
 }
 
-func (g *generator) Next() Enum {
+func (g *generator) next() Enum {
 	return <-g.c
 }
 
 func (g *generator) prepare() {
-	var count Enum = 1
+	var count Enum = EmptyValue + 1
 	go func() {
 		for {
 			g.c <- count

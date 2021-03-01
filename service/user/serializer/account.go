@@ -8,6 +8,7 @@ import (
 	"telegram-splatoon2-bot/service/user/database"
 )
 
+// ToAccounts deserialize Account
 func ToAccounts(value []byte) []database.Account {
 	buf := bytes.NewBuffer(value)
 	var size int32
@@ -25,10 +26,11 @@ func ToAccounts(value []byte) []database.Account {
 	return ret
 }
 
+// FromAccounts serialize Account
 func FromAccounts(accounts []database.Account) []byte {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, int32(len(accounts)))
-	for _, account := range accounts{
+	for _, account := range accounts {
 		_ = binary.Write(buf, binary.LittleEndian, account.UserID)
 		_ = util.Binary.WriteBytes(buf, binary.LittleEndian, []byte(account.SessionToken), 16)
 		_ = util.Binary.WriteBytes(buf, binary.LittleEndian, []byte(account.Tag), 16)

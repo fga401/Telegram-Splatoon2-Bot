@@ -9,6 +9,7 @@ import (
 	"telegram-splatoon2-bot/service/user/database"
 )
 
+// ToStatus deserialize Status
 func ToStatus(value []byte) database.Status {
 	ret := database.Status{}
 	buf := bytes.NewBuffer(value)
@@ -23,6 +24,7 @@ func ToStatus(value []byte) database.Status {
 	return ret
 }
 
+// FromStatus serialize Status
 func FromStatus(status database.Status) []byte {
 	buf := new(bytes.Buffer)
 	_ = binary.Write(buf, binary.LittleEndian, status.UserID)
@@ -32,4 +34,3 @@ func FromStatus(status database.Status) []byte {
 	_ = binary.Write(buf, binary.LittleEndian, status.Timezone)
 	return buf.Bytes()
 }
-

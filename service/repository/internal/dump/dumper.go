@@ -7,9 +7,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Dumper saves splatoon2 item keys to files for translation.
 type Dumper interface {
+	// Get returns the newest dumping object.
+	// Key should be added at Config. File is determined by the pair of key and file in Config.
 	Get(key string, obj easyjson.MarshalerUnmarshaler) (easyjson.MarshalerUnmarshaler, error)
+	// Load loads the dumping object from file.
+	// Key should be added at Config. File is determined by the pair of key and file in Config.
 	Load(key string, obj easyjson.MarshalerUnmarshaler) error
+	// Save saves the dumping object to file.
+	// Key should be added at Config. File is determined by the pair of key and file in Config.
 	Save(key string, obj easyjson.MarshalerUnmarshaler) error
 }
 
@@ -18,6 +25,7 @@ type dumperImpl struct {
 	objs    map[string]easyjson.MarshalerUnmarshaler
 }
 
+// New returns a new Dumper.
 func New(config Config) Dumper {
 	ret := &dumperImpl{
 		targets: make(map[string]string),
@@ -32,10 +40,9 @@ func New(config Config) Dumper {
 func (d *dumperImpl) Get(key string, obj easyjson.MarshalerUnmarshaler) (easyjson.MarshalerUnmarshaler, error) {
 	if v, ok := d.objs[key]; ok {
 		return v, nil
-	} else {
-		err := d.Load(key, obj)
-		return obj, err
 	}
+	err := d.Load(key, obj)
+	return obj, err
 }
 
 func (d *dumperImpl) Load(key string, obj easyjson.MarshalerUnmarshaler) error {

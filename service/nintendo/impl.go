@@ -11,9 +11,10 @@ type impl struct {
 	retryTimes int
 }
 
+// New returns a new Service object.
 func New(config Config) Service {
 	client := proxyClient.New(proxyClient.Config{
-		EnableHttp2: false,
+		EnableHTTP2: false,
 		Timeout:     config.Timeout,
 	})
 	return &impl{

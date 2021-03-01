@@ -8,6 +8,7 @@ import (
 	"telegram-splatoon2-bot/common/log"
 )
 
+// Enum is the basic type of all enumeration type.
 type Enum int64
 
 var enumType = reflect.TypeOf(Enum(0))
@@ -15,7 +16,7 @@ var enumType = reflect.TypeOf(Enum(0))
 // Assign automatically assigns different value to all fields in a structure whose all fields are Enum type.
 // inStructPtr should be a pointer of structure.
 // Assign returns assigned inStructPtr.
-func Assign(inStructPtr interface{}) interface{}{
+func Assign(inStructPtr interface{}) interface{} {
 	rType := reflect.TypeOf(inStructPtr)
 	rVal := reflect.ValueOf(inStructPtr)
 	if rType.Kind() == reflect.Ptr {
@@ -32,9 +33,9 @@ func Assign(inStructPtr interface{}) interface{}{
 			Assign(f.Addr().Interface())
 		} else {
 			if f.Type().ConvertibleTo(enumType) {
-				f.Set(reflect.ValueOf(gen.Next()).Convert(f.Type()))
+				f.Set(reflect.ValueOf(gen.next()).Convert(f.Type()))
 			} else {
-				log.Panic("can't assign enum value", zap.Error(errors.Errorf(t.Name + " type is not Enum")))
+				log.Panic("can't assign enum value", zap.Error(errors.Errorf(t.Name+" type is not Enum")))
 			}
 		}
 	}

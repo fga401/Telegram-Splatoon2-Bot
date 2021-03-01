@@ -1,7 +1,9 @@
 package timezone
 
+// Timezone of user
 type Timezone int32
 
+// all available timezones
 const (
 	UTCMinus12  = Timezone(-720)
 	UTCMinus11  = Timezone(-660)
@@ -43,6 +45,7 @@ const (
 	UTCPlus14   = Timezone(840)
 )
 
+// All available timezones
 var All = []Timezone{
 	UTCMinus12,
 	UTCMinus11,
@@ -84,6 +87,8 @@ var All = []Timezone{
 	UTCPlus14,
 }
 
+// ByMinute converts offset in minute to Timezone.
+// If the returned timezone is not in available timezone, it will return UTC+8.
 func ByMinute(minutes int) Timezone {
 	switch minutes {
 	case -720:

@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	// EmptyPos is the value ExpiredKeys.Pos returned when key not found.
 	EmptyPos = -1
 )
 
@@ -20,6 +21,7 @@ type ExpiredKeys struct {
 	pos  map[string]int
 }
 
+// NewExpiredKeys returns ExpiredKeys object.
 func NewExpiredKeys() *ExpiredKeys {
 	return &ExpiredKeys{
 		keys: make([]ExpiredKey, 0),
@@ -63,9 +65,8 @@ func (q *ExpiredKeys) Pop() interface{} {
 func (q *ExpiredKeys) Pos(x ExpiredKey) int {
 	if v, ok := q.pos[x.toKey()]; ok {
 		return v
-	} else {
-		return EmptyPos
 	}
+	return EmptyPos
 }
 
 // Slice returns the ExpiredKey slice. It may be inconsistent after calling Push or Pop.

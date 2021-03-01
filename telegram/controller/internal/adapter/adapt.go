@@ -5,6 +5,7 @@ import (
 	"telegram-splatoon2-bot/telegram/router"
 )
 
+// Apply applies all Adapter to the AdaptedFunc and returns a Handler.
 func Apply(fn AdaptedFunc, adapters ...Adapter) router.Handler {
 	argManager := NewManager()
 	for i := len(adapters) - 1; i >= 0; i-- {

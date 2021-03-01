@@ -8,11 +8,14 @@ import (
 	"telegram-splatoon2-bot/common/log"
 )
 
+// ManagerConfig sets up a Manager.
 type ManagerConfig struct {
 	Delay time.Duration
 }
 
+// Manager manages all Repository independently.
 type Manager interface {
+	// Start automatically calls Repository.Update for each Repository and sets a ticker according to Repository.NextUpdateTime.
 	Start()
 }
 
@@ -22,6 +25,7 @@ type managerImpl struct {
 	once  sync.Once
 }
 
+// NewManager returns a new Manager.
 func NewManager(config ManagerConfig, repos ...Repository) Manager {
 	return &managerImpl{
 		repos: repos,

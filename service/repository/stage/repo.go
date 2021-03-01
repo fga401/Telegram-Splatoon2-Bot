@@ -25,6 +25,7 @@ var (
 	}{"stage"}
 )
 
+// WrappedSchedule stores stage schedules and downloaded images.
 type WrappedSchedule struct {
 	ImageID  imageSvc.Identifier
 	Schedule nintendo.StageSchedule
@@ -36,8 +37,11 @@ type content struct {
 	LeagueSchedules  []WrappedSchedule
 }
 
+// Repository fetches stage schedules.
 type Repository interface {
 	repository.Repository
+	// Content returns stage schedules filtered by primaryFilter and secondaryFilters.
+	// If result number > limit, the excess will be omitted.
 	Content(primaryFilter PrimaryFilter, secondaryFilters []SecondaryFilter, limit int) []WrappedSchedule
 }
 
@@ -61,6 +65,7 @@ func (repo *repoImpl) Content(primaryFilter PrimaryFilter, secondaryFilters []Se
 	return content.Filter(primaryFilter, secondaryFilters, limit)
 }
 
+// NewRepository return a Repository object.
 func NewRepository(nintendoSvc nintendo.Service, userSvc user.Service, imageSvc imageSvc.Service, config Config) Repository {
 	dumpConfig := dump.Config{}
 	dumpConfig.AddTarget(dumperKey.Stage, config.Dumper.StageFile)
@@ -102,7 +107,7 @@ func (repo *repoImpl) Update() error {
 		return errors.New("no admin")
 	}
 	for _, admin := range admins {
-		err = repo.updateByUid(admin)
+		err = repo.updateByUID(admin)
 		if err == nil {
 			return nil
 		}
@@ -110,7 +115,7 @@ func (repo *repoImpl) Update() error {
 	return errors.Wrap(err, "can't update stage schedules by admins")
 }
 
-func (repo *repoImpl) updateByUid(uid user.ID) error {
+func (repo *repoImpl) updateByUID(uid user.ID) error {
 	status, err := repo.userSvc.GetStatus(uid)
 	if err != nil {
 		return errors.Wrap(err, "can't fetch admin status")
@@ -327,9 +332,8 @@ func (repo *repoImpl) runUpdater() {
 func minInt(a, b int) int {
 	if a < b {
 		return a
-	} else {
-		return b
 	}
+	return b
 }
 
 func drawImage(imgA, imgB image.Image) image.Image {
