@@ -15,6 +15,6 @@ mkdir -p "$data"
 mkdir -p "$config"
 # /bin/bash ./build.sh
 echo "Prepare db..."
-/bin/bash ./migrate.sh "$data"
+/bin/bash ./scripts/migrate.sh "$data"
 echo "Prepare config..."
 cp ../config/prod.json "$config"
