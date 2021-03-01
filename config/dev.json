@@ -1,51 +1,81 @@
 {
-  "nintendo": {
-    "useProxy": false
-  },
-  "bot": {
-    "useProxy": true,
-    "worker": 16,
-    "debug": true
-  },
   "log": {
     "level": "debug"
   },
-  "db": {
+  "bot": {
+    "client": {
+      "enableProxy": true,
+      "timeout": "",
+      "proxyURL": ""
+    },
+    "retryTimes": 3,
+    "callBackQuery": {
+      "cacheTimeInSecond": 1
+    }
+  },
+  "router": {
+    "mode": "polling",
+    "maxWorker": -1,
+    "polling": {
+      "timeoutInSecond": 60
+    }
+  },
+  "database": {
     "url": "./data/sqlite3.db",
+    "driver": "sqlite3",
     "maxIdleConns": 3,
     "maxOpenConns": 0
   },
-  "cache": {
-    "fastcache": {
-      "maxBytes": 2147483648
-    },
-    "gocache": {
+  "fastcache": {
+    "maxBytes": 1073741824
+  },
+  "gocache": {
+    "proofKey": {
       "expiration": "5m",
       "cleanUp": "10m"
     }
   },
-  "account": {
-    "maxAccount": 3,
-    "allowPolling": true
+  "nintendo": {
+    "client": {
+      "timeout": ""
+    },
+    "retryTimes": 3
   },
-  "service": {
-    "language": [
-      "en",
-      "zh-CN",
-      "zh-TW",
-      "ja"
-    ],
-    "callbackQueryCachedSecond": 3,
-    "retryTimes": 3,
-    "updateFailureRetryInterval": "1m",
-    "updateDelayInSecond": 5,
-    "salmon":{
+  "user": {
+    "accountExpiration": "5m",
+    "proofKeyExpiration": "5m",
+    "permission": {
+      "maxAccount": 3,
+      "allowPolling": true,
+      "timezone": 480,
+      "language": "en"
+    }
+  },
+  "language": [
+    "en",
+    "ja",
+    "zh-CN",
+    "zh-TW"
+  ],
+  "locale": {
+    "path": "./locales"
+  },
+  "image": {
+    "retryTimes": 3
+  },
+  "repository": {
+    "delay": "5m",
+    "salmon": {
       "stageFileName": "./data/salmon_stages.json",
-      "weaponFileName": "./data/salmon_weapons.json"
+      "weaponFileName": "./data/salmon_weapons.json",
+      "randomWeaponImagePath": "./resources/salmon_random_weapon_green.png",
+      "grizzcoWeaponImagePath": "./resources/salmon_random_weapon_yellow.png"
     },
     "stage": {
-      "stageFileName": "./data/stages.json",
-      "proposedNumber": 36
+      "stageFileName": "./data/stages.json"
     }
+  },
+  "controller": {
+    "limit": 12
   }
 }

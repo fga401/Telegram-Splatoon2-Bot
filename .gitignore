@@ -3,3 +3,5 @@
 /.idea
 /run.sh
 /copy_codes_from_stupid_windows_to_linux.sh
+*run.sh
+*copy_codes_from_stupid_windows_to_linux.sh
