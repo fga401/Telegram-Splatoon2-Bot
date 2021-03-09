@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	log "telegram-splatoon2-bot/common/log"
+	"telegram-splatoon2-bot/service/language"
+	"telegram-splatoon2-bot/service/timezone"
 )
 
 func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
@@ -12,8 +14,8 @@ func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
 	switch BattleResultType(t) {
 	case BattleResultTypeEnum.Regular:
 		{
-			temp := RegularBattleResult{}
-			err = json.Unmarshal(raw, &temp)
+			temp := &RegularBattleResult{}
+			err = json.Unmarshal(raw, temp)
 			if err != nil {
 				return nil, err
 			}
@@ -21,8 +23,8 @@ func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
 		}
 	case BattleResultTypeEnum.Gachi:
 		{
-			temp := GachiBattleResult{}
-			err = json.Unmarshal(raw, &temp)
+			temp := &GachiBattleResult{}
+			err = json.Unmarshal(raw, temp)
 			if err != nil {
 				return nil, err
 			}
@@ -30,8 +32,8 @@ func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
 		}
 	case BattleResultTypeEnum.League:
 		{
-			temp := LeagueBattleResult{}
-			err = json.Unmarshal(raw, &temp)
+			temp := &LeagueBattleResult{}
+			err = json.Unmarshal(raw, temp)
 			if err != nil {
 				return nil, err
 			}
@@ -39,8 +41,8 @@ func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
 		}
 	case BattleResultTypeEnum.Festival:
 		{
-			temp := FesBattleResult{}
-			err = json.Unmarshal(raw, &temp)
+			temp := &FesBattleResult{}
+			err = json.Unmarshal(raw, temp)
 			if err != nil {
 				return nil, err
 			}
@@ -54,11 +56,11 @@ func unmarshalBattleResult(raw []byte) (ret BattleResult, err error) {
 
 type rawBattleResults struct {
 	ID      string            `json:"unique_id"`
-	Summary *BattleSummary    `json:"summary"`
+	Summary BattleSummary     `json:"summary"`
 	Results []json.RawMessage `json:"results"`
 }
 
-func (b *rawBattleResults) UnmarshalJSON(data []byte) error {
+func (b *BattleResults) UnmarshalJSON(data []byte) error {
 	rawBattleResults := &rawBattleResults{}
 	err := json.Unmarshal(data, rawBattleResults)
 	if err != nil {
@@ -73,68 +75,127 @@ func (b *rawBattleResults) UnmarshalJSON(data []byte) error {
 	}
 	b.ID = rawBattleResults.ID
 	b.Summary = rawBattleResults.Summary
-	//b.Results = ret
+	b.Results = ret
 	return nil
 }
 
-func (svc *impl) GetAllBattleResults(iksm string, timezone int, acceptLang string) (*BattleResults, error) {
+func (svc *impl) GetAllBattleResults(iksm string, timezone timezone.Timezone, language language.Language) (BattleResults, error) {
 	reqURL := "https://app.splatoon2.nintendo.net/api/results"
-	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone, acceptLang)
+	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone.Minute(), language.IETF())
 	if err != nil {
-		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
+		return BattleResults{}, errors.Wrap(err, "can't get splatoon2 restful response")
 	}
 	if isCookiesExpired(respJSON) {
-		return nil, &ErrIKSMExpired{iksm}
+		return BattleResults{}, &ErrIKSMExpired{iksm}
 	}
-	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJSON))
-	battleResults := &BattleResults{}
-	err = json.Unmarshal(respJSON, battleResults)
+	log.Debug("get all battle results", zap.ByteString("all_battle_results", respJSON))
+	battleResults := BattleResults{}
+	err = json.Unmarshal(respJSON, &battleResults)
 	if err != nil {
-		return nil, errors.Wrap(err, "can't parse json to StageSchedules")
+		return BattleResults{}, errors.Wrap(err, "can't parse json to BattleResults")
 	}
 	return battleResults, nil
 }
 
 type rawLatestBattleResult struct {
-	lastBattleNumber string
-	RawResults       []json.RawMessage `json:"results"`
-	Results          []BattleResult
+	RawResults []json.RawMessage `json:"results"`
 }
 
-func (b *rawLatestBattleResult) UnmarshalJSON(data []byte) error {
-	err := json.Unmarshal(data, b)
+func unmarshalRawLatestBattleResult(lastID string, data []byte) ([]BattleResult, error) {
+	raw := rawLatestBattleResult{}
+	err := json.Unmarshal(data, &raw)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	ret := make([]BattleResult, 0, len(b.RawResults))
-	for _, raw := range b.RawResults {
-		res, err := unmarshalBattleResult(raw)
+	ret := make([]BattleResult, 0, len(raw.RawResults))
+	for _, r := range raw.RawResults {
+		res, err := unmarshalBattleResult(r)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if res.Metadata().BattleNumber == b.lastBattleNumber {
+		if res.Metadata().BattleNumber == lastID {
 			break
 		}
 		ret = append(ret, res)
 	}
-	b.Results = ret
-	return nil
+	return ret, nil
 }
 
-func (svc *impl) GetLatestBattleResults(lastBattleNumber string, iksm string, timezone int, acceptLang string) ([]BattleResult, error) {
+func (svc *impl) GetLatestBattleResults(lastID string, iksm string, timezone timezone.Timezone, language language.Language) ([]BattleResult, error) {
 	reqURL := "https://app.splatoon2.nintendo.net/api/results"
-	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone, acceptLang)
+	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone.Minute(), language.IETF())
 	if err != nil {
 		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
 	}
 	if isCookiesExpired(respJSON) {
 		return nil, &ErrIKSMExpired{iksm}
 	}
-	log.Debug("get stage schedules", zap.ByteString("stage_schedules", respJSON))
-	latestBattleResults := &rawLatestBattleResult{lastBattleNumber: lastBattleNumber}
-	err = json.Unmarshal(respJSON, latestBattleResults)
+	log.Debug("get last battle results", zap.ByteString("last_battle_results", respJSON))
+	ret, err := unmarshalRawLatestBattleResult(lastID, respJSON)
 	if err != nil {
-		return nil, errors.Wrap(err, "can't parse json to StageSchedules")
+		return nil, errors.Wrap(err, "can't parse json to slice of BattleResult")
 	}
-	return latestBattleResults.Results, nil
+	return ret, nil
+}
+
+func unmarshalDetailedBattleResult(raw []byte) (ret DetailedBattleResult, err error) {
+	t := json.Get(raw, "type").ToString()
+	switch BattleResultType(t) {
+	case BattleResultTypeEnum.Regular:
+		{
+			temp := &DetailedRegularBattleResult{}
+			err = json.Unmarshal(raw, temp)
+			if err != nil {
+				return nil, err
+			}
+			ret = temp
+		}
+	case BattleResultTypeEnum.Gachi:
+		{
+			temp := &DetailedGachiBattleResult{}
+			err = json.Unmarshal(raw, temp)
+			if err != nil {
+				return nil, err
+			}
+			ret = temp
+		}
+	case BattleResultTypeEnum.League:
+		{
+			temp := &DetailedLeagueBattleResult{}
+			err = json.Unmarshal(raw, temp)
+			if err != nil {
+				return nil, err
+			}
+			ret = temp
+		}
+	case BattleResultTypeEnum.Festival:
+		{
+			temp := &DetailedFesBattleResult{}
+			err = json.Unmarshal(raw, temp)
+			if err != nil {
+				return nil, err
+			}
+			ret = temp
+		}
+	default:
+		return nil, errors.Errorf("unknown type")
+	}
+	return
+}
+
+func (svc *impl) GetDetailedBattleResults(battleNumber string, iksm string, timezone timezone.Timezone, language language.Language) (DetailedBattleResult, error) {
+	reqURL := "https://app.splatoon2.nintendo.net/api/results/" + battleNumber
+	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone.Minute(), language.IETF())
+	if err != nil {
+		return nil, errors.Wrap(err, "can't get splatoon2 restful response")
+	}
+	if isCookiesExpired(respJSON) {
+		return nil, &ErrIKSMExpired{iksm}
+	}
+	log.Debug("get detailed battle results", zap.ByteString("detailed_battle_results", respJSON))
+	ret, err := unmarshalDetailedBattleResult(respJSON)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't parse json to DetailedBattleResult")
+	}
+	return ret, nil
 }
