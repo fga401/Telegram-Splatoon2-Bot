@@ -76,6 +76,8 @@
     }
   },
   "controller": {
-    "limit": 12
+    "limit": 12,
+    "maxBattleResultsPerMessage": 10,
+    "minLastBattleResults": 5
   }
 }

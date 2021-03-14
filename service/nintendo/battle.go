@@ -60,6 +60,7 @@ type rawBattleResults struct {
 	Results []json.RawMessage `json:"results"`
 }
 
+// UnmarshalJSON implements Unmarshaler interface.
 func (b *BattleResults) UnmarshalJSON(data []byte) error {
 	rawBattleResults := &rawBattleResults{}
 	err := json.Unmarshal(data, rawBattleResults)
@@ -101,19 +102,23 @@ type rawLatestBattleResult struct {
 	RawResults []json.RawMessage `json:"results"`
 }
 
-func unmarshalRawLatestBattleResult(lastID string, data []byte) ([]BattleResult, error) {
+func unmarshalRawLatestBattleResult(lastID string, min int, data []byte) ([]BattleResult, error) {
 	raw := rawLatestBattleResult{}
 	err := json.Unmarshal(data, &raw)
 	if err != nil {
 		return nil, err
 	}
 	ret := make([]BattleResult, 0, len(raw.RawResults))
+	found := false
 	for _, r := range raw.RawResults {
 		res, err := unmarshalBattleResult(r)
 		if err != nil {
 			return nil, err
 		}
 		if res.Metadata().BattleNumber == lastID {
+			found = true
+		}
+		if found && len(ret) >= min {
 			break
 		}
 		ret = append(ret, res)
@@ -121,7 +126,7 @@ func unmarshalRawLatestBattleResult(lastID string, data []byte) ([]BattleResult,
 	return ret, nil
 }
 
-func (svc *impl) GetLatestBattleResults(lastID string, iksm string, timezone timezone.Timezone, language language.Language) ([]BattleResult, error) {
+func (svc *impl) GetLatestBattleResults(lastID string, min int, iksm string, timezone timezone.Timezone, language language.Language) ([]BattleResult, error) {
 	reqURL := "https://app.splatoon2.nintendo.net/api/results"
 	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone.Minute(), language.IETF())
 	if err != nil {
@@ -131,7 +136,7 @@ func (svc *impl) GetLatestBattleResults(lastID string, iksm string, timezone tim
 		return nil, &ErrIKSMExpired{iksm}
 	}
 	log.Debug("get last battle results", zap.ByteString("last_battle_results", respJSON))
-	ret, err := unmarshalRawLatestBattleResult(lastID, respJSON)
+	ret, err := unmarshalRawLatestBattleResult(lastID, min, respJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't parse json to slice of BattleResult")
 	}
@@ -198,4 +203,26 @@ func (svc *impl) GetDetailedBattleResults(battleNumber string, iksm string, time
 		return nil, errors.Wrap(err, "can't parse json to DetailedBattleResult")
 	}
 	return ret, nil
+}
+
+type rawBattleSummary struct {
+	Summary BattleSummary `json:"summary"`
+}
+
+func (svc *impl) GetBattleSummary(iksm string, timezone timezone.Timezone, language language.Language) (BattleSummary, error) {
+	reqURL := "https://app.splatoon2.nintendo.net/api/results"
+	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone.Minute(), language.IETF())
+	if err != nil {
+		return BattleSummary{}, errors.Wrap(err, "can't get splatoon2 restful response")
+	}
+	if isCookiesExpired(respJSON) {
+		return BattleSummary{}, &ErrIKSMExpired{iksm}
+	}
+	log.Debug("get battle summary", zap.ByteString("battle_summary", respJSON))
+	ret := rawBattleSummary{}
+	err = json.Unmarshal(respJSON, &ret)
+	if err != nil {
+		return BattleSummary{}, errors.Wrap(err, "can't parse json to BattleResults")
+	}
+	return ret.Summary, nil
 }

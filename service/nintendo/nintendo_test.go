@@ -33,6 +33,7 @@ func TestGetBattleResults(t *testing.T) {
 	require.Nil(t, err)
 	latest, err := svc.GetLatestBattleResults(
 		results.Results[2].Metadata().BattleNumber,
+		10,
 		iksm,
 		timezone.UTCPlus8,
 		language.English,
@@ -60,6 +61,7 @@ func TestGetSalmonResults(t *testing.T) {
 	require.Nil(t, err)
 	latest, err := svc.GetLatestSalmonResults(
 		results.Results[2].JobID,
+		10,
 		iksm,
 		timezone.UTCPlus8,
 		language.English,

@@ -23,6 +23,7 @@ import (
 	"telegram-splatoon2-bot/service/timezone"
 	userSvc "telegram-splatoon2-bot/service/user"
 	"telegram-splatoon2-bot/telegram/bot"
+	"telegram-splatoon2-bot/telegram/controller/battle"
 	repositoryCtrl "telegram-splatoon2-bot/telegram/controller/repository"
 	"telegram-splatoon2-bot/telegram/router"
 )
@@ -189,8 +190,8 @@ func salmonRepositoryConfig() salmon.Config {
 			StageFile:  viper.GetString("repository.salmon.stageFileName"),
 			WeaponFile: viper.GetString("repository.salmon.weaponFileName"),
 		},
-		RandomWeaponPath: viper.GetString("repository.salmon.randomWeaponImagePath"),
-		GrizzcoWeaponPath:  viper.GetString("repository.salmon.grizzcoWeaponImagePath"),
+		RandomWeaponPath:  viper.GetString("repository.salmon.randomWeaponImagePath"),
+		GrizzcoWeaponPath: viper.GetString("repository.salmon.grizzcoWeaponImagePath"),
 	}
 }
 
@@ -211,5 +212,12 @@ func repositoryManagerConfig() repository.ManagerConfig {
 func repositoryControllerConfig() repositoryCtrl.Config {
 	return repositoryCtrl.Config{
 		Limit: viper.GetInt("controller.limit"),
+	}
+}
+
+func battleControllerConfig() battle.Config {
+	return battle.Config{
+		MaxResultsPerMessage: viper.GetInt("controller.maxBattleResultsPerMessage"),
+		MinLastResults:       viper.GetInt("controller.minLastBattleResults"),
 	}
 }

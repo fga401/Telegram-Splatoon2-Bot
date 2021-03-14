@@ -7,7 +7,7 @@ import (
 // Config sets up a Downloader.
 type Config struct {
 	// Proxy config of http client.
-	Proxy      proxyclient.Config
+	Proxy proxyclient.Config
 	// RetryTimes after failure.
 	RetryTimes int
 }

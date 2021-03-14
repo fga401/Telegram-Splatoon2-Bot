@@ -142,11 +142,11 @@ type BattleResultMetadata struct {
 	Stage        Stage    `json:"stage"`
 	GameMode     GameMode `json:"game_mode"`
 	Rank
-	PlayResult       PlayResult `json:"play_result"`
-	StartTime        int64      `json:"start_time"`
-	MyTeamResult     TeamResult `json:"my_team_result"`
-	OtherTeamResult  TeamResult `json:"other_team_result"`
-	WeaponPaintPoint int32      `json:"weapon_paint_point"`
+	PlayerResult     PlayerResult `json:"player_result"`
+	StartTime        int64        `json:"start_time"`
+	MyTeamResult     TeamResult   `json:"my_team_result"`
+	OtherTeamResult  TeamResult   `json:"other_team_result"`
+	WeaponPaintPoint int32        `json:"weapon_paint_point"`
 }
 
 // RegularBattleResult JSON structure
@@ -240,12 +240,12 @@ type TeamResult struct {
 	Key  string `json:"key"`
 }
 
-// PlayResult JSON structure
-type PlayResult struct {
+// PlayerResult JSON structure
+type PlayerResult struct {
 	GamePaintPoint float32 `json:"game_paint_point"`
 	DeathCount     int32   `json:"death_count"`
 	KillCount      int32   `json:"kill_count"`
-	AssertCount    int32   `json:"assert_count"`
+	AssistCount    int32   `json:"assist_count"`
 	SpecialCount   int32   `json:"special_count"`
 	SortScore      int32   `json:"sort_score"`
 	Player         Player  `json:"player"`
@@ -253,25 +253,25 @@ type PlayResult struct {
 
 // TeamPlayerResults JSON structure
 type TeamPlayerResults struct {
-	MyTeamMembers    []PlayResult `json:"my_team_members"`
-	OtherTeamMembers []PlayResult `json:"other_team_members"`
+	MyTeamMembers    []PlayerResult `json:"my_team_members"`
+	OtherTeamMembers []PlayerResult `json:"other_team_members"`
 }
 
 // MyTeamPlayerResults return my team player results
-func (t *TeamPlayerResults) MyTeamPlayerResults() []PlayResult {
+func (t *TeamPlayerResults) MyTeamPlayerResults() []PlayerResult {
 	return t.MyTeamMembers
 }
 
 // OtherTeamPlayerResults return my team player results
-func (t *TeamPlayerResults) OtherTeamPlayerResults() []PlayResult {
+func (t *TeamPlayerResults) OtherTeamPlayerResults() []PlayerResult {
 	return t.OtherTeamMembers
 }
 
 // DetailedBattleResult interface of detailed BattleResult.
 type DetailedBattleResult interface {
 	BattleResult
-	MyTeamPlayerResults() []PlayResult
-	OtherTeamPlayerResults() []PlayResult
+	MyTeamPlayerResults() []PlayerResult
+	OtherTeamPlayerResults() []PlayerResult
 }
 
 // DetailedRegularBattleResult JSON structure
@@ -280,13 +280,13 @@ type DetailedRegularBattleResult struct {
 	TeamPlayerResults
 }
 
-// DetailedRegularBattleResult JSON structure
+// DetailedGachiBattleResult JSON structure
 type DetailedGachiBattleResult struct {
 	GachiBattleResult
 	TeamPlayerResults
 }
 
-// DetailedRegularBattleResult JSON structure
+// DetailedLeagueBattleResult JSON structure
 type DetailedLeagueBattleResult struct {
 	LeagueBattleResult
 	TeamPlayerResults
@@ -419,6 +419,7 @@ type SalmonPlayerResult struct {
 	GoldenIkuraNum int32              `json:"golden_ikura_num"`
 }
 
+// SalmonDetailedResult JSON structure
 type SalmonDetailedResult struct {
 	SalmonResult
 	OtherResults []SalmonPlayerResult `json:"other_results"`
@@ -545,7 +546,7 @@ func (r *FesBattleResult) Metadata() BattleResultMetadata {
 	return r.BattleResultMetadata
 }
 
-// DetailedRegularBattleResult JSON structure
+// DetailedFesBattleResult JSON structure
 type DetailedFesBattleResult struct {
 	FesBattleResult
 	TeamPlayerResults

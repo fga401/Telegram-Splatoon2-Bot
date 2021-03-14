@@ -19,16 +19,25 @@ func init() {
 			Named:    true,
 			Prepared: false,
 		},
+		{
+			Token:    tokenEnum.User.Insert,
+			Stmt:     "INSERT INTO user (uid, user_name) VALUES (:uid, :user_name);",
+			Named:    true,
+			Prepared: false,
+		},
 	})
 }
 
-func (svc *serviceImpl) Register(user Permission, status Status) error {
+func (svc *serviceImpl) Register(user User, permission Permission, status Status) error {
 	return svc.db.Transact(func(tx database.Executable) error {
-		if err := tx.NamedExec(tokenEnum.Permission.Insert, user); err != nil {
+		if err := tx.NamedExec(tokenEnum.Permission.Insert, permission); err != nil {
 			return errors.Wrap(err, "can't insert Permission")
 		}
 		if err := tx.NamedExec(tokenEnum.Status.Insert, status); err != nil {
 			return errors.Wrap(err, "can't insert Status")
+		}
+		if err := tx.NamedExec(tokenEnum.User.Insert, user); err != nil {
+			return errors.Wrap(err, "can't insert User")
 		}
 		return nil
 	})

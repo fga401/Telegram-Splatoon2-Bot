@@ -10,7 +10,7 @@ import (
 	"telegram-splatoon2-bot/service/nintendo"
 	"telegram-splatoon2-bot/service/timezone"
 	"telegram-splatoon2-bot/service/user/database"
-	"telegram-splatoon2-bot/service/user/serializer"
+	"telegram-splatoon2-bot/service/user/internal/serializer"
 )
 
 type defaultPermission struct {

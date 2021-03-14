@@ -50,13 +50,14 @@ type rawLatestSalmonResult struct {
 	RawResults []json.RawMessage `json:"results"`
 }
 
-func unmarshalRawLatestSalmonResult(lastID int32, data []byte) ([]SalmonResult, error) {
+func unmarshalRawLatestSalmonResult(lastID int32, min int, data []byte) ([]SalmonResult, error) {
 	raw := rawLatestSalmonResult{}
 	err := json.Unmarshal(data, &raw)
 	if err != nil {
 		return nil, err
 	}
 	ret := make([]SalmonResult, 0, len(raw.RawResults))
+	found := false
 	for _, r := range raw.RawResults {
 		res := SalmonResult{}
 		err = json.Unmarshal(r, &res)
@@ -64,6 +65,9 @@ func unmarshalRawLatestSalmonResult(lastID int32, data []byte) ([]SalmonResult, 
 			return nil, err
 		}
 		if res.JobID == lastID {
+			found = true
+		}
+		if found && len(ret) >= min {
 			break
 		}
 		ret = append(ret, res)
@@ -71,7 +75,7 @@ func unmarshalRawLatestSalmonResult(lastID int32, data []byte) ([]SalmonResult, 
 	return ret, nil
 }
 
-func (svc *impl) GetLatestSalmonResults(lastBattleNumber int32, iksm string, timezone timezone.Timezone, language language.Language) ([]SalmonResult, error) {
+func (svc *impl) GetLatestSalmonResults(lastBattleNumber int32, min int, iksm string, timezone timezone.Timezone, language language.Language) ([]SalmonResult, error) {
 	reqURL := "https://app.splatoon2.nintendo.net/api/coop_results"
 	respJSON, err := svc.getSplatoon2RestfulJSON(reqURL, iksm, timezone.Minute(), language.IETF())
 	if err != nil {
@@ -81,7 +85,7 @@ func (svc *impl) GetLatestSalmonResults(lastBattleNumber int32, iksm string, tim
 		return nil, &ErrIKSMExpired{iksm}
 	}
 	log.Debug("get latest salmon summary", zap.ByteString("latest_salmon_summary", respJSON))
-	ret, err := unmarshalRawLatestSalmonResult(lastBattleNumber, respJSON)
+	ret, err := unmarshalRawLatestSalmonResult(lastBattleNumber, min, respJSON)
 	if err != nil {
 		return nil, errors.Wrap(err, "can't parse json to slice of SalmonResult")
 	}

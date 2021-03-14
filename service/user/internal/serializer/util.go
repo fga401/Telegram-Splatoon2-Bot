@@ -1,4 +1,4 @@
-package util
+package serializer
 
 import (
 	"encoding/binary"
@@ -7,14 +7,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Binary groups functions about serialization.
-var Binary serialization
-
-type serialization struct{}
-
 // WriteBytes writes byte slice to a writer.
-// lengthSize identifies the size of length field. It should be 8, 16, 32 or 64. And the length of data should not grater than 2^lengthSize-1.
-func (serialization) WriteBytes(w io.Writer, order binary.ByteOrder, data []byte, lengthSize int) error {
+// lengthSize identifies the size of length field. It should be 8, 16, 32 or 64. And the length of data should not greater than 2^lengthSize-1.
+func WriteBytes(w io.Writer, order binary.ByteOrder, data []byte, lengthSize int) error {
 	var err error
 	switch lengthSize {
 	case 8:
@@ -40,7 +35,7 @@ func (serialization) WriteBytes(w io.Writer, order binary.ByteOrder, data []byte
 
 // ReadBytes reads byte slice from a reader.
 // lengthSize should be the same as what WriteBytes sets.
-func (serialization) ReadBytes(r io.Reader, order binary.ByteOrder, lengthSize int) ([]byte, error) {
+func ReadBytes(r io.Reader, order binary.ByteOrder, lengthSize int) ([]byte, error) {
 	var err error
 	length := 0
 	switch lengthSize {

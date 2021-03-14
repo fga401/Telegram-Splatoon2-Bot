@@ -33,7 +33,7 @@ type WebHookConfig struct {
 // Config sets up Router.
 type Config struct {
 	// Mode in which Router is running.
-	Mode      Mode
+	Mode Mode
 	// MaxWorker sets the max number of goroutine to process request.
 	// If MaxWorker == 0, there is no limitation.
 	MaxWorker int32

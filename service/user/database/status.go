@@ -32,6 +32,18 @@ func init() {
 			Named:    false,
 			Prepared: true,
 		},
+		{
+			Token:    tokenEnum.Status.UpdateLastBattle,
+			Stmt:     "UPDATE status SET last_battle=? WHERE uid=?;",
+			Named:    false,
+			Prepared: false,
+		},
+		{
+			Token:    tokenEnum.Status.UpdateLastSalmon,
+			Stmt:     "UPDATE status SET last_salmon=? WHERE uid=?;",
+			Named:    false,
+			Prepared: false,
+		},
 	})
 }
 
@@ -51,4 +63,12 @@ func (svc *serviceImpl) UpdateStatusTimezone(uid UserID, timezone timezone.Timez
 
 func (svc *serviceImpl) UpdateStatusLanguage(uid UserID, language language.Language) error {
 	return svc.db.Exec(tokenEnum.Status.UpdateLanguage, language, uid)
+}
+
+func (svc *serviceImpl) UpdateStatusLastBattle(uid UserID, lastBattle string) error {
+	return svc.db.Exec(tokenEnum.Status.UpdateLastBattle, lastBattle, uid)
+}
+
+func (svc *serviceImpl) UpdateStatusLastSalmon(uid UserID, lastSalmon string) error {
+	return svc.db.Exec(tokenEnum.Status.UpdateLastSalmon, lastSalmon, uid)
 }

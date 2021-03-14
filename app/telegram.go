@@ -20,6 +20,7 @@ import (
 	userSvc "telegram-splatoon2-bot/service/user"
 	userDatabase "telegram-splatoon2-bot/service/user/database"
 	"telegram-splatoon2-bot/telegram/bot"
+	"telegram-splatoon2-bot/telegram/controller/battle"
 	"telegram-splatoon2-bot/telegram/controller/help"
 	repositoryCtrl "telegram-splatoon2-bot/telegram/controller/repository"
 	"telegram-splatoon2-bot/telegram/controller/setting"
@@ -54,7 +55,9 @@ func TelegramApp() {
 	salmonRepo := salmon.NewRepository(nintendoSvc, userSvc, imageSvc, salmonRepositoryConfig())
 	stageRepo := stage.NewRepository(nintendoSvc, userSvc, imageSvc, stageRepositoryConfig())
 	repoManager := repository.NewManager(repositoryManagerConfig(), salmonRepo, stageRepo)
-	repoManager.Start()
+	if false {
+		repoManager.Start()
+	}
 
 	settingCtrl := setting.New(bot, userSvc, languageSvc)
 	router.RegisterCommand("start", settingCtrl.Start)
@@ -80,6 +83,11 @@ func TelegramApp() {
 	helpCtrl := help.New(bot, userSvc, languageSvc)
 	router.RegisterCommand("help", helpCtrl.Help)
 	router.RegisterCommand("help_stages", helpCtrl.HelpStages)
+
+	battleCtrl := battle.New(bot, nintendoSvc, userSvc, languageSvc, battleControllerConfig())
+	router.RegisterCommand("battle_all", battleCtrl.BattleAll)
+	router.RegisterCommand("battle_last", battleCtrl.BattleLast)
+	router.RegisterCommand("battle_summary", battleCtrl.BattleSummary)
 
 	router.Run()
 }
