@@ -14,6 +14,7 @@ import (
 	tgImgUploader "telegram-splatoon2-bot/service/image/uploader/telegram"
 	"telegram-splatoon2-bot/service/language"
 	"telegram-splatoon2-bot/service/nintendo"
+	battlePoller "telegram-splatoon2-bot/service/poller/battle"
 	"telegram-splatoon2-bot/service/repository"
 	"telegram-splatoon2-bot/service/repository/salmon"
 	"telegram-splatoon2-bot/service/repository/stage"
@@ -55,9 +56,7 @@ func TelegramApp() {
 	salmonRepo := salmon.NewRepository(nintendoSvc, userSvc, imageSvc, salmonRepositoryConfig())
 	stageRepo := stage.NewRepository(nintendoSvc, userSvc, imageSvc, stageRepositoryConfig())
 	repoManager := repository.NewManager(repositoryManagerConfig(), salmonRepo, stageRepo)
-	if false {
-		repoManager.Start()
-	}
+	repoManager.Start()
 
 	settingCtrl := setting.New(bot, userSvc, languageSvc)
 	router.RegisterCommand("start", settingCtrl.Start)
@@ -84,7 +83,10 @@ func TelegramApp() {
 	router.RegisterCommand("help", helpCtrl.Help)
 	router.RegisterCommand("help_stages", helpCtrl.HelpStages)
 
-	battleCtrl := battle.New(bot, nintendoSvc, userSvc, languageSvc, battleControllerConfig())
+	battlePoller := battlePoller.New(bot, stageRepo, nintendoSvc, userSvc, battlePollerConfig())
+
+	battleCtrl := battle.New(bot, battlePoller, nintendoSvc, userSvc, languageSvc, battleControllerConfig())
+	router.RegisterCommand("battle_polling", battleCtrl.BattlePolling)
 	router.RegisterCommand("battle_all", battleCtrl.BattleAll)
 	router.RegisterCommand("battle_last", battleCtrl.BattleLast)
 	router.RegisterCommand("battle_summary", battleCtrl.BattleSummary)

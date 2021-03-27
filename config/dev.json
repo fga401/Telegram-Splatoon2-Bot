@@ -75,9 +75,24 @@
       "stageFileName": "./data/stages.json"
     }
   },
+  "poller": {
+    "battles": {
+      "refreshmentTime": "10s",
+      "maxWorker": 32,
+      "maxIdleTime": "10m",
+      "minBattleTime": {
+        "zone": "100s",
+        "clam": "100s",
+        "tower": "100s",
+        "rainmaker": "30s",
+        "waiting": "15s"
+      }
+    }
+  },
   "controller": {
     "limit": 12,
     "maxBattleResultsPerMessage": 10,
-    "minLastBattleResults": 5
+    "minLastBattleResults": 5,
+    "maxBattlePollingWorker": 32
   }
 }

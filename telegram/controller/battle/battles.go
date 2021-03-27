@@ -14,6 +14,36 @@ import (
 	botMessage "telegram-splatoon2-bot/telegram/controller/internal/message"
 )
 
+func (ctrl *battleCtrl) battlePolling(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
+	statusArgIdx := argManager.Index(ctrl.statusAdapter)[0]
+	status := args[statusArgIdx].(userSvc.Status)
+	start := false
+	if _, ok := ctrl.pollingChats[status.UserID]; !ok {
+		start = true
+		ctrl.startPolling(status.UserID, update.Message.Chat.ID)
+	} else {
+		ctrl.stopPolling(status.UserID)
+	}
+	printer := ctrl.languageSvc.Printer(status.Language)
+	msg := getBattlePollingMessage(printer, update, start)
+	_, err := ctrl.bot.Send(msg)
+	return err
+}
+
+const (
+	textKeyBattlePollingStart = "Start polling battles."
+	textKeyBattlePollingStop  = "Stop polling battles."
+)
+
+func getBattlePollingMessage(printer *message.Printer, update botApi.Update, start bool) botApi.Chattable {
+	textKey := textKeyBattlePollingStart
+	if !start {
+		textKey = textKeyBattlePollingStop
+	}
+	text := printer.Sprintf(textKey)
+	return botMessage.NewByUpdate(update, text, nil)
+}
+
 func (ctrl *battleCtrl) battleAll(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
 	statusArgIdx := argManager.Index(ctrl.statusAdapter)[0]
 	status := args[statusArgIdx].(userSvc.Status)

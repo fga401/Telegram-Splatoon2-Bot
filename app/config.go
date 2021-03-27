@@ -17,6 +17,7 @@ import (
 	tgImageUploader "telegram-splatoon2-bot/service/image/uploader/telegram"
 	"telegram-splatoon2-bot/service/language"
 	"telegram-splatoon2-bot/service/nintendo"
+	battlePoller "telegram-splatoon2-bot/service/poller/battle"
 	"telegram-splatoon2-bot/service/repository"
 	"telegram-splatoon2-bot/service/repository/salmon"
 	"telegram-splatoon2-bot/service/repository/stage"
@@ -215,9 +216,25 @@ func repositoryControllerConfig() repositoryCtrl.Config {
 	}
 }
 
+func battlePollerConfig() battlePoller.Config {
+	return battlePoller.Config{
+		RefreshmentTime: viper.GetDuration("poller.battles.refreshmentTime"),
+		MaxWorker:       viper.GetInt32("poller.battles.maxWorker"),
+		MaxIdleTime:     viper.GetDuration("poller.battles.maxIdleTime"),
+		MinBattleTime: battlePoller.MinBattleTime{
+			Zone:      viper.GetDuration("poller.battles.minBattleTime.zone"),
+			Tower:     viper.GetDuration("poller.battles.minBattleTime.tower"),
+			Clam:      viper.GetDuration("poller.battles.minBattleTime.clam"),
+			Rainmaker: viper.GetDuration("poller.battles.minBattleTime.rainmaker"),
+			Waiting:   viper.GetDuration("poller.battles.minBattleTime.waiting"),
+		},
+	}
+}
+
 func battleControllerConfig() battle.Config {
 	return battle.Config{
 		MaxResultsPerMessage: viper.GetInt("controller.maxBattleResultsPerMessage"),
 		MinLastResults:       viper.GetInt("controller.minLastBattleResults"),
+		PollingMaxWorker:     viper.GetInt32("controller.maxBattlePollingWorker"),
 	}
 }

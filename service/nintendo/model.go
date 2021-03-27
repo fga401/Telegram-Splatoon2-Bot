@@ -132,6 +132,7 @@ type BattleResultType string
 type BattleResult interface {
 	Type() BattleResultType
 	Metadata() BattleResultMetadata
+	EndTime() int64
 }
 
 // BattleResultMetadata JSON structure
@@ -185,34 +186,49 @@ type LeagueBattleResult struct {
 	EstimateGachiPower       float32 `json:"estimate_gachi_power"`
 }
 
-// Type return BattleResultType of RegularBattleResult.
+// Type returns BattleResultType of RegularBattleResult.
 func (r *RegularBattleResult) Type() BattleResultType {
 	return BattleResultTypeEnum.Regular
 }
 
-// Type return BattleResultType of GachiBattleResult.
+// Type returns BattleResultType of GachiBattleResult.
 func (r *GachiBattleResult) Type() BattleResultType {
 	return BattleResultTypeEnum.Gachi
 }
 
-// Type return BattleResultType of LeagueBattleResult.
+// Type returns BattleResultType of LeagueBattleResult.
 func (r *LeagueBattleResult) Type() BattleResultType {
 	return BattleResultTypeEnum.League
 }
 
-// Metadata return BattleResultMetadata of RegularBattleResult.
+// Metadata returns BattleResultMetadata of RegularBattleResult.
 func (r *RegularBattleResult) Metadata() BattleResultMetadata {
 	return r.BattleResultMetadata
 }
 
-// Metadata return BattleResultMetadata of GachiBattleResult.
+// Metadata returns BattleResultMetadata of GachiBattleResult.
 func (r *GachiBattleResult) Metadata() BattleResultMetadata {
 	return r.BattleResultMetadata
 }
 
-// Metadata return BattleResultMetadata of LeagueBattleResult.
+// Metadata returns BattleResultMetadata of LeagueBattleResult.
 func (r *LeagueBattleResult) Metadata() BattleResultMetadata {
 	return r.BattleResultMetadata
+}
+
+// EndTime returns the EndTime of the battle.
+func (r *RegularBattleResult) EndTime() int64 {
+	return r.StartTime + 3*60
+}
+
+// EndTime returns the EndTime of the battle.
+func (r *GachiBattleResult) EndTime() int64 {
+	return r.StartTime + int64(r.ElapsedTime)
+}
+
+// EndTime returns the EndTime of the battle.
+func (r *LeagueBattleResult) EndTime() int64 {
+	return r.StartTime + int64(r.ElapsedTime)
 }
 
 // BattleResults JSON structure
@@ -544,6 +560,11 @@ func (r *FesBattleResult) Type() BattleResultType {
 // Metadata return BattleResultMetadata of FesBattleResult.
 func (r *FesBattleResult) Metadata() BattleResultMetadata {
 	return r.BattleResultMetadata
+}
+
+// EndTime returns the EndTime of the battle.
+func (r *FesBattleResult) EndTime() int64 {
+	return r.StartTime + 3*60
 }
 
 // DetailedFesBattleResult JSON structure

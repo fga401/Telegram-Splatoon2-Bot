@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	keyDefeat = "defeat"
-
 	textKeyVictoryEmoji     = "✅"
 	textKeyDefeatEmoji      = "❌"
 	textKeyTimeTemplate     = "2006-01-02 15:04:05"
@@ -91,7 +89,7 @@ func formatBattleResult(printer *message.Printer, battle nintendo.BattleResult, 
 		textKey = textKeyBoldBattleResult
 	}
 	emoji := textKeyVictoryEmoji
-	if battle.Metadata().MyTeamResult.Key == keyDefeat {
+	if battle.Metadata().MyTeamResult.Key == nintendo.KeyDefeat {
 		emoji = textKeyDefeatEmoji
 	}
 	ret := printer.Sprintf(textKey,
