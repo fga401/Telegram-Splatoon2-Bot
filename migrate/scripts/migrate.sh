@@ -4,7 +4,7 @@ cd "$(dirname "$0")" || exit 1
 cd ..
 if [ ! "$1" ]
 then
-    data_path=~/sqlite/splatoon2_bot
+    data_path=~/bots/splatoon2_bot/data
 else
     data_path=${1%/}
 fi
