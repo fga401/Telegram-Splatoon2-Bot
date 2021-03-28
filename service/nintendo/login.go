@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -173,7 +174,7 @@ func (svc *impl) getSessionToken(proofKey []byte, sessionTokenCode string, accep
 	if resp.StatusCode != http.StatusOK {
 		n, _ := ioutil.ReadAll(resp.Body)
 		log.Debug("get session token", zap.ByteString("json", n))
-		return "", errors.New("status code not 200")
+		return "", fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respBody := resp.Body
@@ -223,7 +224,7 @@ func (svc *impl) getAccessToken(sessionToken string, acceptLang string) (string,
 		return "", errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("status code not 200")
+		return "", fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respBody := resp.Body
@@ -269,7 +270,7 @@ func (svc *impl) getUserInfo(accessToken string, acceptLang string) (*userInfo, 
 		return nil, errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("status code not 200")
+		return nil, fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respBody := resp.Body
@@ -331,7 +332,7 @@ func (svc *impl) getFlapgResponse(guid, accessToken string, timestamp int64, iid
 		return nil, errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("status code not 200")
+		return nil, fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respJSON, err := ioutil.ReadAll(resp.Body)
@@ -372,7 +373,7 @@ func (svc *impl) getS2SResponse(accessToken string, timestamp int64) (string, er
 		return "", errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("status code not 200")
+		return "", fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respJSON, err := ioutil.ReadAll(resp.Body)
@@ -424,7 +425,7 @@ func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse
 		return "", "", errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", "", errors.New("status code not 200")
+		return "", "", fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respBody := resp.Body
@@ -484,7 +485,7 @@ func (svc *impl) getSplatoonAccessTokenSecondStep(accessToken string, flapgAppRe
 		return "", errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("status code not 200")
+		return "", fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	respBody := resp.Body
@@ -559,7 +560,7 @@ func (svc *impl) getIksmSession(splatoonAccessToken string, acceptLang string) (
 		return "", errors.Wrap(err, "can't get response")
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("status code not 200")
+		return "", fmt.Errorf("status code not 200, got %d", resp.StatusCode)
 	}
 	defer closeBody(resp.Body)
 	cookies := resp.Cookies()

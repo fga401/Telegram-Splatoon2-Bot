@@ -12,6 +12,7 @@ import (
 type Result struct {
 	UserID  user.ID
 	Battles []nintendo.BattleResult
+	Detail  nintendo.DetailedBattleResult
 	Error   error
 }
 

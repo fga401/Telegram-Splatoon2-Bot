@@ -161,9 +161,13 @@ func (svc *impl) statisticsManagementRoutine() {
 				}
 				if isValidResult(result) && isDifferentFromLastBattle(stat, result) {
 					stat.LastBattle = result.Battles[0]
+					updateTime := time.Unix(stat.LastBattle.EndTime(), 0)
+					if stat.LastBattle == nil {
+						updateTime = time.Now()
+					}
 					svc.restartQueue.EnqueueChan() <- task{
 						UserID:     result.UserID,
-						UpdateTime: time.Unix(stat.LastBattle.EndTime(), 0),
+						UpdateTime: updateTime,
 					}
 					svc.outQueue.EnqueueChan() <- result
 					continue
@@ -227,9 +231,20 @@ func (svc *impl) fetch(id user.ID) Result {
 		}
 		battles, err = svc.nintendoSvc.GetLatestBattleResults(status.LastBattle, 0, status.IKSM, status.Timezone, language.English)
 	}
+	if err != nil {
+		return Result{
+			UserID: id,
+			Error:  err,
+		}
+	}
+	var detail nintendo.DetailedBattleResult
+	if len(battles) == 1 {
+		detail, err = svc.nintendoSvc.GetDetailedBattleResults(battles[0].Metadata().BattleNumber, status.IKSM, status.Timezone, language.English)
+	}
 	return Result{
 		UserID:  id,
 		Battles: battles,
+		Detail:  detail,
 		Error:   err,
 	}
 }

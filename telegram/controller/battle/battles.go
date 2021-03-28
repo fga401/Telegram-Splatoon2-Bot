@@ -1,6 +1,8 @@
 package battle
 
 import (
+	"strings"
+
 	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -17,6 +19,16 @@ import (
 func (ctrl *battleCtrl) battlePolling(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
 	statusArgIdx := argManager.Index(ctrl.statusAdapter)[0]
 	status := args[statusArgIdx].(userSvc.Status)
+	permission, err :=ctrl.userSvc.GetPermission(status.UserID)
+	printer := ctrl.languageSvc.Printer(status.Language)
+	if err != nil {
+		return errors.Wrap(err, "can't fetch permission")
+	}
+	if !permission.AllowPolling{
+		msg := getBattlePollingNotAllowedMessage(printer, update)
+		_, err = ctrl.bot.Send(msg)
+		return err
+	}
 	start := false
 	if _, ok := ctrl.pollingChats[status.UserID]; !ok {
 		start = true
@@ -24,15 +36,16 @@ func (ctrl *battleCtrl) battlePolling(update botApi.Update, argManager adapter.M
 	} else {
 		ctrl.stopPolling(status.UserID)
 	}
-	printer := ctrl.languageSvc.Printer(status.Language)
 	msg := getBattlePollingMessage(printer, update, start)
-	_, err := ctrl.bot.Send(msg)
+	_, err = ctrl.bot.Send(msg)
 	return err
 }
 
 const (
 	textKeyBattlePollingStart = "Start polling battles."
 	textKeyBattlePollingStop  = "Stop polling battles."
+
+	textKeyBattlePollingNotAllowed  = "Your account is not allowed to use this function. Please contact the administrator for help."
 )
 
 func getBattlePollingMessage(printer *message.Printer, update botApi.Update, start bool) botApi.Chattable {
@@ -41,6 +54,11 @@ func getBattlePollingMessage(printer *message.Printer, update botApi.Update, sta
 		textKey = textKeyBattlePollingStop
 	}
 	text := printer.Sprintf(textKey)
+	return botMessage.NewByUpdate(update, text, nil)
+}
+
+func getBattlePollingNotAllowedMessage(printer *message.Printer, update botApi.Update) botApi.Chattable {
+	text := printer.Sprintf(textKeyBattlePollingNotAllowed)
 	return botMessage.NewByUpdate(update, text, nil)
 }
 
@@ -195,5 +213,48 @@ func getBattleSummaryMessage(printer *message.Printer, update botApi.Update, sum
 		summary.VictoryRate,
 		summary.KillCountAverage+summary.AssistCountAverage, summary.AssistCountAverage, summary.DeathCountAverage, summary.SpecialCountAverage,
 	)
+	return botMessage.NewByUpdate(update, text, nil)
+}
+
+func encodeBattleNumberCommand(battleNumber string) string {
+	return "b" + battleNumber
+}
+
+func decodeBattleNumberCommand(command string) string {
+	return strings.TrimPrefix(command, "b")
+}
+
+func (ctrl *battleCtrl) battleDetail(update botApi.Update, argManager adapter.Manager, args ...interface{}) error {
+	statusArgIdx := argManager.Index(ctrl.statusAdapter)[0]
+	status := args[statusArgIdx].(userSvc.Status)
+	battleNumber := decodeBattleNumberCommand(update.Message.Command())
+	battle, err := ctrl.nintendoSvc.GetDetailedBattleResults(battleNumber, status.IKSM, status.Timezone, language.English)
+	printer := ctrl.languageSvc.Printer(status.Language)
+	if errors.Is(err, &nintendo.ErrIKSMExpired{}) {
+		msg := botMessage.UpdatingToken(printer, update)
+		var resp *botApi.Message
+		resp, err = ctrl.bot.Send(msg)
+		if err != nil {
+			log.Warn("can't send UpdateToken message")
+		}
+		status, err = ctrl.userSvc.UpdateStatusIKSM(status.UserID)
+		if err != nil {
+			msg := botMessage.InternalError(printer, resp)
+			_, _ = ctrl.bot.Send(msg)
+			return errors.Wrap(err, "can't update IKSM when fetching user's last battles")
+		}
+		battle, err = ctrl.nintendoSvc.GetDetailedBattleResults(battleNumber, status.IKSM, status.Timezone, language.English)
+		_, _ = ctrl.bot.Send(botApi.NewDeleteMessage(resp.Chat.ID, resp.MessageID))
+	}
+	if err != nil {
+		return errors.Wrap(err, "can't fetches user's last battles")
+	}
+	msg := getBattleDetailMessage(printer, update, battle, status.Timezone)
+	_, err = ctrl.bot.Send(msg)
+	return err
+}
+
+func getBattleDetailMessage(printer *message.Printer, update botApi.Update, battle nintendo.DetailedBattleResult, timezone timezone.Timezone) botApi.Chattable {
+	text := formatDetailedBattleResults(printer, battle, timezone)
 	return botMessage.NewByUpdate(update, text, nil)
 }

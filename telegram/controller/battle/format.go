@@ -1,6 +1,8 @@
 package battle
 
 import (
+	"bytes"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -14,26 +16,77 @@ import (
 )
 
 const (
-	textKeyVictoryEmoji     = "✅"
-	textKeyDefeatEmoji      = "❌"
+	escapeChars = "*_~["
+
+	textKeyVictoryEmoji  = `✅`
+	textKeyDefeatEmoji   = `❌`
+	textKeyRegularEmoji  = `🟢`
+	textKeyGachiEmoji    = `🟠`
+	textKeyLeagueEmoji   = `🔴`
+	textKeyPrivateEmoji  = `🟣`
+	textKeyFestivalEmoji = `🟡`
+
 	textKeyTimeTemplate     = "2006-01-02 15:04:05"
-	textKeyBoldBattleResult = `*[/%s] [%s]*
+	textKeyBoldBattleResult = `*[ /%s ] [ %s ]*
 - Time: %s
 - Mode: %s - %s
-- Stage: %s 
-- Count: %s %s %s
+- Stage: %s
+- Count: %s
 - Weapon: %s
 - K(A)/D/SP: *%d(%d)/%d/%d*
 `
-	textKeyBattleResult = `\[/%s] \[%s] 
+	textKeyBattleResult = `\[ /%s ] \[ %s ] 
 - Time: %s
 - Mode: %s - %s
-- Stage: %s 
-- Count: %s %s %s
+- Stage: %s
+- Count: %s
 - Weapon: %s
 - K(A)/D/SP: *%d(%d)/%d/%d*
 `
+	textKeyBattleDetailResult = `*[ /%s Detail ] [ %s ]*
+- Start Time: %s
+- End Time: %s
+- Mode: %s - %s
+- Stage: %s 
+- Count: %s
+*[ My Team ]*:
+%s
+*[ Other Team ]*:
+%s
+`
+	textKeyPlayerResult = "    *[ %s ]*    `%s`\n        - Weapon: %s\n        - K(A)/D/SP: *%d(%d)/%d/%d*\n        - Point: %dp"
 )
+
+func formatDetailedBattleResults(printer *message.Printer, battle nintendo.DetailedBattleResult, timezone timezone.Timezone) string {
+	template := printer.Sprintf(textKeyTimeTemplate)
+	myTeamPlayersResults := []nintendo.PlayerResult{battle.Metadata().PlayerResult}
+	myTeamPlayersResults = append(myTeamPlayersResults, battle.MyTeamPlayerResults()...)
+	otherTeamPlayerResults := battle.OtherTeamPlayerResults()
+	ret := printer.Sprintf(textKeyBattleDetailResult,
+		printer.Sprintf(encodeBattleNumberCommand(battle.Metadata().BattleNumber)), formatTeamResult(printer, battle),
+		util.Time.LocalTime(battle.Metadata().StartTime, timezone.Minute()).Format(template),
+		util.Time.LocalTime(battle.EndTime(), timezone.Minute()).Format(template),
+		formatMode(printer, battle), printer.Sprintf(battle.Metadata().Rule.Name),
+		printer.Sprintf(battle.Metadata().Stage.Name),
+		formatTeamCountBanner(battle),
+		formatPlayerResults(printer, myTeamPlayersResults),
+		formatPlayerResults(printer, otherTeamPlayerResults),
+	)
+	return ret
+}
+
+func formatPlayerResults(printer *message.Printer, results []nintendo.PlayerResult) string {
+	texts := make([]string, 0, 4)
+	for _, r := range results {
+		text := printer.Sprintf(textKeyPlayerResult,
+			r.Player.Udemae.Name, r.Player.Nickname, printer.Sprintf(r.Player.Weapon.Name),
+			r.KillCount+r.AssistCount, r.AssistCount, r.DeathCount, r.SpecialCount,
+			r.GamePaintPoint,
+		)
+		texts = append(texts, text)
+	}
+	return strings.Join(texts, "\n")
+}
 
 func (ctrl *battleCtrl) formatBattleResults(printer *message.Printer, update botApi.Update, battles []nintendo.BattleResult, timezone timezone.Timezone, emphasis []bool) []botApi.Chattable {
 	texts := make([]string, 0, ctrl.maxResultsPerMessage)
@@ -56,61 +109,118 @@ func (ctrl *battleCtrl) formatBattleResults(printer *message.Printer, update bot
 
 func formatBattleResult(printer *message.Printer, battle nintendo.BattleResult, timezone timezone.Timezone, emphasis bool) string {
 	template := printer.Sprintf(textKeyTimeTemplate)
-	var myTeamCount, otherTeamCount float64
-	var myTeamCountString, otherTeamCountString string
-	switch battle.Type() {
-	case nintendo.BattleResultTypeEnum.Regular:
-		battle := battle.(*nintendo.RegularBattleResult)
-		myTeamCount = float64(battle.MyTeamPercentage)
-		otherTeamCount = float64(battle.OtherTeamPercentage)
-		myTeamCountString = strconv.FormatFloat(myTeamCount, 'f', 1, 64)
-		otherTeamCountString = strconv.FormatFloat(otherTeamCount, 'f', 1, 64)
-	case nintendo.BattleResultTypeEnum.Gachi:
-		battle := battle.(*nintendo.GachiBattleResult)
-		myTeamCount = float64(battle.MyTeamCount)
-		otherTeamCount = float64(battle.OtherTeamCount)
-		myTeamCountString = strconv.Itoa(int(myTeamCount))
-		otherTeamCountString = strconv.Itoa(int(otherTeamCount))
-	case nintendo.BattleResultTypeEnum.League:
-		battle := battle.(*nintendo.LeagueBattleResult)
-		myTeamCount = float64(battle.MyTeamCount)
-		otherTeamCount = float64(battle.OtherTeamCount)
-		myTeamCountString = strconv.Itoa(int(myTeamCount))
-		otherTeamCountString = strconv.Itoa(int(otherTeamCount))
-	case nintendo.BattleResultTypeEnum.Festival:
-		battle := battle.(*nintendo.FesBattleResult)
-		myTeamCount = float64(battle.MyTeamPercentage)
-		otherTeamCount = float64(battle.OtherTeamPercentage)
-		myTeamCountString = strconv.FormatFloat(myTeamCount, 'f', 1, 64)
-		otherTeamCountString = strconv.FormatFloat(otherTeamCount, 'f', 1, 64)
-	}
 	textKey := textKeyBattleResult
 	if emphasis {
 		textKey = textKeyBoldBattleResult
 	}
-	emoji := textKeyVictoryEmoji
-	if battle.Metadata().MyTeamResult.Key == nintendo.KeyDefeat {
-		emoji = textKeyDefeatEmoji
-	}
 	ret := printer.Sprintf(textKey,
-		printer.Sprintf(battle.Metadata().BattleNumber),
-		printer.Sprintf(battle.Metadata().MyTeamResult.Name)+" "+emoji,
+		printer.Sprintf(encodeBattleNumberCommand(battle.Metadata().BattleNumber)), formatTeamResult(printer, battle),
 		util.Time.LocalTime(battle.Metadata().StartTime, timezone.Minute()).Format(template),
-		printer.Sprintf(battle.Metadata().GameMode.Name), printer.Sprintf(battle.Metadata().Rule.Name),
+		formatMode(printer, battle), printer.Sprintf(battle.Metadata().Rule.Name),
 		printer.Sprintf(battle.Metadata().Stage.Name),
-		myTeamCountString, formatCount(myTeamCount, otherTeamCount), otherTeamCountString,
+		formatTeamCountBanner(battle),
 		printer.Sprintf(battle.Metadata().PlayerResult.Player.Weapon.Name),
 		battle.Metadata().PlayerResult.KillCount+battle.Metadata().PlayerResult.AssistCount, battle.Metadata().PlayerResult.AssistCount, battle.Metadata().PlayerResult.DeathCount, battle.Metadata().PlayerResult.SpecialCount,
 	)
 	return ret
 }
 
-func formatCount(myCount, otherCount float64) string {
+func formatMode(printer *message.Printer, battle nintendo.BattleResult) string {
+	return printer.Sprintf(battle.Metadata().GameMode.Name) + " " + modeEmoji(battle.Metadata().GameMode.Key)
+}
+
+func formatTeamResult(printer *message.Printer, battle nintendo.BattleResult) string {
+	emoji := textKeyVictoryEmoji
+	if battle.Metadata().MyTeamResult.Key == nintendo.KeyDefeat {
+		emoji = textKeyDefeatEmoji
+	}
+	return printer.Sprintf(battle.Metadata().MyTeamResult.Name) + " " + emoji
+}
+
+func modeEmoji(key string) string {
+	switch key {
+	case nintendo.KeyRegular:
+		return textKeyRegularEmoji
+	case nintendo.KeyGachi:
+		return textKeyGachiEmoji
+	case nintendo.KeyLeaguePair:
+		return textKeyLeagueEmoji
+	case nintendo.KeyLeagueTeam:
+		return textKeyLeagueEmoji
+	case nintendo.KeyPrivate:
+		return textKeyPrivateEmoji
+	case nintendo.KeyFestivalSolo:
+		return textKeyFestivalEmoji
+	case nintendo.KeyFestivalTeam:
+		return textKeyFestivalEmoji
+	default:
+		return ""
+	}
+}
+
+func formatTeamCountBanner(battleRaw nintendo.BattleResult) string {
+	var myTeamCount, otherTeamCount float64
+	var myTeamCountString, otherTeamCountString string
+	switch battleRaw.Type() {
+	case nintendo.BattleResultTypeEnum.Regular:
+		battle, ok := battleRaw.(*nintendo.RegularBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedRegularBattleResult).RegularBattleResult
+		}
+		myTeamCount = float64(battle.MyTeamPercentage)
+		otherTeamCount = float64(battle.OtherTeamPercentage)
+		myTeamCountString = strconv.FormatFloat(myTeamCount, 'f', 1, 64)
+		otherTeamCountString = strconv.FormatFloat(otherTeamCount, 'f', 1, 64)
+	case nintendo.BattleResultTypeEnum.Gachi:
+		battle, ok := battleRaw.(*nintendo.GachiBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedGachiBattleResult).GachiBattleResult
+		}
+		myTeamCount = float64(battle.MyTeamCount)
+		otherTeamCount = float64(battle.OtherTeamCount)
+		myTeamCountString = strconv.Itoa(int(myTeamCount))
+		otherTeamCountString = strconv.Itoa(int(otherTeamCount))
+	case nintendo.BattleResultTypeEnum.League:
+		battle, ok := battleRaw.(*nintendo.LeagueBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedLeagueBattleResult).LeagueBattleResult
+		}
+		myTeamCount = float64(battle.MyTeamCount)
+		otherTeamCount = float64(battle.OtherTeamCount)
+		myTeamCountString = strconv.Itoa(int(myTeamCount))
+		otherTeamCountString = strconv.Itoa(int(otherTeamCount))
+	case nintendo.BattleResultTypeEnum.Festival:
+		battle, ok := battleRaw.(*nintendo.FesBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedFesBattleResult).FesBattleResult
+		}
+		myTeamCount = float64(battle.MyTeamPercentage)
+		otherTeamCount = float64(battle.OtherTeamPercentage)
+		myTeamCountString = strconv.FormatFloat(myTeamCount, 'f', 1, 64)
+		otherTeamCountString = strconv.FormatFloat(otherTeamCount, 'f', 1, 64)
+	}
+	return fmt.Sprintf("%s %s %s", myTeamCountString, formatBanner(myTeamCount, otherTeamCount), otherTeamCountString)
+}
+
+func formatBanner(myCount, otherCount float64) string {
 	myPct := myCount / (myCount + otherCount)
 	otherPct := otherCount / (myCount + otherCount)
 	mySeg := int(round(myPct, 0.1) * 10)
 	otherSeg := int(round(otherPct, 0.1) * 10)
 	return strings.Repeat("=", mySeg) + ">/<" + strings.Repeat("≈", otherSeg)
+}
+
+func escapeNickName(nickName string) string {
+	buf := new(bytes.Buffer)
+	i := strings.IndexAny(nickName, escapeChars)
+	for ; i != -1; i = strings.IndexAny(nickName, escapeChars) {
+		buf.WriteString(nickName[:i])
+		buf.WriteByte('\\')
+		buf.WriteByte(nickName[i])
+		nickName = nickName[i+1:]
+	}
+	buf.WriteString(nickName)
+	return buf.String()
 }
 
 func round(x, unit float64) float64 {

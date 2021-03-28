@@ -12,6 +12,10 @@ type optionEnum struct {
 	CaseSensitive Option
 	// AsDefault indicates that use this handler if no command matched.
 	AsDefault Option
+	// Regexp indicates that the command is a regular expression.
+	// All command matching this regular expression would be processed by handler.
+	// Earlier registered commands take higher priority.
+	Regexp Option
 }
 
 // OptionEnum lists all available option.

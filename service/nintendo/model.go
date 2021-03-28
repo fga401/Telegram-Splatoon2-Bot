@@ -258,7 +258,7 @@ type TeamResult struct {
 
 // PlayerResult JSON structure
 type PlayerResult struct {
-	GamePaintPoint float32 `json:"game_paint_point"`
+	GamePaintPoint int32 `json:"game_paint_point"`
 	DeathCount     int32   `json:"death_count"`
 	KillCount      int32   `json:"kill_count"`
 	AssistCount    int32   `json:"assist_count"`

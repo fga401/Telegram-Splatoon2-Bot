@@ -14,12 +14,16 @@ import (
 	"telegram-splatoon2-bot/telegram/router"
 )
 
+// BattleNumberCommand is the regular expression of battle number.
+const BattleNumberCommand = `b\d+`
+
 // Battle groups all handler about battle result.
 type Battle interface {
 	BattlePolling(update botApi.Update) error
 	BattleAll(update botApi.Update) error
 	BattleLast(update botApi.Update) error
 	BattleSummary(update botApi.Update) error
+	BattleDetail(update botApi.Update) error
 }
 
 // UserID is the ID of user
@@ -38,6 +42,7 @@ type battleCtrl struct {
 	battleAllHandler     router.Handler
 	battleLastHandler    router.Handler
 	battleSummaryHandler router.Handler
+	battleDetailHandler router.Handler
 
 	maxResultsPerMessage int
 	minLastResults       int
@@ -73,6 +78,7 @@ func New(bot bot.Bot,
 	ctrl.battleAllHandler = adapter.Apply(ctrl.battleAll, ctrl.statusAdapter)
 	ctrl.battleLastHandler = adapter.Apply(ctrl.battleLast, ctrl.statusAdapter)
 	ctrl.battleSummaryHandler = adapter.Apply(ctrl.battleSummary, ctrl.statusAdapter)
+	ctrl.battleDetailHandler = adapter.Apply(ctrl.battleDetail, ctrl.statusAdapter)
 	go ctrl.pollingRoutine()
 	return ctrl
 }
@@ -91,4 +97,8 @@ func (ctrl *battleCtrl) BattleLast(update botApi.Update) error {
 
 func (ctrl *battleCtrl) BattleSummary(update botApi.Update) error {
 	return ctrl.battleSummaryHandler(update)
+}
+
+func (ctrl *battleCtrl) BattleDetail(update botApi.Update) error {
+	return ctrl.battleDetailHandler(update)
 }

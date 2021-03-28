@@ -36,6 +36,7 @@ func TelegramApp() {
 		log.Panic("can't init botAPI", zap.Error(err))
 	}
 	bot := bot.New(botAPI, botConfig())
+	routerOpt := router.OptionEnum
 	router := router.New(botAPI, routerConfig())
 
 	database := database.New(databaseConfig())
@@ -90,6 +91,7 @@ func TelegramApp() {
 	router.RegisterCommand("battle_all", battleCtrl.BattleAll)
 	router.RegisterCommand("battle_last", battleCtrl.BattleLast)
 	router.RegisterCommand("battle_summary", battleCtrl.BattleSummary)
+	router.RegisterCommand(battle.BattleNumberCommand, battleCtrl.BattleDetail, routerOpt.Regexp)
 
 	router.Run()
 }

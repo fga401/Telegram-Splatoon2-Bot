@@ -55,7 +55,7 @@ func (ctrl *battleCtrl) sendPolledResult(result battlePoller.Result) {
 		}
 		return
 	}
-	if len(result.Battles) == 0 {
+	if len(result.Battles) == 0 && result.Detail == nil{
 		return
 	}
 	if chatID, ok := ctrl.getChatID(result.UserID); ok {
@@ -69,9 +69,14 @@ func (ctrl *battleCtrl) sendPolledResult(result battlePoller.Result) {
 			log.Warn("can't update last battle number when polling battles.", zap.Int64("user_id", int64(result.UserID)), zap.Error(err))
 		}
 		printer := ctrl.languageSvc.Printer(status.Language)
-		messages := ctrl.formatBattleResultsByChatID(printer, chatID, result.Battles, status.Timezone)
-		for _, msg := range messages {
+		if result.Detail != nil {
+			msg := formatDetailedBattleResultsByChatID(printer, chatID, result.Detail, status.Timezone)
 			_, _ = ctrl.bot.Send(msg)
+		} else {
+			messages := ctrl.formatBattleResultsByChatID(printer, chatID, result.Battles, status.Timezone)
+			for _, msg := range messages {
+				_, _ = ctrl.bot.Send(msg)
+			}
 		}
 	}
 }
@@ -90,6 +95,11 @@ func (ctrl *battleCtrl) pollingRoutine() {
 			go ctrl.sendPolledResult(result)
 		}
 	}
+}
+
+func formatDetailedBattleResultsByChatID(printer *message.Printer, chatID int64, detail nintendo.DetailedBattleResult, timezone timezone.Timezone) botApi.Chattable {
+	text := formatDetailedBattleResults(printer, detail, timezone)
+	return botMessage.NewByChatID(chatID, text, nil)
 }
 
 func (ctrl *battleCtrl) formatBattleResultsByChatID(printer *message.Printer, chatID int64, battles []nintendo.BattleResult, timezone timezone.Timezone) []botApi.Chattable {
