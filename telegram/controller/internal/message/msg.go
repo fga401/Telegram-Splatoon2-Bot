@@ -15,12 +15,7 @@ func NewByMsg(msg *botApi.Message, text string, markup *botApi.InlineKeyboardMar
 		}
 		return ret
 	}
-	ret := botApi.NewMessage(msg.Chat.ID, text)
-	ret.ParseMode = "Markdown"
-	if markup != nil {
-		ret.ReplyMarkup = &markup
-	}
-	return ret
+	return NewByChatID(msg.Chat.ID, text, markup)
 }
 
 // NewByUpdate returns a telegram message given text, markup and update.
@@ -30,4 +25,14 @@ func NewByUpdate(update botApi.Update, text string, markup *botApi.InlineKeyboar
 		return NewByMsg(update.CallbackQuery.Message, text, markup, true)
 	}
 	return NewByMsg(update.Message, text, markup, false)
+}
+
+// NewByChatID returns a telegram message given text, markup and update.
+func NewByChatID(chatID int64, text string, markup *botApi.InlineKeyboardMarkup) botApi.Chattable {
+	ret := botApi.NewMessage(chatID, text)
+	ret.ParseMode = "Markdown"
+	if markup != nil {
+		ret.ReplyMarkup = &markup
+	}
+	return ret
 }

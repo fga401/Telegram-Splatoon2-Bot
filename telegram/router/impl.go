@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 
 	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -10,10 +11,16 @@ import (
 	log "telegram-splatoon2-bot/common/log"
 )
 
+type regexpHandler struct {
+	re      *regexp.Regexp
+	handler Handler
+}
+
 type impl struct {
 	commandHandlers       map[string]Handler
 	defaultCommandHandler Handler
 	callbackQueryHandlers map[string]Handler
+	regexpCommandHandlers []regexpHandler
 	textHandler           Handler
 	config                Config
 	bot                   *botApi.BotAPI

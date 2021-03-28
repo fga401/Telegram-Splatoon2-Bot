@@ -14,12 +14,14 @@ import (
 	tgImgUploader "telegram-splatoon2-bot/service/image/uploader/telegram"
 	"telegram-splatoon2-bot/service/language"
 	"telegram-splatoon2-bot/service/nintendo"
+	battlePoller "telegram-splatoon2-bot/service/poller/battle"
 	"telegram-splatoon2-bot/service/repository"
 	"telegram-splatoon2-bot/service/repository/salmon"
 	"telegram-splatoon2-bot/service/repository/stage"
 	userSvc "telegram-splatoon2-bot/service/user"
 	userDatabase "telegram-splatoon2-bot/service/user/database"
 	"telegram-splatoon2-bot/telegram/bot"
+	"telegram-splatoon2-bot/telegram/controller/battle"
 	"telegram-splatoon2-bot/telegram/controller/help"
 	repositoryCtrl "telegram-splatoon2-bot/telegram/controller/repository"
 	"telegram-splatoon2-bot/telegram/controller/setting"
@@ -34,6 +36,7 @@ func TelegramApp() {
 		log.Panic("can't init botAPI", zap.Error(err))
 	}
 	bot := bot.New(botAPI, botConfig())
+	routerOpt := router.OptionEnum
 	router := router.New(botAPI, routerConfig())
 
 	database := database.New(databaseConfig())
@@ -80,6 +83,15 @@ func TelegramApp() {
 	helpCtrl := help.New(bot, userSvc, languageSvc)
 	router.RegisterCommand("help", helpCtrl.Help)
 	router.RegisterCommand("help_stages", helpCtrl.HelpStages)
+
+	battlePoller := battlePoller.New(bot, stageRepo, nintendoSvc, userSvc, battlePollerConfig())
+
+	battleCtrl := battle.New(bot, battlePoller, nintendoSvc, userSvc, languageSvc, battleControllerConfig())
+	router.RegisterCommand("battle_polling", battleCtrl.BattlePolling)
+	router.RegisterCommand("battle_all", battleCtrl.BattleAll)
+	router.RegisterCommand("battle_last", battleCtrl.BattleLast)
+	router.RegisterCommand("battle_summary", battleCtrl.BattleSummary)
+	router.RegisterCommand(battle.BattleNumberCommand, battleCtrl.BattleDetail, routerOpt.Regexp)
 
 	router.Run()
 }

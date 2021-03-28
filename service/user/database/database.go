@@ -13,7 +13,7 @@ type Service interface {
 	// Existed checks whether a user is existed.
 	Existed(uid UserID) (bool, error)
 	// Register adds a new user to database.
-	Register(user Permission, status Status) error
+	Register(user User, permission Permission, status Status) error
 
 	// SelectStatus gets the status against the user.
 	SelectStatus(uid UserID) (Status, error)
@@ -23,6 +23,10 @@ type Service interface {
 	UpdateStatusTimezone(uid UserID, timezone timezone.Timezone) error
 	// UpdateStatusLanguage updates the language of user.
 	UpdateStatusLanguage(uid UserID, language language.Language) error
+	// UpdateStatusLastBattle updates the lastBattle of user.
+	UpdateStatusLastBattle(uid UserID, lastBattle string) error
+	// UpdateStatusLastSalmon updates the lastSalmon of user.
+	UpdateStatusLastSalmon(uid UserID, lastSalmon string) error
 
 	// SelectStatus gets the account against the user.
 	SelectAccount(uid UserID, tag string) (Account, error)

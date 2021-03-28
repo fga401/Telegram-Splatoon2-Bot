@@ -8,9 +8,10 @@ import (
 var tokenEnum = enum.Assign(&tokens{}).(*tokens)
 
 type tokens struct {
-	Permission userTokens
+	Permission permissionTokens
 	Status     statusTokens
 	Account    accountTokens
+	User       userTokens
 }
 
 type statusTokens struct {
@@ -20,9 +21,11 @@ type statusTokens struct {
 	UpdateTimezone            database.Token
 	UpdateIKSM                database.Token
 	UpdateSessionTokenAndIKSM database.Token
+	UpdateLastBattle          database.Token
+	UpdateLastSalmon          database.Token
 }
 
-type userTokens struct {
+type permissionTokens struct {
 	Insert      database.Token
 	Count       database.Token
 	Admins      database.Token
@@ -34,4 +37,8 @@ type accountTokens struct {
 	Delete            database.Token
 	SelectByUID       database.Token
 	SelectByUIDAndTag database.Token
+}
+
+type userTokens struct {
+	Insert database.Token
 }

@@ -50,7 +50,7 @@ func getSalmonSchedulesNoReadyMessage(printer *message.Printer, update botApi.Up
 }
 
 func getSalmonSchedulesMessages(printer *message.Printer, update botApi.Update, content *salmon.Content, timezone timezone.Timezone) []botApi.Chattable {
-	timeTemplate := printer.Sprintf(timeTemplateTextKey)
+	timeTemplate := printer.Sprintf(textKeyTimeTemplate)
 	// future msg
 	var texts []string
 	for _, s := range content.Schedules.Schedules[:len(content.Schedules.Schedules)-2] {

@@ -7,12 +7,16 @@ import (
 
 // UpdateLogger wraps Update as zapcore.ObjectMarshaler.
 type UpdateLogger botApi.Update
+
 // MessageLogger wraps Message as zapcore.ObjectMarshaler.
 type MessageLogger botApi.Message
+
 // CallbackQueryLogger wraps CallbackQuery as zapcore.ObjectMarshaler.
 type CallbackQueryLogger botApi.CallbackQuery
+
 // UserLogger wraps User as zapcore.ObjectMarshaler.
 type UserLogger botApi.User
+
 // ChatLogger wraps Chat as zapcore.ObjectMarshaler.
 type ChatLogger botApi.Chat
 

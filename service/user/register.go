@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/pkg/errors"
-	"telegram-splatoon2-bot/service/user/serializer"
+	"telegram-splatoon2-bot/service/user/internal/serializer"
 )
 
 const (
@@ -12,9 +12,8 @@ const (
 
 func (svc *serviceImpl) Register(uid ID, username string) error {
 	_, isAdmin := svc.defaultPermission.Admins[uid]
-	user := Permission{
+	permission := Permission{
 		UserID:       uid,
-		UserName:     username,
 		IsBlock:      svc.defaultPermission.IsBlock,
 		MaxAccount:   svc.defaultPermission.MaxAccount,
 		IsAdmin:      isAdmin,
@@ -27,9 +26,13 @@ func (svc *serviceImpl) Register(uid ID, username string) error {
 		Language:     svc.defaultPermission.Language,
 		Timezone:     svc.defaultPermission.Timezone,
 	}
-	err := svc.db.Register(user, status)
+	user := User{
+		UserID:   uid,
+		UserName: username,
+	}
+	err := svc.db.Register(user, permission, status)
 	if err != nil {
-		return errors.Wrap(err, "can't insert user and runtime to db")
+		return errors.Wrap(err, "can't insert user and status to db")
 	}
 
 	key := serializer.FromID(uid)

@@ -17,12 +17,14 @@ import (
 	tgImageUploader "telegram-splatoon2-bot/service/image/uploader/telegram"
 	"telegram-splatoon2-bot/service/language"
 	"telegram-splatoon2-bot/service/nintendo"
+	battlePoller "telegram-splatoon2-bot/service/poller/battle"
 	"telegram-splatoon2-bot/service/repository"
 	"telegram-splatoon2-bot/service/repository/salmon"
 	"telegram-splatoon2-bot/service/repository/stage"
 	"telegram-splatoon2-bot/service/timezone"
 	userSvc "telegram-splatoon2-bot/service/user"
 	"telegram-splatoon2-bot/telegram/bot"
+	"telegram-splatoon2-bot/telegram/controller/battle"
 	repositoryCtrl "telegram-splatoon2-bot/telegram/controller/repository"
 	"telegram-splatoon2-bot/telegram/router"
 )
@@ -189,8 +191,8 @@ func salmonRepositoryConfig() salmon.Config {
 			StageFile:  viper.GetString("repository.salmon.stageFileName"),
 			WeaponFile: viper.GetString("repository.salmon.weaponFileName"),
 		},
-		RandomWeaponPath: viper.GetString("repository.salmon.randomWeaponImagePath"),
-		GrizzcoWeaponPath:  viper.GetString("repository.salmon.grizzcoWeaponImagePath"),
+		RandomWeaponPath:  viper.GetString("repository.salmon.randomWeaponImagePath"),
+		GrizzcoWeaponPath: viper.GetString("repository.salmon.grizzcoWeaponImagePath"),
 	}
 }
 
@@ -211,5 +213,28 @@ func repositoryManagerConfig() repository.ManagerConfig {
 func repositoryControllerConfig() repositoryCtrl.Config {
 	return repositoryCtrl.Config{
 		Limit: viper.GetInt("controller.limit"),
+	}
+}
+
+func battlePollerConfig() battlePoller.Config {
+	return battlePoller.Config{
+		RefreshmentTime: viper.GetDuration("poller.battles.refreshmentTime"),
+		MaxWorker:       viper.GetInt32("poller.battles.maxWorker"),
+		MaxIdleTime:     viper.GetDuration("poller.battles.maxIdleTime"),
+		MinBattleTime: battlePoller.MinBattleTime{
+			Zone:      viper.GetDuration("poller.battles.minBattleTime.zone"),
+			Tower:     viper.GetDuration("poller.battles.minBattleTime.tower"),
+			Clam:      viper.GetDuration("poller.battles.minBattleTime.clam"),
+			Rainmaker: viper.GetDuration("poller.battles.minBattleTime.rainmaker"),
+			Waiting:   viper.GetDuration("poller.battles.minBattleTime.waiting"),
+		},
+	}
+}
+
+func battleControllerConfig() battle.Config {
+	return battle.Config{
+		MaxResultsPerMessage: viper.GetInt("controller.maxBattleResultsPerMessage"),
+		MinLastResults:       viper.GetInt("controller.minLastBattleResults"),
+		PollingMaxWorker:     viper.GetInt32("controller.maxBattlePollingWorker"),
 	}
 }

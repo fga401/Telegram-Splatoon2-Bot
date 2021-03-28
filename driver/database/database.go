@@ -5,11 +5,11 @@ import "telegram-splatoon2-bot/common/enum"
 // Declaration of a SQL statement.
 type Declaration struct {
 	// Token is the unique ID of a statement.
-	Token    Token
+	Token Token
 	// Stmt, the SQL statement.
-	Stmt     string
+	Stmt string
 	// Named identifies if the statement is named statement, i.e. the statement containing any named placeholder parameters which are replaced with fields from arg.
-	Named    bool
+	Named bool
 	// Prepared identifies whether to prepare the statement. If prepared, a connection will be kept for this statement.
 	Prepared bool
 }

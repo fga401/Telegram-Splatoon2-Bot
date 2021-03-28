@@ -8,7 +8,7 @@ import (
 	"telegram-splatoon2-bot/common/log"
 	"telegram-splatoon2-bot/service/language"
 	"telegram-splatoon2-bot/service/nintendo"
-	"telegram-splatoon2-bot/service/user/serializer"
+	"telegram-splatoon2-bot/service/user/internal/serializer"
 )
 
 func (svc *serviceImpl) NewLoginLink(uid ID) (string, error) {
