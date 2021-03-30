@@ -8,12 +8,18 @@ import (
 
 // ID of user
 type ID = database.UserID
+
 // Permission stores user permission.
 type Permission = database.Permission
+
 // Status stores user status and preference.
 type Status = database.Status
+
 // Account stores user accounts.
 type Account = database.Account
+
+// User stores user name.
+type User = database.User
 
 // Service manages all transactions about user.
 type Service interface {
@@ -33,6 +39,10 @@ type Service interface {
 	UpdateStatusTimezone(uid ID, timezone timezone.Timezone) (Status, error)
 	// UpdateStatusLanguage updates the language of user and return the new status.
 	UpdateStatusLanguage(uid ID, language language.Language) (Status, error)
+	// UpdateStatusLastBattle updates the lastBattle of user.
+	UpdateStatusLastBattle(uid ID, lastBattle string) (Status, error)
+	// UpdateStatusLastSalmon updates the lastSalmon of user.
+	UpdateStatusLastSalmon(uid ID, lastSalmon string) (Status, error)
 
 	// GetAccount gets the account against the user.
 	GetAccount(uid ID, tag string) (Account, error)

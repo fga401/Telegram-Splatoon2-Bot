@@ -12,4 +12,5 @@ VOLUME /splatoon2_bot/data
 VOLUME /splatoon2_bot/config
 COPY --from=build /splatoon2_bot/splatoon2_bot ./
 COPY --from=build /splatoon2_bot/resources ./resources
+COPY --from=build /splatoon2_bot/locales ./locales
 CMD ["./splatoon2_bot"]

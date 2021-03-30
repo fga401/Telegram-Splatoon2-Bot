@@ -31,6 +31,8 @@ func TestStatus(t *testing.T) {
 			IKSM:         "",
 			Language:     "",
 			Timezone:     0,
+			LastBattle:   "",
+			LastSalmon:   "",
 		},
 		database.Status{
 			UserID:       123456789,
@@ -38,6 +40,8 @@ func TestStatus(t *testing.T) {
 			IKSM:         "0000000000000000000000000000000000000000",
 			Language:     "en",
 			Timezone:     720,
+			LastBattle:   "123456",
+			LastSalmon:   "123456",
 		},
 	}
 	for _, expected := range testcases {

@@ -40,7 +40,7 @@ func base64UrlDecode(base64Url []byte) ([]byte, error) {
 	}
 	temp := make([]byte, len(base64Url)+padding)
 	copy(temp, base64Url)
-	for i := 0; i < padding; i ++ {
+	for i := 0; i < padding; i++ {
 		temp[len(base64Url)+i] = '='
 	}
 	temp = bytes.ReplaceAll(temp, []byte{'_'}, []byte{'/'})

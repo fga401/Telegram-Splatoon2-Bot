@@ -1,7 +1,7 @@
 # [WIP] Splatoon2 Telgram Bot
 A telegram bot copying all functions in Nintendo app but running on telegram.
 
-The Bot in Version [0.3.0](https://github.com/fga401/Telegram-Splatoon2-Bot/releases/tag/0.3.0) has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
+The Bot in Version [0.4.2](https://github.com/fga401/Telegram-Splatoon2-Bot/releases/tag/0.4.2) has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
 
 ## Feature
 
@@ -9,9 +9,9 @@ The Bot in Version [0.3.0](https://github.com/fga401/Telegram-Splatoon2-Bot/rele
   + [x] Schedules
   + [ ] Results
 + [x] Stage query
-+ [ ] Battle query
-  + [ ] Manually
-  + [ ] Automatically (whitelist only)
++ [x] Battle query
+  + [x] Manually
+  + [x] Automatically (whitelist only)
 + [ ] Wiki integration
 
 ## Deploy
@@ -19,7 +19,7 @@ The Bot in Version [0.3.0](https://github.com/fga401/Telegram-Splatoon2-Bot/rele
 To build your own bot, clone the codes and generate a new sqlite database file:
 
 ```shell script
-./migrate/prepare.sh [some_path]
+./migrate/scripts/prepare.sh [some_path]
 ```
 The database file and config will be saved in `some_path`.
 
@@ -35,8 +35,8 @@ some_path:
 
 Then build docker image and run:
 ```shell script
-./build.sh [version]
-./run.sh [version] [some_path]
+./scripts/build.sh [version]
+./scripts/run.sh [version] [some_path]
 ```
 An example run script:
 ```shell script
@@ -45,8 +45,9 @@ An example run script:
 # arg 2: path
 if [ ! "$1" ]
 then
-  echo "Need version number!"
-  exit 1
+    version="latest"
+else
+    version=$1
 fi
 if [ ! "$2" ]
 then
@@ -54,7 +55,7 @@ then
 else
     path=${2%/}
 fi
-echo "Path: "$path
+echo "Path: $path"
 docker stop splatoon2_bot >/dev/null 2>&1
 docker rm splatoon2_bot >/dev/null 2>&1
 docker run -d -v "$path"/data:/splatoon2_bot/data -v "$path"/config:/splatoon2_bot/config --network host -e socks5_proxy="socks5://127.0.0.1:1080" -e CONFIG=prod -e TOKEN=<token> -e ADMIN=<user_id> -e STORE_CHANNEL=<channel_id> --name splatoon2_bot splatoon2_bot:"$1"
@@ -69,4 +70,4 @@ If you use proxy, read following docs about how to use proxy in docker:
 You can change the `./config` according to your environment.
 
 - **store channel**: A telegram channel to save some cached images.
-- **others**: ~~I'm too lazy to write README~~ Please read the codes :)
+- **others**: ~~I'm too lazy to write README~~ Please read the codes. :)

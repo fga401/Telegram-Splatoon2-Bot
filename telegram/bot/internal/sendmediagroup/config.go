@@ -16,7 +16,6 @@ type FileConfig interface {
 	File() BasicFileConfig
 }
 
-
 // Config sets up the SendMediaGroup request.
 // More info: https://core.telegram.org/bots/api#sendmediagroup
 type Config struct {
@@ -51,7 +50,8 @@ func (c PhotoConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,
 		Data: c.Data,
-	}}
+	}
+}
 
 // VideoConfig sets up the Photo to upload.
 // More info: https://core.telegram.org/bots/api#inputmediavideo
@@ -118,7 +118,8 @@ func (c DocumentConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,
 		Data: c.Data,
-	}}
+	}
+}
 
 // AudioConfig sets up the Photo to upload.
 // More info: https://core.telegram.org/bots/api#inputmediaaudio
@@ -152,7 +153,8 @@ func (c AudioConfig) File() BasicFileConfig {
 	return BasicFileConfig{
 		Name: c.Name,
 		Data: c.Data,
-	}}
+	}
+}
 
 func parseThumb(thumb *string) *string {
 	if thumb == nil {

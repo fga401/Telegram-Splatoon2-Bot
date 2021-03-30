@@ -1,6 +1,7 @@
 package router
 
 import (
+	"regexp"
 	"strings"
 
 	botApi "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -27,6 +28,11 @@ func (r *impl) RegisterCommand(command string, handler Handler, options ...Optio
 			log.Panic(`can't register "`+command+`" command handler`, zap.Error(err))
 		}
 	}
+	if hasOption(options, OptionEnum.Regexp) {
+		if err := r.registerRegexpCommand(command, handler); err != nil {
+			log.Panic(`can't register "`+command+`" regular expression command handler`, zap.Error(err))
+		}
+	}
 	if !hasOption(options, OptionEnum.CaseSensitive) {
 		command = strings.ToLower(command)
 	}
@@ -48,6 +54,24 @@ func (r *impl) RegisterText(handler Handler) {
 		log.Panic("text handler has already been registered")
 	}
 	r.textHandler = handler
+}
+
+func (r *impl) registerRegexpCommand(command string, handler Handler) error {
+	if !strings.HasPrefix(command, "^") {
+		command = "^" + command
+	}
+	if !strings.HasSuffix(command, "$") {
+		command = command + "$"
+	}
+	re, err := regexp.Compile(command)
+	if err != nil {
+		return errors.Wrap(err, "can't compile regular expression")
+	}
+	r.regexpCommandHandlers = append(r.regexpCommandHandlers, regexpHandler{
+		re:      re,
+		handler: handler,
+	})
+	return nil
 }
 
 func (r *impl) registerCommand(command string, handler Handler) error {
@@ -111,6 +135,14 @@ func (r *impl) route(update botApi.Update) Handler {
 			cmd = strings.ToLower(cmd)
 		}
 		handler := r.commandHandlers[cmd]
+		if handler == nil {
+			for _, reHandler := range r.regexpCommandHandlers {
+				if reHandler.re.Match([]byte(cmd)) {
+					handler = reHandler.handler
+					break
+				}
+			}
+		}
 		if handler == nil {
 			handler = r.defaultCommandHandler
 		}

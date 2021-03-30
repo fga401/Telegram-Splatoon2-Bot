@@ -6,7 +6,7 @@ import (
 	log "telegram-splatoon2-bot/common/log"
 	"telegram-splatoon2-bot/service/language"
 	"telegram-splatoon2-bot/service/timezone"
-	"telegram-splatoon2-bot/service/user/serializer"
+	"telegram-splatoon2-bot/service/user/internal/serializer"
 )
 
 func (svc *serviceImpl) GetStatus(uid ID) (Status, error) {
@@ -62,6 +62,26 @@ func (svc *serviceImpl) UpdateStatusLanguage(uid ID, language language.Language)
 	err := svc.db.UpdateStatusLanguage(uid, language)
 	if err != nil {
 		return Status{}, errors.Wrap(err, "can't update status language in database")
+	}
+	svc.statusCache.Del(serializer.FromID(uid))
+	log.Debug("status cache delete", zap.Any("user_id", uid))
+	return svc.GetStatus(uid)
+}
+
+func (svc *serviceImpl) UpdateStatusLastBattle(uid ID, lastBattle string) (Status, error) {
+	err := svc.db.UpdateStatusLastBattle(uid, lastBattle)
+	if err != nil {
+		return Status{}, errors.Wrap(err, "can't update status lastBattle in database")
+	}
+	svc.statusCache.Del(serializer.FromID(uid))
+	log.Debug("status cache delete", zap.Any("user_id", uid))
+	return svc.GetStatus(uid)
+}
+
+func (svc *serviceImpl) UpdateStatusLastSalmon(uid ID, lastSalmon string) (Status, error) {
+	err := svc.db.UpdateStatusLastSalmon(uid, lastSalmon)
+	if err != nil {
+		return Status{}, errors.Wrap(err, "can't update status lastSalmon in database")
 	}
 	svc.statusCache.Del(serializer.FromID(uid))
 	log.Debug("status cache delete", zap.Any("user_id", uid))

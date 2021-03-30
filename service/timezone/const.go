@@ -41,7 +41,6 @@ const (
 	UTCPlus12   = Timezone(720)
 	UTCPlus1245 = Timezone(765)
 	UTCPlus13   = Timezone(780)
-	UTCPlus1345 = Timezone(825)
 	UTCPlus14   = Timezone(840)
 )
 
@@ -83,7 +82,6 @@ var All = []Timezone{
 	UTCPlus12,
 	UTCPlus1245,
 	UTCPlus13,
-	UTCPlus1345,
 	UTCPlus14,
 }
 

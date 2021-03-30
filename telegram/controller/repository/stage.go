@@ -186,7 +186,7 @@ func getStageSchedulesOverLimitMessage(printer *message.Printer, update botApi.U
 }
 
 func getStageSchedulesMessages(printer *message.Printer, update botApi.Update, content []stage.WrappedSchedule, timezone timezone.Timezone) []botApi.Chattable {
-	timeTemplate := printer.Sprintf(timeTemplateTextKey)
+	timeTemplate := printer.Sprintf(textKeyTimeTemplate)
 	var ret []botApi.Chattable
 	for i := len(content) - 1; i >= 0; i-- {
 		s := content[i]
