@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	escapeChars = "*_~["
+	escapeChar = '`'
 
 	textKeyVictoryEmoji  = `✅`
 	textKeyDefeatEmoji   = `❌`
@@ -59,9 +60,16 @@ const (
 
 func formatDetailedBattleResults(printer *message.Printer, battle nintendo.DetailedBattleResult, timezone timezone.Timezone) string {
 	template := printer.Sprintf(textKeyTimeTemplate)
-	myTeamPlayersResults := []nintendo.PlayerResult{battle.Metadata().PlayerResult}
-	myTeamPlayersResults = append(myTeamPlayersResults, battle.MyTeamPlayerResults()...)
+	myPlayerResult := []nintendo.PlayerResult{battle.Metadata().PlayerResult}
+	myTeamPlayerResults := battle.MyTeamPlayerResults()
+	sort.Slice(myTeamPlayerResults, func(i, j int) bool {
+		return myTeamPlayerResults[i].KillCount+myTeamPlayerResults[i].AssistCount > myTeamPlayerResults[j].KillCount+myTeamPlayerResults[j].AssistCount
+	})
+	myTeamPlayerResults = append(myPlayerResult, myTeamPlayerResults...)
 	otherTeamPlayerResults := battle.OtherTeamPlayerResults()
+	sort.Slice(otherTeamPlayerResults, func(i, j int) bool {
+		return otherTeamPlayerResults[i].KillCount+otherTeamPlayerResults[i].AssistCount > otherTeamPlayerResults[j].KillCount+otherTeamPlayerResults[j].AssistCount
+	})
 	ret := printer.Sprintf(textKeyBattleDetailResult,
 		printer.Sprintf(encodeBattleNumberCommand(battle.Metadata().BattleNumber)), formatTeamResult(printer, battle),
 		util.Time.LocalTime(battle.Metadata().StartTime, timezone.Minute()).Format(template),
@@ -69,7 +77,7 @@ func formatDetailedBattleResults(printer *message.Printer, battle nintendo.Detai
 		formatMode(printer, battle), printer.Sprintf(battle.Metadata().Rule.Name),
 		printer.Sprintf(battle.Metadata().Stage.Name),
 		formatTeamCountBanner(battle),
-		formatPlayerResults(printer, myTeamPlayersResults),
+		formatPlayerResults(printer, myTeamPlayerResults),
 		formatPlayerResults(printer, otherTeamPlayerResults),
 	)
 	return ret
@@ -79,7 +87,7 @@ func formatPlayerResults(printer *message.Printer, results []nintendo.PlayerResu
 	texts := make([]string, 0, 4)
 	for _, r := range results {
 		text := printer.Sprintf(textKeyPlayerResult,
-			r.Player.Udemae.Name, r.Player.Nickname, printer.Sprintf(r.Player.Weapon.Name),
+			r.Player.Udemae.Name, escapeNickName(r.Player.Nickname), printer.Sprintf(r.Player.Weapon.Name),
 			r.KillCount+r.AssistCount, r.AssistCount, r.DeathCount, r.SpecialCount,
 			r.GamePaintPoint,
 		)
@@ -212,11 +220,10 @@ func formatBanner(myCount, otherCount float64) string {
 
 func escapeNickName(nickName string) string {
 	buf := new(bytes.Buffer)
-	i := strings.IndexAny(nickName, escapeChars)
-	for ; i != -1; i = strings.IndexAny(nickName, escapeChars) {
+	i := strings.IndexByte(nickName, escapeChar)
+	for ; i != -1; i = strings.IndexByte(nickName, escapeChar) {
 		buf.WriteString(nickName[:i])
-		buf.WriteByte('\\')
-		buf.WriteByte(nickName[i])
+		buf.WriteString("`\\``")
 		nickName = nickName[i+1:]
 	}
 	buf.WriteString(nickName)
