@@ -33,6 +33,7 @@ const (
 - Mode: %s - %s
 - Stage: %s
 - Count: %s
+- Power: %s
 - Weapon: %s
 - K(A)/D/SP: *%d(%d)/%d/%d*
 `
@@ -41,15 +42,17 @@ const (
 - Mode: %s - %s
 - Stage: %s
 - Count: %s
+- Power: %s
 - Weapon: %s
 - K(A)/D/SP: *%d(%d)/%d/%d*
 `
-	textKeyBattleDetailResult = `*[ /%s Detail ] [ %s ]*
+	textKeyBattleDetailResultRanking = `*[ /%s Detail ] [ %s ]*
 - Start Time: %s
 - End Time: %s
 - Mode: %s - %s
 - Stage: %s 
 - Count: %s
+- Power: %s
 *[ My Team ]*:
 %s
 *[ Other Team ]*:
@@ -70,13 +73,14 @@ func formatDetailedBattleResults(printer *message.Printer, battle nintendo.Detai
 	sort.Slice(otherTeamPlayerResults, func(i, j int) bool {
 		return otherTeamPlayerResults[i].KillCount+otherTeamPlayerResults[i].AssistCount > otherTeamPlayerResults[j].KillCount+otherTeamPlayerResults[j].AssistCount
 	})
-	ret := printer.Sprintf(textKeyBattleDetailResult,
+	ret := printer.Sprintf(textKeyBattleDetailResultRanking,
 		printer.Sprintf(encodeBattleNumberCommand(battle.Metadata().BattleNumber)), formatTeamResult(printer, battle),
 		util.Time.LocalTime(battle.Metadata().StartTime, timezone.Minute()).Format(template),
 		util.Time.LocalTime(battle.EndTime(), timezone.Minute()).Format(template),
 		formatMode(printer, battle), printer.Sprintf(battle.Metadata().Rule.Name),
 		printer.Sprintf(battle.Metadata().Stage.Name),
 		formatTeamCountBanner(battle),
+		formatPower(battle),
 		formatPlayerResults(printer, myTeamPlayerResults),
 		formatPlayerResults(printer, otherTeamPlayerResults),
 	)
@@ -127,6 +131,7 @@ func formatBattleResult(printer *message.Printer, battle nintendo.BattleResult, 
 		formatMode(printer, battle), printer.Sprintf(battle.Metadata().Rule.Name),
 		printer.Sprintf(battle.Metadata().Stage.Name),
 		formatTeamCountBanner(battle),
+		formatPower(battle),
 		printer.Sprintf(battle.Metadata().PlayerResult.Player.Weapon.Name),
 		battle.Metadata().PlayerResult.KillCount+battle.Metadata().PlayerResult.AssistCount, battle.Metadata().PlayerResult.AssistCount, battle.Metadata().PlayerResult.DeathCount, battle.Metadata().PlayerResult.SpecialCount,
 	)
@@ -232,4 +237,30 @@ func escapeNickName(nickName string) string {
 
 func round(x, unit float64) float64 {
 	return math.Round(x/unit) * unit
+}
+
+func formatPower(battleRaw nintendo.BattleResult) string {
+	switch battleRaw.Type() {
+	case nintendo.BattleResultTypeEnum.Regular:
+		return "0"
+	case nintendo.BattleResultTypeEnum.Gachi:
+		battle, ok := battleRaw.(*nintendo.GachiBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedGachiBattleResult).GachiBattleResult
+		}
+		return strconv.Itoa(int(battle.EstimateGachiPower))
+	case nintendo.BattleResultTypeEnum.League:
+		battle, ok := battleRaw.(*nintendo.LeagueBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedLeagueBattleResult).LeagueBattleResult
+		}
+		return strconv.Itoa(int(battle.EstimateGachiPower))
+	case nintendo.BattleResultTypeEnum.Festival:
+		battle, ok := battleRaw.(*nintendo.FesBattleResult)
+		if !ok {
+			battle = &battleRaw.(*nintendo.DetailedFesBattleResult).FesBattleResult
+		}
+		return strconv.Itoa(int(battle.MyEstimateFesPower))
+	}
+	return "0"
 }
