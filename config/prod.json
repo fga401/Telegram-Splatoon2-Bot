@@ -46,7 +46,7 @@
     "proofKeyExpiration": "5m",
     "permission": {
       "maxAccount": 3,
-      "allowPolling": false,
+      "allowPolling": true,
       "timezone": 480,
       "language": "en"
     }
@@ -76,7 +76,7 @@
     "battles": {
       "refreshmentTime": "10s",
       "maxWorker": 32,
-      "maxIdleTime": "10m",
+      "maxIdleTime": "20m",
       "minBattleTime": {
         "zone": "100s",
         "clam": "100s",
