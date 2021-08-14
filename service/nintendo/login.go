@@ -165,7 +165,7 @@ func (svc *impl) getSessionToken(proofKey []byte, sessionTokenCode string, accep
 		"Content-Length":  {strconv.FormatInt(int64(len(bodyText)), 10)},
 		"Content-Type":    {"application/x-www-form-urlencoded"},
 		"Host":            {"accounts.nintendo.com"},
-		"User-Agent":      {"OnlineLounge/1.10.1 NASDKAPI Android"},
+		"User-Agent":      {"OnlineLounge/1.11.0 NASDKAPI Android"},
 	}
 	resp, err := svc.client.Do(req)
 	if err != nil {
@@ -217,7 +217,7 @@ func (svc *impl) getAccessToken(sessionToken string, acceptLang string) (string,
 		"Content-Length":  {strconv.FormatInt(int64(len(bodyText)), 10)},
 		"Content-Type":    {"application/json; charset=utf-8"},
 		"Host":            {"accounts.nintendo.com"},
-		"User-Agent":      {"OnlineLounge/1.10.1 NASDKAPI Android"},
+		"User-Agent":      {"OnlineLounge/1.11.0 NASDKAPI Android"},
 	}
 	resp, err := svc.client.Do(req)
 	if err != nil {
@@ -263,7 +263,7 @@ func (svc *impl) getUserInfo(accessToken string, acceptLang string) (*userInfo, 
 		"Authorization":   {"Bearer " + accessToken},
 		"Host":            {"api.accounts.nintendo.com"},
 		"Connection":      {"Keep-Alive"},
-		"User-Agent":      {"OnlineLounge/1.10.1 NASDKAPI Android"},
+		"User-Agent":      {"OnlineLounge/1.11.0 NASDKAPI Android"},
 	}
 	resp, err := svc.client.Do(req)
 	if err != nil {
@@ -366,7 +366,7 @@ func (svc *impl) getS2SResponse(accessToken string, timestamp int64) (string, er
 		return "", errors.Wrap(err, "can't generate request")
 	}
 	req.Header = map[string][]string{
-		"User-Agent": {"splatnet2statink/1.5.8"}, // todo: use my own agent?
+		"User-Agent": {"telegram-splotoon2-bot/0.4.3"},
 	}
 	resp, err := svc.client.Do(req)
 	if err != nil {
@@ -416,9 +416,9 @@ func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse
 		"Content-Length":   {strconv.FormatInt(int64(len(bodyText)), 10)},
 		"Content-Type":     {"application/json; charset=utf-8"},
 		"Host":             {"api-lp1.znc.srv.nintendo.net"},
-		"User-Agent":       {"com.nintendo.znca/1.10.1 (Android/7.1.2)"},
+		"User-Agent":       {"com.nintendo.znca/1.11.0 (Android/7.1.2)"},
 		"X-Platform":       {"Android"},
-		"X-ProductVersion": {"1.10.1"},
+		"X-ProductVersion": {"1.11.0"},
 	}
 	resp, err := svc.client.Do(req)
 	if err != nil {
@@ -476,9 +476,9 @@ func (svc *impl) getSplatoonAccessTokenSecondStep(accessToken string, flapgAppRe
 		"Content-Length":   {strconv.FormatInt(int64(len(bodyText)), 10)},
 		"Content-Type":     {"application/json; charset=utf-8"},
 		"Host":             {"api-lp1.znc.srv.nintendo.net"},
-		"User-Agent":       {"com.nintendo.znca/1.10.1 (Android/7.1.2)"},
+		"User-Agent":       {"com.nintendo.znca/1.11.0 (Android/7.1.2)"},
 		"X-Platform":       {"Android"},
-		"X-ProductVersion": {"1.10.1"},
+		"X-ProductVersion": {"1.11.0"},
 	}
 	resp, err := svc.client.Do(req)
 	if err != nil {
