@@ -129,6 +129,7 @@ func nintendoConfig() nintendo.Config {
 	return nintendo.Config{
 		Timeout:    viper.GetDuration("nintendo.client.timeout"),
 		RetryTimes: viper.GetInt("nintendo.retryTimes"),
+		AppVersion: viper.GetString("nintendo.appVersion"),
 	}
 }
 

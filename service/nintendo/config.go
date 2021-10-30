@@ -8,4 +8,6 @@ type Config struct {
 	Timeout time.Duration
 	// RetryTimes after failure.
 	RetryTimes int
+	// AppVersion of Nintendo App
+	AppVersion string
 }

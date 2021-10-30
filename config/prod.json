@@ -39,7 +39,8 @@
     "client": {
       "timeout": ""
     },
-    "retryTimes": 3
+    "retryTimes": 3,
+    "appVersion": "1.13.2"
   },
   "user": {
     "accountExpiration": "5m",
