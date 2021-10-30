@@ -9,6 +9,7 @@ import (
 type impl struct {
 	client     *http.Client
 	retryTimes int
+	appVersion string
 }
 
 // New returns a new Service object.
@@ -20,5 +21,6 @@ func New(config Config) Service {
 	return &impl{
 		client:     client,
 		retryTimes: config.RetryTimes,
+		appVersion: config.AppVersion,
 	}
 }
