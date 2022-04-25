@@ -212,7 +212,7 @@ func (svc *impl) getAccessToken(sessionToken string, acceptLang string) (string,
 	req.Header = map[string][]string{
 		"Accept":          {"application/json"},
 		"Accept-Encoding": {"gzip"},
-		"Accept-Language": {acceptLang},
+		"Accept-Language": {"en-US"},
 		"Connection":      {"Keep-Alive"},
 		"Content-Length":  {strconv.FormatInt(int64(len(bodyText)), 10)},
 		"Content-Type":    {"application/json; charset=utf-8"},
@@ -258,7 +258,7 @@ func (svc *impl) getUserInfo(accessToken string, acceptLang string) (*userInfo, 
 	}
 	req.Header = map[string][]string{
 		"Accept":          {"application/json"},
-		"Accept-Language": {acceptLang},
+		"Accept-Language": {"en-US"},
 		"Accept-Encoding": {"gzip"},
 		"Authorization":   {"Bearer " + accessToken},
 		"Host":            {"api.accounts.nintendo.com"},
@@ -410,7 +410,7 @@ func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse
 	req.Header = map[string][]string{
 		"Accept":           {"application/json"},
 		"Accept-Encoding":  {"gzip"},
-		"Accept-Language":  {acceptLang},
+		"Accept-Language":  {"en-US"},
 		"Authorization":    {"Bearer"},
 		"Connection":       {"Keep-Alive"},
 		"Content-Length":   {strconv.FormatInt(int64(len(bodyText)), 10)},
@@ -444,6 +444,9 @@ func (svc *impl) getSplatoonAccessTokenFirstStep(flapgNsoResponse *flapgResponse
 	log.Debug("get splatoon access token first step",
 		zap.String("splatoon webApiServerCredential access token", splatoonAccessToken),
 		zap.ByteString("json", respJSON))
+	if splatoonAccessToken == "" || nsName == "" {
+		return "", "", errors.New("failed to get splatoonAccessToken")
+	}
 	return splatoonAccessToken, nsName, nil
 }
 
@@ -470,7 +473,7 @@ func (svc *impl) getSplatoonAccessTokenSecondStep(accessToken string, flapgAppRe
 	req.Header = map[string][]string{
 		"Accept":           {"application/json"},
 		"Accept-Encoding":  {"gzip"},
-		"Accept-Language":  {acceptLang},
+		"Accept-Language":  {"en-US"},
 		"Authorization":    {"Bearer " + accessToken},
 		"Connection":       {"Keep-Alive"},
 		"Content-Length":   {strconv.FormatInt(int64(len(bodyText)), 10)},
@@ -545,7 +548,7 @@ func (svc *impl) getIksmSession(splatoonAccessToken string, acceptLang string) (
 	req.Header = map[string][]string{
 		"Accept":                  {"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
 		"Accept-Encoding":         {"gzip"},
-		"Accept-Language":         {acceptLang},
+		"Accept-Language":         {"en-US"},
 		"Connection":              {"Keep-Alive"},
 		"DNT":                     {"0"},
 		"Host":                    {"app.splatoon2.nintendo.net"},
