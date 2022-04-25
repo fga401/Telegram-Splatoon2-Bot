@@ -2,6 +2,7 @@ package sendmediagroup
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -45,7 +46,7 @@ func Do(bot *botApi.BotAPI, config Config, retryTimes int) ([]*botApi.Message, e
 		}
 		err = json.Unmarshal(data, &apiResp)
 		if err != nil {
-			return errors.Wrap(err, "can't unmarshal response")
+			return errors.Wrap(err, fmt.Sprintf("can't unmarshal response, resp=%s", data))
 		}
 		if !apiResp.Ok {
 			if is, sec := botUtils.IsTooManyRequestString(apiResp.Description); is {

@@ -50,6 +50,7 @@ func (s *telegramUploader) Upload(img image.Image) (imageSvc.Identifier, error) 
 }
 
 func (s *telegramUploader) UploadAll(images []image.Image) ([]imageSvc.Identifier, error) {
+	batchSize := 1
 	if len(images) == 0 {
 		return []imageSvc.Identifier{}, nil
 	}
@@ -59,8 +60,8 @@ func (s *telegramUploader) UploadAll(images []image.Image) ([]imageSvc.Identifie
 		return []imageSvc.Identifier{id}, err
 	}
 	ids := make([]imageSvc.Identifier, len(images))
-	for i := 0; i < len(images); i += 10 {
-		sup := min(i+10, len(images))
+	for i := 0; i < len(images); i += batchSize {
+		sup := min(i+batchSize, len(images))
 		if sup-i == 1 {
 			var err error
 			ids[i], err = s.Upload(images[i])
