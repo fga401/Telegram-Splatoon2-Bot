@@ -40,7 +40,7 @@
       "timeout": ""
     },
     "retryTimes": 3,
-    "appVersion": "1.13.2"
+    "appVersion": "2.0.0"
   },
   "user": {
     "accountExpiration": "5m",
