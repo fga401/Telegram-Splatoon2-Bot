@@ -254,7 +254,7 @@ func formatPower(battleRaw nintendo.BattleResult) string {
 		if !ok {
 			battle = &battleRaw.(*nintendo.DetailedLeagueBattleResult).LeagueBattleResult
 		}
-		return strconv.Itoa(int(battle.EstimateGachiPower))
+		return fmt.Sprintf("%d \\[ %d / %d ]", int(battle.EstimateGachiPower), int(battle.MyEstimateLeaguePoint), int(battle.OtherEstimateLeaguePoint))
 	case nintendo.BattleResultTypeEnum.Festival:
 		battle, ok := battleRaw.(*nintendo.FesBattleResult)
 		if !ok {
