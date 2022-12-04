@@ -1,4 +1,6 @@
-# [WIP] Splatoon2 Telgram Bot
+# [Deprecated] Splatoon2 Telgram Bot
+**This bot is deprecated as Splatoon3 has released.**
+
 A telegram bot copying all functions in Nintendo app but running on telegram.
 
 The Bot in Version [0.4.4](https://github.com/fga401/Telegram-Splatoon2-Bot/releases/tag/0.4.4) has been deployed, you can find it by [@Splatoon2HelperBot](https://t.me/Splatoon2HelperBot) in Telegram.
